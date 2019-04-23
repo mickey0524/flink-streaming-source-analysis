@@ -46,6 +46,10 @@ import static java.util.Objects.requireNonNull;
  * @param <F>
  *            The type of the user function
  */
+/**
+ * 这是拥有 UDF 的 operator 的基类
+ * 这个 class 处理 UDF 的 opening 和 closing，并将其作为 operator 生命周期的一部分
+ */
 @PublicEvolving
 public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
 		extends AbstractStreamOperator<OUT>

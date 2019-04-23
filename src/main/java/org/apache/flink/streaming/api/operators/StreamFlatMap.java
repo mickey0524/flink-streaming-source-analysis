@@ -24,6 +24,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 /**
  * A {@link StreamOperator} for executing {@link FlatMapFunction FlatMapFunctions}.
  */
+/**
+ * flatMap 算子
+ */
 @Internal
 public class StreamFlatMap<IN, OUT>
 		extends AbstractUdfStreamOperator<OUT, FlatMapFunction<IN, OUT>>
@@ -35,13 +38,13 @@ public class StreamFlatMap<IN, OUT>
 
 	public StreamFlatMap(FlatMapFunction<IN, OUT> flatMapper) {
 		super(flatMapper);
-		chainingStrategy = ChainingStrategy.ALWAYS;
+		chainingStrategy = ChainingStrategy.ALWAYS;  // flatMap 会在当前 Thread 内执行
 	}
 
 	@Override
 	public void open() throws Exception {
 		super.open();
-		collector = new TimestampedCollector<>(output);
+		collector = new TimestampedCollector<>(output);  // 保证一条 Element 的输出有相同的 ts
 	}
 
 	@Override

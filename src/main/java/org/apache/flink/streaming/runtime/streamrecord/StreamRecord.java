@@ -24,16 +24,22 @@ import org.apache.flink.annotation.Internal;
  *
  * @param <T> The type encapsulated with the stream record.
  */
+/**
+ * 数据流中的一个 value，存储 value 和一个可选的相关的时间戳
+ */
 @Internal
 public final class StreamRecord<T> extends StreamElement {
 
 	/** The actual value held by this record. */
+	// record 真正的 value
 	private T value;
 
 	/** The timestamp of the record. */
+	// record 的时间戳 
 	private long timestamp;
 
 	/** Flag whether the timestamp is actually set. */
+	// 是否设置了时间戳
 	private boolean hasTimestamp;
 
 	/**
@@ -163,13 +169,19 @@ public final class StreamRecord<T> extends StreamElement {
 	//  Utilities
 	// ------------------------------------------------------------------------
 
+	/**
+	 * 重写 equals 方法
+	 */
 	@Override
 	public boolean equals(Object o) {
+		// 如果相等，直接返回 true
 		if (this == o) {
 			return true;
 		}
+		// 判断两个实例的 class 是否相同
 		else if (o != null && getClass() == o.getClass()) {
 			StreamRecord<?> that = (StreamRecord<?>) o;
+			// 判断实例属性是否相同
 			return this.hasTimestamp == that.hasTimestamp &&
 					(!this.hasTimestamp || this.timestamp == that.timestamp) &&
 					(this.value == null ? that.value == null : this.value.equals(that.value));

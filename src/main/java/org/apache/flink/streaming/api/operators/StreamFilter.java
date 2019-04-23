@@ -24,6 +24,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 /**
  * A {@link StreamOperator} for executing {@link FilterFunction FilterFunctions}.
  */
+/**
+ * filter 算子
+ */
 @Internal
 public class StreamFilter<IN> extends AbstractUdfStreamOperator<IN, FilterFunction<IN>> implements OneInputStreamOperator<IN, IN> {
 
@@ -31,13 +34,13 @@ public class StreamFilter<IN> extends AbstractUdfStreamOperator<IN, FilterFuncti
 
 	public StreamFilter(FilterFunction<IN> filterFunction) {
 		super(filterFunction);
-		chainingStrategy = ChainingStrategy.ALWAYS;
+		chainingStrategy = ChainingStrategy.ALWAYS;  // filter 会在当前 Thread 内执行
 	}
 
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		if (userFunction.filter(element.getValue())) {
-			output.collect(element);
+			output.collect(element);  // Collector 接口中的方法
 		}
 	}
 }

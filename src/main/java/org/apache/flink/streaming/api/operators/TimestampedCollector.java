@@ -31,6 +31,11 @@ import org.apache.flink.util.Collector;
  *
  * @param <T> The type of the elements that can be emitted.
  */
+/**
+ * 包裹一个 Output 用来实现 Collector 接口（collect／close）
+ * 在将 Element 交给 UDF 之前
+ * 需要设置 ts
+ */
 @Internal
 public class TimestampedCollector<T> implements Collector<T> {
 
@@ -43,7 +48,12 @@ public class TimestampedCollector<T> implements Collector<T> {
 	 */
 	public TimestampedCollector(Output<StreamRecord<T>> output) {
 		this.output = output;
-		this.reuse = new StreamRecord<T>(null);
+		/**
+		 * flatMap 中用到了 TimestampedCollector
+		 * flatMap 一个输入，多个输出
+		 * 使用 reuse 保证多个输出拥有相同的 ts 属性
+		 */
+		this.reuse = new StreamRecord<T>(null);  
 	}
 
 	@Override
@@ -51,6 +61,10 @@ public class TimestampedCollector<T> implements Collector<T> {
 		output.collect(reuse.replace(record));
 	}
 
+	/**
+	 * flatMap open 的时候，会初始化 TimestampedCollector
+	 * 在 processElement 之前，会调用 setTimestamp 保证多个输出 ts 的一致性
+	 */
 	public void setTimestamp(StreamRecord<?> timestampBase) {
 		if (timestampBase.hasTimestamp()) {
 			reuse.setTimestamp(timestampBase.getTimestamp());

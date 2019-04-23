@@ -32,6 +32,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * @param <IN2> The input type of the operator
  * @param <OUT> The output type of the operator
  */
+/**
+ * 处理两个输入的 operator 接口
+ */
 @PublicEvolving
 public interface TwoInputStreamOperator<IN1, IN2, OUT> extends StreamOperator<OUT> {
 
@@ -39,11 +42,17 @@ public interface TwoInputStreamOperator<IN1, IN2, OUT> extends StreamOperator<OU
 	 * Processes one element that arrived on the first input of this two-input operator.
 	 * This method is guaranteed to not be called concurrently with other methods of the operator.
 	 */
+	/**
+	 * 处理第一个 input 中到来的元素，不能被并发调用
+	 */
 	void processElement1(StreamRecord<IN1> element) throws Exception;
 
 	/**
 	 * Processes one element that arrived on the second input of this two-input operator.
 	 * This method is guaranteed to not be called concurrently with other methods of the operator.
+	 */
+	/**
+	 * 处理第二个 input 中到来的元素，不能被并发调用
 	 */
 	void processElement2(StreamRecord<IN2> element) throws Exception;
 

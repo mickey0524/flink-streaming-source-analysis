@@ -88,6 +88,11 @@ import java.util.Locale;
  *
  * @param <OUT> The output type of the operator
  */
+/**
+ * 所有 operator 的基类
+ * 具体使用的话，需要实现 OneInputStreamOperator 接口或者 TwoInputStreamOperator 接口
+ * 类方法不能被并发使用！！！
+ */
 @PublicEvolving
 public abstract class AbstractStreamOperator<OUT>
 		implements StreamOperator<OUT>, Serializable {

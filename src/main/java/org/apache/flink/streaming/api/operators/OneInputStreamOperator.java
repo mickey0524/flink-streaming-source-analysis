@@ -31,12 +31,18 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * @param <IN> The input type of the operator
  * @param <OUT> The output type of the operator
  */
+/**
+ * 处理一个 input 的 operator 的接口
+ */
 @PublicEvolving
 public interface OneInputStreamOperator<IN, OUT> extends StreamOperator<OUT> {
 
 	/**
 	 * Processes one element that arrived at this operator.
 	 * This method is guaranteed to not be called concurrently with other methods of the operator.
+	 */
+	/**
+	 * 处理一个到达 operator 的元素，不能被并发调用
 	 */
 	void processElement(StreamRecord<IN> element) throws Exception;
 
@@ -45,6 +51,9 @@ public interface OneInputStreamOperator<IN, OUT> extends StreamOperator<OUT> {
 	 * This method is guaranteed to not be called concurrently with other methods of the operator.
 	 *
 	 * @see org.apache.flink.streaming.api.watermark.Watermark
+	 */
+	/**
+	 * 处理 watermark
 	 */
 	void processWatermark(Watermark mark) throws Exception;
 

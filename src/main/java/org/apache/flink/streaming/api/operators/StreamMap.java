@@ -24,6 +24,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 /**
  * A {@link StreamOperator} for executing {@link MapFunction MapFunctions}.
  */
+/**
+ * map 算子
+ */
 @Internal
 public class StreamMap<IN, OUT>
 		extends AbstractUdfStreamOperator<OUT, MapFunction<IN, OUT>>
@@ -33,7 +36,7 @@ public class StreamMap<IN, OUT>
 
 	public StreamMap(MapFunction<IN, OUT> mapper) {
 		super(mapper);
-		chainingStrategy = ChainingStrategy.ALWAYS;
+		chainingStrategy = ChainingStrategy.ALWAYS;  // map 会在当前 Thread 内执行
 	}
 
 	@Override

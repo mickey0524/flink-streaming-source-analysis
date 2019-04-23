@@ -45,6 +45,11 @@ import java.io.Serializable;
  *
  * @param <OUT> The output type of the operator
  */
+/**
+ * 流操作符，有两个子接口 OneInputStreamOperator/TwoInputStreamOperator
+ * AbstractStreamOperator 抽象类定义了默认的操作符的生命周期以及属性方法
+ * StreamOperator 的方法不能被并发调用！！！
+ */
 @PublicEvolving
 public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Disposable, Serializable {
 
@@ -55,6 +60,9 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	/**
 	 * Initializes the operator. Sets access to the context and the output.
 	 */
+	/**
+	 * 初始化 operator，设置对上下文和输出的访问
+	 */
 	void setup(StreamTask<?, ?> containingTask, StreamConfig config, Output<StreamRecord<OUT>> output);
 
 	/**
@@ -62,6 +70,9 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	 * operator's initialization logic.
 	 *
 	 * @throws java.lang.Exception An exception in this method causes the operator to fail.
+	 */
+	/**
+	 * 本方法需要在第一个 element 被处理前调用，本方法内需要包括操作符的初始化逻辑
 	 */
 	void open() throws Exception;
 
@@ -77,6 +88,10 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	 *
 	 * @throws java.lang.Exception An exception in this method causes the operator to fail.
 	 */
+	/**
+	 * 在所有的 records 通过 processElement/processElement1/processElement2 三个方法被加入 operator 后，调用本方法
+	 * 本方法预期会将剩余的缓存的数据刷入 network，本方法中抛出的异常需要被传播，因为最后的数据没有被正确的处理
+	 */
 	void close() throws Exception;
 
 	/**
@@ -86,6 +101,11 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	 * <p>This method is expected to make a thorough effort to release all resources
 	 * that the operator has acquired.
 	 */
+	/**
+	 * 无论 operator 执行成功或失败，在 operator 生命周期最后，调用本方法
+	 * 同时释放 operator 申请的所有资源
+	 */
+
 	@Override
 	void dispose() throws Exception;
 
@@ -111,6 +131,9 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	 * @param checkpointId The ID of the checkpoint.
 	 * @throws Exception Throwing an exception here causes the operator to fail and go into recovery.
 	 */
+	/**
+	 * 在操作符发出检查点障碍之前，需要生成一个快照，调用这个方法
+	 */
 	void prepareSnapshotPreBarrier(long checkpointId) throws Exception;
 
 	/**
@@ -120,6 +143,9 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	 * the runnable might already be finished.
 	 *
 	 * @throws Exception exception that happened during snapshotting.
+	 */
+	/**
+	 * 生成快照
 	 */
 	OperatorSnapshotFutures snapshotState(
 		long checkpointId,

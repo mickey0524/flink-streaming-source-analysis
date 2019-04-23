@@ -35,6 +35,9 @@ import java.util.List;
  *
  * @param <T> The type of the elements that result from this {@code UnionTransformation}
  */
+/**
+ * UnionTransformation 算子代表多个相同 OutputType DataStream 的联合，并不是一个物理上的操作
+ */
 @Internal
 public class UnionTransformation<T> extends StreamTransformation<T> {
 	private final List<StreamTransformation<T>> inputs;

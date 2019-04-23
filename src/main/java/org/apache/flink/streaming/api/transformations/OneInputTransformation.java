@@ -37,6 +37,9 @@ import java.util.List;
  * @param <IN> The type of the elements in the input {@code StreamTransformation}
  * @param <OUT> The type of the elements that result from this {@code OneInputTransformation}
  */
+/**
+ * 单个输入的 Transformation
+ */
 @Internal
 public class OneInputTransformation<IN, OUT> extends StreamTransformation<OUT> {
 

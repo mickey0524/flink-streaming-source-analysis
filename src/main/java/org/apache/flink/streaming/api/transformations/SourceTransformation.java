@@ -32,6 +32,9 @@ import java.util.Collections;
  *
  * @param <T> The type of the elements that this source produces
  */
+/**
+ * 数据流的源
+ */
 @Internal
 public class SourceTransformation<T> extends StreamTransformation<T> {
 

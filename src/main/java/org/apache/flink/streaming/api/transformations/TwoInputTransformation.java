@@ -39,6 +39,9 @@ import java.util.List;
  * @param <OUT> The type of the elements that result from this {@code TwoInputTransformation}
  */
 @Internal
+/**
+ * 输入两个流，输出一个流
+ */
 public class TwoInputTransformation<IN1, IN2, OUT> extends StreamTransformation<OUT> {
 
 	private final StreamTransformation<IN1> input1;

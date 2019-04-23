@@ -35,6 +35,10 @@ import java.util.List;
  *
  * @param <T> The type of the elements that result from this {@code PartitionTransformation}
  */
+/**
+ * 这个 transformation 操作是一个逻辑上的操作，用来对 input elements 进行逻辑上分组
+ * 影响 downstream 操作
+ */
 @Internal
 public class PartitionTransformation<T> extends StreamTransformation<T> {
 

@@ -36,6 +36,9 @@ import java.util.List;
  *
  * @param <T> The type of the elements that result from this {@code SelectTransformation}
  */
+/**
+ * 配合 SplitTransformation 将一个流转为多个流
+ */
 @Internal
 public class SelectTransformation<T> extends StreamTransformation<T> {
 

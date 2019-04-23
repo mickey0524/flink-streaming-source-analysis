@@ -35,6 +35,9 @@ import java.util.List;
  *
  * @param <T> The type of the elements in the input {@code SinkTransformation}
  */
+/**
+ * Sink 操作
+ */
 @Internal
 public class SinkTransformation<T> extends StreamTransformation<Object> {
 

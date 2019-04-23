@@ -32,6 +32,13 @@ import org.apache.flink.shaded.guava18.com.google.common.collect.Lists;
  *
  * @param <OUT> The type of the elements in the Stream
  */
+/**
+ * 将一个 DataStream 切分成多个 DataStream
+ * SplitStream<Integer> split;
+ * DataStream<Integer> even = split.select("even"); 
+ * DataStream<Integer> odd = split.select("odd"); 
+ * DataStream<Integer> all = split.select("even","odd");
+ */
 
 @Deprecated
 @PublicEvolving

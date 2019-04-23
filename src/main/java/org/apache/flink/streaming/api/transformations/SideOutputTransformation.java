@@ -38,6 +38,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> The type of the elements that result from this {@code SideOutputTransformation}
  */
+/**
+ * 上游的偏侧输出
+ */
 public class SideOutputTransformation<T> extends StreamTransformation<T> {
 	private final StreamTransformation<?> input;
 

@@ -44,6 +44,10 @@ import java.util.List;
  *
  * @param <T> The type of the input elements and the feedback elements.
  */
+/**
+ * 这代表了一个拓扑中的反馈点，反馈点可以连接其他的反馈点形成一个反馈边
+ * 反馈点会从 input 和反馈边接受 elements
+ */
 @Internal
 public class FeedbackTransformation<T> extends StreamTransformation<T> {
 
@@ -51,7 +55,8 @@ public class FeedbackTransformation<T> extends StreamTransformation<T> {
 
 	private final List<StreamTransformation<T>> feedbackEdges;
 
-	private final Long waitTime;
+	// 这个时间代表了 feedback operator 等待 feedback elements 的时间，时间到了就不会接受更多的 elements
+	private final Long waitTime; 
 
 	/**
 	 * Creates a new {@code FeedbackTransformation} from the given input.

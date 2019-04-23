@@ -109,18 +109,24 @@ import java.util.List;
  *
  * @param <T> The type of the elements in this stream.
  */
+/**
+ * DataStream 指代 T 类型的一个数据流，一个 DataStream 可以通过 map/filter 等操作转换为其他数据流
+ */
 @Public
 public class DataStream<T> {
 
-	protected final StreamExecutionEnvironment environment;
+	protected final StreamExecutionEnvironment environment;  // 当前的执行环境
 
-	protected final StreamTransformation<T> transformation;
+	protected final StreamTransformation<T> transformation;  // transformation 算子
 
 	/**
 	 * Create a new {@link DataStream} in the given execution environment with
 	 * partitioning set to forward by default.
 	 *
 	 * @param environment The StreamExecutionEnvironment
+	 */
+	/**
+	 * 构造函数
 	 */
 	public DataStream(StreamExecutionEnvironment environment, StreamTransformation<T> transformation) {
 		this.environment = Preconditions.checkNotNull(environment, "Execution Environment must not be null.");
@@ -208,6 +214,9 @@ public class DataStream<T> {
 	 *            The DataStreams to union output with.
 	 * @return The {@link DataStream}.
 	 */
+	/**
+	 * 相同 OutputType DataStream 数据流合并
+	 */
 	@SafeVarargs
 	public final DataStream<T> union(DataStream<T>... streams) {
 		List<StreamTransformation<T>> unionedTransforms = new ArrayList<>();
@@ -236,6 +245,9 @@ public class DataStream<T> {
 	 * @return The {@link SplitStream}
 	 * @deprecated Please use side output instead.
 	 */
+	/**
+	 * 切分数据流
+	 */
 	@Deprecated
 	public SplitStream<T> split(OutputSelector<T> outputSelector) {
 		return new SplitStream<>(this, clean(outputSelector));
@@ -250,6 +262,9 @@ public class DataStream<T> {
 	 * @param dataStream
 	 *            The DataStream with which this stream will be connected.
 	 * @return The {@link ConnectedStreams}.
+	 */
+	/**
+	 * 合并两个不同 OutputType 的数据流，返回值可以应用 CoFunctions
 	 */
 	public <R> ConnectedStreams<T, R> connect(DataStream<R> dataStream) {
 		return new ConnectedStreams<>(environment, this, dataStream);

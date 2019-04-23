@@ -37,6 +37,14 @@ import java.util.List;
  *
  * @param <T> The type of the elements that result from this {@code SplitTransformation}
  */
+/**
+ * 将一个 DataStream 切分成多个 DataStream
+ * SplitStream<Integer> split;
+ * DataStream<Integer> even = split.select("even"); 
+ * DataStream<Integer> odd = split.select("odd"); 
+ * DataStream<Integer> all = split.select("even","odd");
+ */
+
 @Internal
 public class SplitTransformation<T> extends StreamTransformation<T> {
 

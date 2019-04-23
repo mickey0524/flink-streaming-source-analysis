@@ -14,7 +14,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 
 package org.apache.flink.streaming.api.transformations;
 
@@ -117,6 +117,7 @@ public abstract class StreamTransformation<T> {
 	// This is used to handle MissingTypeInfo. As long as the outputType has not been queried
 	// it can still be changed using setOutputType(). Afterwards an exception is thrown when
 	// trying to change the output type.
+	// 当使用过 getOutputType() 便不能再使用 setOutputType() 更改 type
 	protected boolean typeUsed;
 
 	private int parallelism;
@@ -145,12 +146,25 @@ public abstract class StreamTransformation<T> {
 	 * generated {@link #id}, which is assigned from a static counter. That
 	 * field is independent from this.
 	 */
+	/**
+	 * 用户指定的 id，用于在 job 重启的时候安排相同的 operator
+	 */
 	private String uid;
 
 	private String userProvidedNodeHash;
 
+	/**
+	 * 设置 transformation 中数据在本地缓存的时间
+	 * -1 使用 StreamExecutionEnvironment 的默认 bufferTimeout
+	 * 0 表示不缓存
+	 * 其他正数表示 transformation 自己的 bufferTimeout
+	 */
 	protected long bufferTimeout = -1;
 
+	/**
+	 * 设置本次 transformation 的 slot sharing group，并行情况下，相同的 slot sharing group 会被分配到相同的
+	 * TaskManager
+	 */
 	private String slotSharingGroup;
 
 	@Nullable

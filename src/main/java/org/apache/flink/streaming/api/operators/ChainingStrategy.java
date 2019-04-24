@@ -29,6 +29,10 @@ import org.apache.flink.annotation.PublicEvolving;
  * the operator is not chained to its predecessor. Most operators override this with
  * {@link #ALWAYS}, meaning they will be chained to predecessors whenever possible.
  */
+/**
+ * 定义了操作符的链式模式，当一个操作符链接到前任，意味着它们会在一个 thread 内运行
+ * StreamOperator 默认值是 HEAD
+ */
 @PublicEvolving
 public enum ChainingStrategy {
 
@@ -38,16 +42,25 @@ public enum ChainingStrategy {
 	 * <p>To optimize performance, it is generally a good practice to allow maximal
 	 * chaining and increase operator parallelism.
 	 */
+	/**
+	 * 操作符会尽可能的链接
+	 */
 	ALWAYS,
 
 	/**
 	 * The operator will not be chained to the preceding or succeeding operators.
+	 */
+	/**
+	 * 操作符不会链接到前任和后继
 	 */
 	NEVER,
 
 	/**
 	 * The operator will not be chained to the predecessor, but successors may chain to this
 	 * operator.
+	 */
+	/**
+	 * 操作符不会链接到前任，但是后继可能会链接到这个操作符
 	 */
 	HEAD
 }

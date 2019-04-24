@@ -28,7 +28,10 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * A {@link StreamOperator} for executing a {@link ReduceFunction} on a
  * {@link org.apache.flink.streaming.api.datastream.KeyedStream}.
  */
-
+/**
+ * reduce 算子
+ * 用于聚合 KeyedStream 数据流
+ */
 @Internal
 public class StreamGroupedReduce<IN> extends AbstractUdfStreamOperator<IN, ReduceFunction<IN>>
 		implements OneInputStreamOperator<IN, IN> {
@@ -37,7 +40,7 @@ public class StreamGroupedReduce<IN> extends AbstractUdfStreamOperator<IN, Reduc
 
 	private static final String STATE_NAME = "_op_state";
 
-	private transient ValueState<IN> values;
+	private transient ValueState<IN> values;  // 存储当前 KeyedStream 处理的当前状态
 
 	private TypeSerializer<IN> serializer;
 
@@ -54,6 +57,7 @@ public class StreamGroupedReduce<IN> extends AbstractUdfStreamOperator<IN, Reduc
 	}
 
 	@Override
+	// reduce 的中间输出也会被 collect
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		IN value = element.getValue();
 		IN currentValue = values.value();

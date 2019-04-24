@@ -32,6 +32,9 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * Source contexts for various stream time characteristics.
  */
+/**
+ * 不同流时间模式的 Source context
+ */
 public class StreamSourceContexts {
 
 	/**
@@ -43,6 +46,12 @@ public class StreamSourceContexts {
 	 *     <li>{@link TimeCharacteristic#EventTime} = {@code ManualWatermarkContext}</li>
 	 * </ul>
 	 * */
+	/**
+	 * 根据不同的 TimeCharacteristic 返回不同的 SourceContext
+	 * IngestionTime => AutomaticWatermarkContext
+	 * ProcessingTime => NonTimestampContext
+	 * EventTime => ManualWatermarkContext
+	 */
 	public static <OUT> SourceFunction.SourceContext<OUT> getSourceContext(
 			TimeCharacteristic timeCharacteristic,
 			ProcessingTimeService processingTimeService,
@@ -85,6 +94,10 @@ public class StreamSourceContexts {
 	/**
 	 * A source context that attached {@code -1} as a timestamp to all records, and that
 	 * does not forward watermarks.
+	 */
+	/**
+	 * 配合 ProcessingTime 方式使用，ts 在 flink 处理完打上
+	 * 一个 source context 设置 -1 作为所有 record 的 ts，同时不用向前传递 watermark
 	 */
 	private static class NonTimestampContext<T> implements SourceFunction.SourceContext<T> {
 
@@ -134,6 +147,10 @@ public class StreamSourceContexts {
 	 * {@link SourceFunction.SourceContext} to be used for sources with automatic timestamps
 	 * and watermark emission.
 	 */
+	/**
+	 * 配合 IngestionTime 方式使用，ts 在 StreamRecord 进入 flink 的时候打上
+	 * 自动 emit timestamps 和 watermark
+	 */
 	private static class AutomaticWatermarkContext<T> extends WatermarkContext<T> {
 
 		private final Output<StreamRecord<T>> output;
@@ -178,8 +195,12 @@ public class StreamSourceContexts {
 			// this is to avoid lock contention in the lockingObject by
 			// sending the watermark before the firing of the watermark
 			// emission task.
+			// 捎带传输一波，避免锁竞争
+			// 在 emit StreamRecord 的时候，检查当前时间内是否大于下一次发送 watermark 的时候
+			// 如果大于，则避免进行 nextWatermarkTimer 的调度，直接 emit 一个 watermark 完事
 			if (lastRecordTime > nextWatermarkTime) {
 				// in case we jumped some watermarks, recompute the next watermark time
+				// 这里需要重新计算，目的是为了下一次 emit watermark 是 watermarkInterval 的整数倍
 				final long watermarkTime = lastRecordTime - (lastRecordTime % watermarkInterval);
 				nextWatermarkTime = watermarkTime + watermarkInterval;
 				output.emitWatermark(new Watermark(watermarkTime));
@@ -190,11 +211,17 @@ public class StreamSourceContexts {
 		}
 
 		@Override
+		/**
+		 * IngestionTime 模式用机器当前时间来设置 ts		
+		 */
 		protected void processAndCollectWithTimestamp(T element, long timestamp) {
 			processAndCollect(element);
 		}
 
 		@Override
+		/**
+		 * 流已经没有数据，发送一个 value 为 LONG.MAX_VALUE 的 watermark 告诉 operators
+		 */
 		protected boolean allowWatermark(Watermark mark) {
 			// allow Long.MAX_VALUE since this is the special end-watermark that for example the Kafka source emits
 			return mark.getTimestamp() == Long.MAX_VALUE && nextWatermarkTime != Long.MAX_VALUE;
@@ -209,6 +236,7 @@ public class StreamSourceContexts {
 			// we can shutdown the watermark timer now, no watermarks will be needed any more.
 			// Note that this procedure actually doesn't need to be synchronized with the lock,
 			// but since it's only a one-time thing, doesn't hurt either
+			// 发送了 value 为 Long.MAX_VALUE 的最后一个 watermark，不需要再发送 watermark 了，可以 cancel 定时器
 			final ScheduledFuture<?> nextWatermarkTimer = this.nextWatermarkTimer;
 			if (nextWatermarkTimer != null) {
 				nextWatermarkTimer.cancel(true);
@@ -242,15 +270,18 @@ public class StreamSourceContexts {
 
 			@Override
 			public void onProcessingTime(long timestamp) {
+				// 时间用统一的，避免不同机器时间不对
 				final long currentTime = timeService.getCurrentProcessingTime();
 
 				synchronized (lock) {
 					// we should continue to automatically emit watermarks if we are active
+					// 如果 Stream 是 active 的，我们应该持续自动 emit watermark
 					if (streamStatusMaintainer.getStreamStatus().isActive()) {
 						if (idleTimeout != -1 && currentTime - lastRecordTime > idleTimeout) {
 							// if we are configured to detect idleness, piggy-back the idle detection check on the
 							// watermark interval, so that we may possibly discover idle sources faster before waiting
 							// for the next idle check to fire
+							// 在这里检测有可能能更早的发现 Stream 空闲
 							markAsTemporarilyIdle();
 
 							// no need to finish the next check, as we are now idle.
@@ -281,6 +312,9 @@ public class StreamSourceContexts {
 	 *
 	 * <p>Streaming topologies can use timestamp assigner functions to override the timestamps
 	 * assigned here.
+	 */
+	/**
+	 * 配合 EventTime 方式使用，ts 是 StreamRecord 自带的 
 	 */
 	private static class ManualWatermarkContext<T> extends WatermarkContext<T> {
 
@@ -336,6 +370,14 @@ public class StreamSourceContexts {
 	 * toggles the status. ACTIVE status resumes as soon as some record or watermark is collected
 	 * again.
 	 */
+	/**
+	 * 与 watermark 相关的 SourceContext 的抽象类
+	 * 与 watermark 有关的 SourceContext 负责控制当前的 StreamStatus，使得 StreamStatus 能够正确的传播到
+	 * 下游
+	 * 本类实现了空闲检测的逻辑，会在给定的时间间隔开启空闲检测。如果在两次连续的检测中没有 StreamRecord 或者 watermark 被
+	 * SourceContext collect，会认为 Source 空闲并且相应的修改 Status，当 StreamRecord 或 watermark 被 collect 之后
+	 * Status 立马变为 ACTIVE
+	 */
 	private abstract static class WatermarkContext<T> implements SourceFunction.SourceContext<T> {
 
 		protected final ProcessingTimeService timeService;
@@ -352,6 +394,12 @@ public class StreamSourceContexts {
 		 * <p>When the scheduled check is fired, if the flag remains to be {@code true}, the check
 		 * will fail, and our current status will determined to be IDLE.
 		 */
+		/**
+		 * 用于判断 Stream 是否进入空闲状态，第一次检查的时候会设为 true，在第二次检查之前
+		 * 如果 collect StreamRecord 或 watermark，设为 false
+		 * 如果在第二次检查的时候还是 true 的话
+		 * 说明 Stream 是空闲的
+		 */
 		private volatile boolean failOnNextCheck;
 
 		/**
@@ -361,6 +409,12 @@ public class StreamSourceContexts {
 		 * @param checkpointLock the checkpoint lock
 		 * @param streamStatusMaintainer the stream status maintainer to toggle and retrieve current status
 		 * @param idleTimeout (-1 if idleness checking is disabled)
+		 */
+		/**
+		 * 创建一个 watermark 上下文
+		 * @param timeService 时间服务用于调度空闲检测
+		 * @param checkpointLock the checkpoint lock，SourceFuntion 中提到 collect 操作需要上锁
+		 * @param streamStatusMaintainer 流状态维护器，用于改变和恢复流状态
 		 */
 		public WatermarkContext(
 				final ProcessingTimeService timeService,
@@ -428,8 +482,12 @@ public class StreamSourceContexts {
 		}
 
 		@Override
+		/**
+		 * SourceContext 认为当前 Stream 处于空闲状态
+		 */
 		public void markAsTemporarilyIdle() {
 			synchronized (checkpointLock) {
+				// 流状态管理器设置流的状态为空闲
 				streamStatusMaintainer.toggleStreamStatus(StreamStatus.IDLE);
 			}
 		}
@@ -462,16 +520,23 @@ public class StreamSourceContexts {
 			}
 		}
 
+		/**
+		 * 注册下一次空闲检测的任务
+		 */
 		private void scheduleNextIdleDetectionTask() {
 			if (idleTimeout != -1) {
 				// reset flag; if it remains true when task fires, we have detected idleness
 				failOnNextCheck = true;
+				// 注册下一次空闲检测的时间
 				nextCheck = this.timeService.registerTimer(
 					this.timeService.getCurrentProcessingTime() + idleTimeout,
 					new IdlenessDetectionTask());
 			}
 		}
 
+		/**
+		 * 取消空闲检测
+		 */
 		protected void cancelNextIdleDetectionTask() {
 			final ScheduledFuture<?> nextCheck = this.nextCheck;
 			if (nextCheck != null) {

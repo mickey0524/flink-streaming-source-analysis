@@ -38,15 +38,25 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamElement;
  * <p>When a source closes it will emit a final watermark with timestamp {@code Long.MAX_VALUE}.
  * When an operator receives this it will know that no more input will be arriving in the future.
  */
+/**
+ * 一个 Watermark 告诉操作符，时间戳早于或等于 Watermark 时间戳的元素不可能到达操作符了
+ * Watermark 在源头发出，并随着操作符拓扑传播，操作符需要使用 Output 接口的 emitWatermark
+ * 方法将 watermark 传给下游的操作符。没有内部缓存数据的操作符直接将接受到的 watermark 向前传递就行
+ * 像 window 操作符这样有缓存的操作符，在元素被到来的 watermark 触发之后向前传递 watermark
+ * 
+ * 当一个流关闭，它会发出一个 watermark，ts 是 Long.MAX_VALUE，操作符看到后，就能知道，未来不会有元素到达了
+ */
 @PublicEvolving
 public final class Watermark extends StreamElement {
 
 	/** The watermark that signifies end-of-event-time. */
+	// 这个 watermark 指代流的最后
 	public static final Watermark MAX_WATERMARK = new Watermark(Long.MAX_VALUE);
 
 	// ------------------------------------------------------------------------
 
 	/** The timestamp of the watermark in milliseconds. */
+	// watermark 的 ts
 	private final long timestamp;
 
 	/**

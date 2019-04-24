@@ -24,6 +24,9 @@ import org.apache.flink.annotation.Internal;
  * Interface for processing-time callbacks that can be registered at a
  * {@link ProcessingTimeService}.
  */
+/**
+ * ProcessingTimeService 中 ScheduledFuture 的回调函数
+ */
 @Internal
 public interface ProcessingTimeCallback {
 
@@ -35,6 +38,9 @@ public interface ProcessingTimeCallback {
 	 * original timestamp for which the trigger was scheduled.
 	 *
 	 * @param timestamp The timestamp for which the trigger event was scheduled.
+	 */
+	/**
+	 * 回调函数，ts 是 trigger 被调度的时间
 	 */
 	void onProcessingTime(long timestamp) throws Exception;
 }

@@ -38,14 +38,19 @@ import java.util.concurrent.ScheduledFuture;
  * @param <OUT> Type of the output elements
  * @param <SRC> Type of the source function of this stream source operator
  */
+/**
+ * 数据流的源头
+ * @param <OUT> 输出的类型
+ * @param <SRC> 数据源操作符的数据源函数
+ */
 @Internal
 public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends AbstractUdfStreamOperator<OUT, SRC> {
 
 	private static final long serialVersionUID = 1L;
 
-	private transient SourceFunction.SourceContext<OUT> ctx;
+	private transient SourceFunction.SourceContext<OUT> ctx;  // 从数据源 emit element
 
-	private transient volatile boolean canceledOrStopped = false;
+	private transient volatile boolean canceledOrStopped = false;  // 标识 StreamSource 是否停止
 
 	public StreamSource(SRC sourceFunction) {
 		super(sourceFunction);
@@ -61,7 +66,7 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 			final StreamStatusMaintainer streamStatusMaintainer,
 			final Output<StreamRecord<OUT>> collector) throws Exception {
 
-		final TimeCharacteristic timeCharacteristic = getOperatorConfig().getTimeCharacteristic();
+		final TimeCharacteristic timeCharacteristic = getOperatorConfig().getTimeCharacteristic();  // 获取当前操作符的 TimeCharacteristic
 
 		final Configuration configuration = this.getContainingTask().getEnvironment().getTaskManagerInfo().getConfiguration();
 		final long latencyTrackingInterval = getExecutionConfig().isLatencyTrackingConfigured()
@@ -95,6 +100,9 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 			// if we get here, then the user function either exited after being done (finite source)
 			// or the function was canceled or stopped. For the finite source case, we should emit
 			// a final watermark that indicates that we reached the end of event-time
+			// 如果代码运行到了这里，说明 UDF 数据源程序退出了或者数据 emit 完毕了
+			// 如果是有限数据 emit 完毕了，我们 emit 一个 final watermark
+			// 告诉后续 operator 没有更多数据了
 			if (!isCanceledOrStopped()) {
 				ctx.emitWatermark(Watermark.MAX_WATERMARK);
 			}
@@ -125,6 +133,10 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 	 *
 	 * <p>This indicates that any exit of the {@link #run(Object, StreamStatusMaintainer, Output)} method
 	 * cannot be interpreted as the result of a finite source.
+	 */
+	/**
+	 * 标识数据源被取消或停止
+	 * run 方法的退出并不能被认为数据流结束了
 	 */
 	protected void markCanceledOrStopped() {
 		this.canceledOrStopped = true;

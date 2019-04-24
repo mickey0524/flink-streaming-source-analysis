@@ -106,6 +106,20 @@ import java.io.Serializable;
  * @see org.apache.flink.api.common.functions.StoppableFunction
  * @see org.apache.flink.streaming.api.TimeCharacteristic
  */
+/**
+ * Flink 所有数据源头的基础接口，所有数据源的运作如下：当数据源开始 emit 数据的时候
+ * run 方法被调用，run 方法可能运行非常长的时间，数据源要能够对 cancel 方法作出反应
+ * break 出子循环
+ *
+ * 实现了 CheckpointedFunction 接口的 Source 要保证状态检查、内部状态更新以及事件的 emit
+ * 不并发执行，使用 checkpointing lock 实现
+ *
+ * 当流处理程序运行在 EventTime 模式下，Source 会给事件设置 ts 或者 emit watermark
+ *
+ * 优雅结束函数
+ * Functions 可能实现了 StoppableFunction 接口，Stopping 是一个函数，与 canceling 方法
+ * 相对应，会将状态保存好再退出
+ */
 @Public
 public interface SourceFunction<T> extends Function, Serializable {
 
@@ -160,6 +174,9 @@ public interface SourceFunction<T> extends Function, Serializable {
 	 *
 	 * @param ctx The context to emit elements to and for accessing locks.
 	 */
+	/**
+	 * 开启一个流，通过 SourceContext 来 emit 数据
+	 */
 	void run(SourceContext<T> ctx) throws Exception;
 
 	/**
@@ -177,6 +194,13 @@ public interface SourceFunction<T> extends Function, Serializable {
 	 * this method "volatile", in order to guarantee the visibility of the effects of
 	 * this method to any interruption handler.
 	 */
+	/**
+	 * 关闭流，大多数流都会有一个 while 循环在 run 方法里，cancel 方法需要保证 while 方法
+	 * 能够 break 循环
+	 *
+	 * 一个非常典型的做法是设置一个字段 "volatile boolean isRunning" 在 run 方法的循环中判断 isRunning
+	 * 如果 isRunning 为 false，则 break
+	 */
 	void cancel();
 
 	// ------------------------------------------------------------------------
@@ -187,6 +211,9 @@ public interface SourceFunction<T> extends Function, Serializable {
 	 * Interface that source functions use to emit elements, and possibly watermarks.
 	 *
 	 * @param <T> The type of the elements produced by the source.
+	 */
+	/**
+	 * 源程序用来 emit 数据的接口，可能是 watermarks
 	 */
 	@Public // Interface might be extended in the future with additional methods.
 	interface SourceContext<T> {
@@ -207,6 +234,9 @@ public interface SourceFunction<T> extends Function, Serializable {
 		 * </ul>
 		 *
 		 * @param element The element to emit
+		 */
+		/**
+		 * emit 一个 element，不带 ts，在大多数 case 中，这是默认的 emit element 的方式
 		 */
 		void collect(T element);
 
@@ -230,6 +260,11 @@ public interface SourceFunction<T> extends Function, Serializable {
 		 * @param element The element to emit
 		 * @param timestamp The timestamp in milliseconds since the Epoch
 		 */
+		/**
+		 * EventTime 模式使用的方法，element 自带时间戳，不依赖 TimestampAssigner 获取 ts
+		 * 在 ProcessingTime 模式下，本方法会被 ignore
+		 * 在 IngestionTime 模式下，本方法会被重写为使用机器当前的时间
+		 */
 		@PublicEvolving
 		void collectWithTimestamp(T element, long timestamp);
 
@@ -244,6 +279,10 @@ public interface SourceFunction<T> extends Function, Serializable {
 		 * automatic ingestion time watermarks.
 		 *
 		 * @param mark The Watermark to emit
+		 */
+		/**
+		 * EventTime 模式使用的方法，emit watermark，宣布之后没有 ts <= mark.ts 的元素
+		 * 如果有的话，这些元素被认为是 late
 		 */
 		@PublicEvolving
 		void emitWatermark(Watermark mark);

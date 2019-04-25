@@ -73,12 +73,15 @@ import java.util.Set;
  * necessary to build the jobgraph for the execution.
  *
  */
+/**
+ * 代表流拓扑的类，它包含了构建执行所用的 jobgraph 需要的所有信息
+ */
 @Internal
 public class StreamGraph extends StreamingPlan {
 
 	private static final Logger LOG = LoggerFactory.getLogger(StreamGraph.class);
 
-	private String jobName = StreamExecutionEnvironment.DEFAULT_JOB_NAME;
+	private String jobName = StreamExecutionEnvironment.DEFAULT_JOB_NAME;  // Flink Streaming Job
 
 	private final StreamExecutionEnvironment environment;
 	private final ExecutionConfig executionConfig;
@@ -104,6 +107,7 @@ public class StreamGraph extends StreamingPlan {
 		this.checkpointConfig = environment.getCheckpointConfig();
 
 		// create an empty new stream graph.
+		// 创建一个空的新流图
 		clear();
 	}
 

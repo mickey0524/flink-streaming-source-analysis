@@ -35,6 +35,10 @@ import org.apache.flink.streaming.runtime.tasks.StreamTask;
  * responsible for propagating their status further downstream once they toggle between being idle and active. The cases
  * that source tasks and downstream tasks are considered either idle or active is explained below:
  *
+ * StreamStatus 告知 StreamTask 是否它们需要继续等待 StreamRecord 或者 watermark。有两种 StreamStatus，分别是 IDLE 和 ACTIVE
+ * StreamSource 在流源头产生，随着拓扑传递，能够直接反应当前 task 的状态；一个 SourceStreamTask 或者 StreamTask emit 一个 IDLE 代表
+ * 它们停止 emit StreamRecord 和 watermark，emit 一个 ACTIVE 指代它们回复发送了。当状态改变后，Tasks 需要将 StreamStatus 传播给下游
+ * 
  * <ul>
  *     <li>Source tasks: A source task is considered to be idle if its head operator, i.e. a {@link StreamSource}, will
  *         not emit records for an indefinite amount of time. This is the case, for example, for Flink's Kafka Consumer,
@@ -45,11 +49,13 @@ import org.apache.flink.streaming.runtime.tasks.StreamTask;
  *         Kafka Consumer which can generate watermarks directly within the source) will be emitted while the task is
  *         idle. This guarantee should be enforced on sources through
  *         {@link org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext} implementations.</li>
+ * 		   Source tasks 没有数据，源头就是空的，例如 Kafka 消费者没有分配到 partition
  *
  *     <li>Downstream tasks: a downstream task is considered to be idle if all its input streams are idle, i.e. the last
  *         received Stream Status element from all input streams is a {@link StreamStatus#IDLE}. As long as one of its
  *         input streams is active, i.e. the last received Stream Status element from the input stream is
  *         {@link StreamStatus#ACTIVE}, the task is active.</li>
+ *         中间流的所有上游都 IDLE 了
  * </ul>
  *
  * <p>Stream Status elements received at downstream tasks also affect and control how their operators process and advance
@@ -74,6 +80,7 @@ import org.apache.flink.streaming.runtime.tasks.StreamTask;
  * <p>Note that to notify downstream tasks that a source task is permanently closed and will no longer send any more
  * elements, the source should still send a {@link Watermark#MAX_WATERMARK} instead of {@link StreamStatus#IDLE}.
  * Stream Status elements only serve as markers for temporary status.
+ * 如果数据源永久的没有数据了，需要 emit 一个 value 为 LONG.MAX_VALUE 的 watermark，StreamStatus 只处理暂时的状态
  */
 @Internal
 public final class StreamStatus extends StreamElement {

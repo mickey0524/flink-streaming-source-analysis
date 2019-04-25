@@ -27,6 +27,9 @@ import org.apache.flink.streaming.runtime.tasks.ProcessingTimeService;
 /**
  * A {@link StreamOperator} for executing {@link SinkFunction SinkFunctions}.
  */
+/**
+ * 一个流操作符用于执行 Sink 操作
+ */
 @Internal
 public class StreamSink<IN> extends AbstractUdfStreamOperator<Object, SinkFunction<IN>>
 		implements OneInputStreamOperator<IN, Object> {
@@ -36,11 +39,14 @@ public class StreamSink<IN> extends AbstractUdfStreamOperator<Object, SinkFuncti
 	private transient SimpleContext sinkContext;
 
 	/** We listen to this ourselves because we don't have an {@link InternalTimerService}. */
+	/**
+	 * 我们自己监听，因为没有 InternalTimerService
+	 */
 	private long currentWatermark = Long.MIN_VALUE;
 
 	public StreamSink(SinkFunction<IN> sinkFunction) {
 		super(sinkFunction);
-		chainingStrategy = ChainingStrategy.ALWAYS;
+		chainingStrategy = ChainingStrategy.ALWAYS;  // 在当前 Thread sink
 	}
 
 	@Override

@@ -27,6 +27,9 @@ import java.io.Serializable;
  *
  * @param <IN> Input type parameter.
  */
+/**
+ * 实现用户定义的 sink 函数的接口
+ */
 @Public
 public interface SinkFunction<IN> extends Function, Serializable {
 
@@ -48,6 +51,10 @@ public interface SinkFunction<IN> extends Function, Serializable {
 	 * @throws Exception This method may throw exceptions. Throwing an exception will cause the operation
 	 *                   to fail and may trigger recovery.
 	 */
+	/**
+	 * 将 value sink 到下游，每一个 StreamRecord 都需要调用这个函数
+	 * 当你实现一个 SinkFunction 的时候，你需要重写这个方法，default 是为了兼容老版本
+	 */
 	default void invoke(IN value, Context context) throws Exception {
 		invoke(value);
 	}
@@ -62,18 +69,31 @@ public interface SinkFunction<IN> extends Function, Serializable {
 	 *
 	 * @param <T> The type of elements accepted by the sink.
 	 */
+	/**
+	 * SinkFunction 可以从 Context 中获取输入 record 的其他信息
+	 * SinkFunction 仅仅在 invoke 函数内是有效的，不要存储上下文
+	 */
 	@Public // Interface might be extended in the future with additional methods.
 	interface Context<T> {
 
 		/** Returns the current processing time. */
+		/**
+		 * 获取当前的进程时间
+		 */
 		long currentProcessingTime();
 
 		/** Returns the current event-time watermark. */
+		/**
+		 * 获取当前的 event-time watermark
+		 */
 		long currentWatermark();
 
 		/**
 		 * Returns the timestamp of the current input record or {@code null} if the element does not
 		 * have an assigned timestamp.
+		 */
+		/**
+		 * 获取当前输入 input 的 ts
 		 */
 		Long timestamp();
 	}

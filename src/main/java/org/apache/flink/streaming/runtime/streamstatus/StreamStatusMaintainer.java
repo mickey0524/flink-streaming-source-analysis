@@ -23,6 +23,9 @@ import org.apache.flink.annotation.Internal;
 /**
  * Interface that allows toggling the current {@link StreamStatus} as well as retrieving it.
  */
+/**
+ * 切换当前流状态的接口
+ */
 @Internal
 public interface StreamStatusMaintainer extends StreamStatusProvider {
 

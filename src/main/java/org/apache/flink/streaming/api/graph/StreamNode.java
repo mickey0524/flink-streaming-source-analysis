@@ -37,11 +37,15 @@ import java.util.List;
 /**
  * Class representing the operators in the streaming programs, with all their properties.
  */
+/**
+ * StreamNode 指代流程序中的操作符
+ */
 @Internal
 public class StreamNode implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	// 执行环境
 	private transient StreamExecutionEnvironment env;
 
 	private final int id;
@@ -49,6 +53,10 @@ public class StreamNode implements Serializable {
 	/**
 	 * Maximum parallelism for this stream node. The maximum parallelism is the upper limit for
 	 * dynamic scaling and the number of key groups used for partitioned state.
+	 */
+	/**
+	 * StreamNode 的最大并行度
+	 * 最大并行度是动态扩展和按 key partition 的上限
 	 */
 	private int maxParallelism;
 	private ResourceSpec minResources = ResourceSpec.DEFAULT;
@@ -75,7 +83,7 @@ public class StreamNode implements Serializable {
 	private InputFormat<?, ?> inputFormat;
 
 	private String transformationUID;
-	private String userHash;
+	private String userHash;  // 用户自定义的 hash，用于 StreamGraphUserHashHasher
 
 	public StreamNode(StreamExecutionEnvironment env,
 		Integer id,
@@ -96,7 +104,11 @@ public class StreamNode implements Serializable {
 		this.coLocationGroup = coLocationGroup;
 	}
 
+	/**
+	 * 添加入边
+	 */
 	public void addInEdge(StreamEdge inEdge) {
+		// 入边的话，如果边的目的节点不为本节点，抛出异常
 		if (inEdge.getTargetId() != getId()) {
 			throw new IllegalArgumentException("Destination id doesn't match the StreamNode id");
 		} else {
@@ -104,7 +116,11 @@ public class StreamNode implements Serializable {
 		}
 	}
 
+	/**
+	 * 添加出边
+	 */
 	public void addOutEdge(StreamEdge outEdge) {
+		// 出边的话，如果边的源节点不为本节点，抛出异常
 		if (outEdge.getSourceId() != getId()) {
 			throw new IllegalArgumentException("Source id doesn't match the StreamNode id");
 		} else {
@@ -120,6 +136,9 @@ public class StreamNode implements Serializable {
 		return inEdges;
 	}
 
+	/**
+	 * 获取出边的目的节点集合
+	 */
 	public List<Integer> getOutEdgeIndices() {
 		List<Integer> outEdgeIndices = new ArrayList<Integer>();
 
@@ -130,6 +149,9 @@ public class StreamNode implements Serializable {
 		return outEdgeIndices;
 	}
 
+	/**
+	 * 获取入边的源节点集合
+	 */
 	public List<Integer> getInEdgeIndices() {
 		List<Integer> inEdgeIndices = new ArrayList<Integer>();
 
@@ -144,6 +166,9 @@ public class StreamNode implements Serializable {
 		return id;
 	}
 
+	/**
+	 * 获取节点的并行度
+	 */
 	public int getParallelism() {
 		if (parallelism == ExecutionConfig.PARALLELISM_DEFAULT) {
 			return env.getParallelism();
@@ -152,6 +177,9 @@ public class StreamNode implements Serializable {
 		}
 	}
 
+	/**
+	 * 设置节点的并行度
+	 */
 	public void setParallelism(Integer parallelism) {
 		this.parallelism = parallelism;
 	}
@@ -161,6 +189,9 @@ public class StreamNode implements Serializable {
 	 *
 	 * @return Maximum parallelism
 	 */
+	/**
+	 * 获取 StreamNode 的最大并行度
+	 */
 	int getMaxParallelism() {
 		return maxParallelism;
 	}
@@ -169,6 +200,9 @@ public class StreamNode implements Serializable {
 	 * Set the maximum parallelism for this stream node.
 	 *
 	 * @param maxParallelism Maximum parallelism to be set
+	 */
+	/**
+	 * 设置 StreamNode 的最大并行度
 	 */
 	void setMaxParallelism(int maxParallelism) {
 		this.maxParallelism = maxParallelism;

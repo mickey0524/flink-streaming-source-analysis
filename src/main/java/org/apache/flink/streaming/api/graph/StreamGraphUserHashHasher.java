@@ -29,6 +29,10 @@ import java.util.Map;
  * hashes has changed in an incompatible way.
  *
  */
+/**
+ * StreamGraphHasher 工作在用户提供 hashes 的场景下，当我们想要有选择的设置 hashes 的时候，StreamGraphHasher 十分有用
+ * 这也给我们提供了向下兼容的能力，防止不同版本产生 hashes 的机制不一致
+ */
 public class StreamGraphUserHashHasher implements StreamGraphHasher {
 
 	@Override

@@ -83,12 +83,16 @@ public class LocalStreamEnvironment extends StreamExecutionEnvironment {
 	 *            name of the job
 	 * @return The result of the job execution, containing elapsed time and accumulators.
 	 */
+	/**
+	 * 在 mini cluster 上执行 JobGraph
+	 */
 	@Override
 	public JobExecutionResult execute(String jobName) throws Exception {
 		// transform the streaming program into a JobGraph
+		// 第一步，生成 StreamGraph
 		StreamGraph streamGraph = getStreamGraph();
 		streamGraph.setJobName(jobName);
-
+		// 第二步，生成 JobGraph
 		JobGraph jobGraph = streamGraph.getJobGraph();
 		jobGraph.setAllowQueuedScheduling(true);
 

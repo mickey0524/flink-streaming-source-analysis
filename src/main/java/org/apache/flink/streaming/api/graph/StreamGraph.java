@@ -168,6 +168,9 @@ public class StreamGraph extends StreamingPlan {
 		return !vertexIDtoLoopTimeout.isEmpty();
 	}
 
+	/**
+	 * 添加源 transformation
+	 */
 	public <IN, OUT> void addSource(Integer vertexID,
 		String slotSharingGroup,
 		@Nullable String coLocationGroup,
@@ -190,6 +193,9 @@ public class StreamGraph extends StreamingPlan {
 		sinks.add(vertexID);
 	}
 
+	/**
+	 * 添加操作符
+	 */
 	public <IN, OUT> void addOperator(
 			Integer vertexID,
 			String slotSharingGroup,
@@ -259,6 +265,9 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	/**
+	 * 添加节点
+	 */
 	protected StreamNode addNode(Integer vertexID,
 		String slotSharingGroup,
 		@Nullable String coLocationGroup,
@@ -266,6 +275,9 @@ public class StreamGraph extends StreamingPlan {
 		StreamOperator<?> operatorObject,
 		String operatorName) {
 
+		/**
+		 * 如果图里已经存在 vertexID 这个节点，抛出重复节点的异常
+		 */
 		if (streamNodes.containsKey(vertexID)) {
 			throw new RuntimeException("Duplicate vertexID " + vertexID);
 		}
@@ -279,6 +291,9 @@ public class StreamGraph extends StreamingPlan {
 			new ArrayList<OutputSelector<?>>(),
 			vertexClass);
 
+		/**
+		 * 将 (id, 节点) 加入哈希表，避免重复添加节点
+		 */
 		streamNodes.put(vertexID, vertex);
 
 		return vertex;
@@ -381,6 +396,12 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	/**
+	 * 为 StreamGraph 中的两个节点连上边（暴露给外部使用的方法）
+	 * @param upStreamVertexID 边的 source 节点
+	 * @param downStreamVertexID 边的 target 节点
+	 * @param typeNumber 边的类型
+	 */
 	public void addEdge(Integer upStreamVertexID, Integer downStreamVertexID, int typeNumber) {
 		addEdgeInternal(upStreamVertexID,
 				downStreamVertexID,
@@ -391,6 +412,9 @@ public class StreamGraph extends StreamingPlan {
 
 	}
 
+	/**
+	 * 为 StreamGraph 中的两个节点连上边（内部使用的方法），会被递归调用
+	 */
 	private void addEdgeInternal(Integer upStreamVertexID,
 			Integer downStreamVertexID,
 			int typeNumber,
@@ -426,6 +450,8 @@ public class StreamGraph extends StreamingPlan {
 
 			// If no partitioner was specified and the parallelism of upstream and downstream
 			// operator matches use forward partitioning, use rebalance otherwise.
+			// 如果没有显示定义 partitioner，同时上下游操作符满足使用 forward partitioning 的条件，使用
+			// forward partitioning，否则使用 rebalance
 			if (partitioner == null && upstreamNode.getParallelism() == downstreamNode.getParallelism()) {
 				partitioner = new ForwardPartitioner<Object>();
 			} else if (partitioner == null) {
@@ -443,6 +469,7 @@ public class StreamGraph extends StreamingPlan {
 
 			StreamEdge edge = new StreamEdge(upstreamNode, downstreamNode, typeNumber, outputNames, partitioner, outputTag);
 
+			// 将边加入两端节点的入边集合和出边集合
 			getStreamNode(edge.getSourceId()).addOutEdge(edge);
 			getStreamNode(edge.getTargetId()).addInEdge(edge);
 		}
@@ -500,6 +527,9 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	/**
+	 * 设置序列化
+	 */
 	public void setSerializers(Integer vertexID, TypeSerializer<?> in1, TypeSerializer<?> in2, TypeSerializer<?> out) {
 		StreamNode vertex = getStreamNode(vertexID);
 		vertex.setSerializerIn1(in1);
@@ -542,6 +572,9 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	/**
+	 * 通过节点 id 获取 StreamNode
+	 */
 	public StreamNode getStreamNode(Integer vertexID) {
 		return streamNodes.get(vertexID);
 	}
@@ -667,10 +700,14 @@ public class StreamGraph extends StreamingPlan {
 	/**
 	 * Gets the assembled {@link JobGraph} with a given job id.
 	 */
+	/**
+	 * 生成 JobGraph
+	 */
 	@SuppressWarnings("deprecation")
 	@Override
 	public JobGraph getJobGraph(@Nullable JobID jobID) {
 		// temporarily forbid checkpointing for iterative jobs
+		// 临时禁止迭代任务的检查点
 		if (isIterative() && checkpointConfig.isCheckpointingEnabled() && !checkpointConfig.isForceCheckpointing()) {
 			throw new UnsupportedOperationException(
 				"Checkpointing is currently not supported by default for iterative jobs, as we cannot guarantee exactly once semantics. "

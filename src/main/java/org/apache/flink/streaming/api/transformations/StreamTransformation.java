@@ -359,6 +359,10 @@ public abstract class StreamTransformation<T> {
 	 *
 	 * @param slotSharingGroup The slot sharing group name.
 	 */
+	/**
+	 * 设置 transformation 的 slot sharing group。并行环境下，如果操作的 slot sharing group 相同
+	 * 可能的话，会将操作放在相同的 TaskManager slot 内执行
+	 */
 	public void setSlotSharingGroup(String slotSharingGroup) {
 		this.slotSharingGroup = slotSharingGroup;
 	}
@@ -372,6 +376,11 @@ public abstract class StreamTransformation<T> {
 	 * placed into the same slot by the scheduler.
 	 *
 	 * <p>Setting this to null means there is no co-location constraint.
+	 */
+	/**
+	 * 这个变量长期来看不一定是稳定可用的
+	 * 设置标识 co-location group 的 key
+	 * 拥有相同 co-location group 的操作的子操作会被调度在相同的 slot 内
 	 */
 	public void setCoLocationGroupKey(@Nullable String coLocationGroupKey) {
 		this.coLocationGroupKey = coLocationGroupKey;

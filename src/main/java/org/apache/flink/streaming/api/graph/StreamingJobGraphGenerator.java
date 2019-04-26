@@ -78,6 +78,9 @@ import java.util.Map.Entry;
 /**
  * The StreamingJobGraphGenerator converts a {@link StreamGraph} into a {@link JobGraph}.
  */
+/**
+ * StreamingJobGraphGenerator 将 StreamGraph 转换为 JobGraph
+ */
 @Internal
 public class StreamingJobGraphGenerator {
 

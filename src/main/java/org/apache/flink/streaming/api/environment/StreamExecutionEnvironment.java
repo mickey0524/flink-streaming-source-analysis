@@ -1521,12 +1521,19 @@ public abstract class StreamExecutionEnvironment {
 	 * @return The result of the job execution, containing elapsed time and accumulators.
 	 * @throws Exception which occurs during job execution.
 	 */
+	/**
+	 * 触发程序的执行，运行环境会执行程序的所有部分，最后将结果执行 sink 操作
+	 * 有哪些 sink 操作呢，例如 print 打印到控制台，或者将结果写入消息队列
+	 */
 	public abstract JobExecutionResult execute(String jobName) throws Exception;
 
 	/**
 	 * Getter of the {@link org.apache.flink.streaming.api.graph.StreamGraph} of the streaming job.
 	 *
 	 * @return The streamgraph representing the transformations
+	 */
+	/**
+	 * 根据当前环境的 transformations 数组生成 StreamGraph
 	 */
 	@Internal
 	public StreamGraph getStreamGraph() {

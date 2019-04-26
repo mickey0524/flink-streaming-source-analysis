@@ -25,12 +25,19 @@ import java.util.Map;
 /**
  * Interface for different implementations of generating hashes over a stream graph.
  */
+/**
+ * 通过 StreamGraph 生成 hashed 的不同方法实现的接口
+ */
 public interface StreamGraphHasher {
 
 	/**
 	 * Returns a map with a hash for each {@link StreamNode} of the {@link
 	 * StreamGraph}. The hash is used as the {@link JobVertexID} in order to
 	 * identify nodes across job submissions if they didn't change.
+	 */
+	/**
+	 * 返回一个 map，为每一个 StreamNode 生成一个 hash
+	 * hash 是用于 JobVertexID，为了在 job 提交的过程中判断节点是否发生了变化
 	 */
 	Map<Integer, byte[]> traverseStreamGraphAndGenerateHashes(StreamGraph streamGraph);
 }

@@ -31,6 +31,10 @@ import java.io.Serializable;
  * @param <OUT>
  *            Type parameter of the split values.
  */
+/**
+ * 定义操作 SplitStream 的接口
+ * SplitStream 调用 Select 能够分成多个流
+ */
 @PublicEvolving
 public interface OutputSelector<OUT> extends Serializable {
 	/**

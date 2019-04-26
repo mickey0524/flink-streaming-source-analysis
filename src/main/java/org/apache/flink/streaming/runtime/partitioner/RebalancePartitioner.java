@@ -29,6 +29,9 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * @param <T> Type of the elements in the Stream being rebalanced
  */
+/**
+ * Partitioner 将数据以相等的概率轮询到输出 channel 中
+ */
 @Internal
 public class RebalancePartitioner<T> extends StreamPartitioner<T> {
 	private static final long serialVersionUID = 1L;
@@ -38,7 +41,7 @@ public class RebalancePartitioner<T> extends StreamPartitioner<T> {
 	@Override
 	public void setup(int numberOfChannels) {
 		super.setup(numberOfChannels);
-
+		// 初始化随机的选择一个下游 channel
 		nextChannelToSendTo = ThreadLocalRandom.current().nextInt(numberOfChannels);
 	}
 

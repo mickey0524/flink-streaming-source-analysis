@@ -26,6 +26,10 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  *
  * @param <T> Type of the elements in the Stream
  */
+/**
+ * Partitioner 仅仅将元素送到当前的下游
+ * 当 StreamGraph 中边的两个节点的并行度相同的时候，使用该 Partitioner
+ */
 @Internal
 public class ForwardPartitioner<T> extends StreamPartitioner<T> {
 	private static final long serialVersionUID = 1L;

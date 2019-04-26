@@ -29,6 +29,11 @@ import java.util.List;
  * gets converted to a connection between two job vertices (due to
  * chaining/optimization).
  */
+/**
+ * 流拓扑中的边
+ * StreamGraph 中的边不一定存在于 JobGraph
+ * 因为存在 chaining/optimization
+ */
 @Internal
 public class StreamEdge implements Serializable {
 
@@ -41,6 +46,9 @@ public class StreamEdge implements Serializable {
 
 	/**
 	 * The type number of the input for co-tasks.
+	 */
+	/**
+	 * 边的类型
 	 */
 	private final int typeNumber;
 
@@ -57,6 +65,9 @@ public class StreamEdge implements Serializable {
 
 	/**
 	 * The {@link StreamPartitioner} on this {@link StreamEdge}.
+	 */
+	/**
+	 * 边的 Partitioner
 	 */
 	private StreamPartitioner<?> outputPartitioner;
 

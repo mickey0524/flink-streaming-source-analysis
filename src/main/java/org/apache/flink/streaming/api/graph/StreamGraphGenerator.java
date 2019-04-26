@@ -96,6 +96,7 @@ public class StreamGraphGenerator {
 
 	// Keep track of which Transforms we have already transformed, this is necessary because
 	// we have loops, i.e. feedback edges.
+	// 保存已经执行过的 Transforms，这非常有必要，因为可能会出现循环，比如 feedback edges
 	private Map<StreamTransformation<?>, Collection<Integer>> alreadyTransformed;
 
 
@@ -120,12 +121,18 @@ public class StreamGraphGenerator {
 	 *
 	 * @return The generated {@code StreamGraph}
 	 */
+	/**
+	 * 通过遍历 StreamTransformations 生成一个 StreamGraph
+	 */
 	public static StreamGraph generate(StreamExecutionEnvironment env, List<StreamTransformation<?>> transformations) {
 		return new StreamGraphGenerator(env).generateInternal(transformations);
 	}
 
 	/**
 	 * This starts the actual transformation, beginning from the sinks.
+	 */
+	/**
+	 * 生成一棵 transformation 树
 	 */
 	private StreamGraph generateInternal(List<StreamTransformation<?>> transformations) {
 		for (StreamTransformation<?> transformation: transformations) {
@@ -139,6 +146,11 @@ public class StreamGraphGenerator {
 	 *
 	 * <p>This checks whether we already transformed it and exits early in that case. If not it
 	 * delegates to one of the transformation specific methods.
+	 */
+	/**
+	 * Transform 一个 StreamTransformation
+	 * 这个方法会先检查 transform 参数是否已经被执行过了，如果没有的话，会根据 transform 的类型
+	 * 选择特定的方法来执行
 	 */
 	private Collection<Integer> transform(StreamTransformation<?> transform) {
 
@@ -474,9 +486,14 @@ public class StreamGraphGenerator {
 	/**
 	 * Transforms a {@code SourceTransformation}.
 	 */
+	/**
+	 * 转换一个 SourceTransformation
+	 */
 	private <T> Collection<Integer> transformSource(SourceTransformation<T> source) {
+		// 获取 slot sharing group，source 的话是 default
 		String slotSharingGroup = determineSlotSharingGroup(source.getSlotSharingGroup(), Collections.emptyList());
 
+		// 在 StreamGraph 中添加源节点
 		streamGraph.addSource(source.getId(),
 				slotSharingGroup,
 				source.getCoLocationGroupKey(),
@@ -488,13 +505,18 @@ public class StreamGraphGenerator {
 			InputFormatSourceFunction<T> fs = (InputFormatSourceFunction<T>) source.getOperator().getUserFunction();
 			streamGraph.setInputFormat(source.getId(), fs.getFormat());
 		}
+		// 给 StreamGraph 源节点设置并行度，source.getParallelism() 等于 1，因为源节点是一个 SingleOutputStreamOperator
 		streamGraph.setParallelism(source.getId(), source.getParallelism());
+		// 给 StreamGraph 源节点设置最大并行度
 		streamGraph.setMaxParallelism(source.getId(), source.getMaxParallelism());
 		return Collections.singleton(source.getId());
 	}
 
 	/**
-	 * Transforms a {@code SourceTransformation}.
+	 * Transforms a {@code SinkTransformation}.
+	 */
+	/**
+	 * 转换一个 SinkTransformation
 	 */
 	private <T> Collection<Integer> transformSink(SinkTransformation<T> sink) {
 
@@ -510,9 +532,12 @@ public class StreamGraphGenerator {
 				null,
 				"Sink: " + sink.getName());
 
+		// 给 StreamGraph sink 节点设置并行度，sink.getParallelism() 由流入的 DataStream 决定
 		streamGraph.setParallelism(sink.getId(), sink.getParallelism());
+		// 给 StreamGraph sink 节点设置最大并行度
 		streamGraph.setMaxParallelism(sink.getId(), sink.getMaxParallelism());
 
+		// 在图中为 sink 节点和 inputs 中的每个节点加上边
 		for (Integer inputId: inputIds) {
 			streamGraph.addEdge(inputId,
 					sink.getId(),
@@ -635,6 +660,9 @@ public class StreamGraphGenerator {
 	 *
 	 * @param specifiedGroup The group specified by the user.
 	 * @param inputIds The IDs of the input operations.
+	 */
+	/**
+	 * 根据 input 的 slot sharing groups 来决定操作的 slot sharing group
 	 */
 	private String determineSlotSharingGroup(String specifiedGroup, Collection<Integer> inputIds) {
 		if (specifiedGroup != null) {

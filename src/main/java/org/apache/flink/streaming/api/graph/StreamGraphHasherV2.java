@@ -250,6 +250,16 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		// 将节点本身加入 hash 的计算。我们使用 hashes 当前的 size 作为 ID
 		// 我们不能使用 node 的 ID，因为它是由一个静态 counter 分配 id 的
 		// 这会导致相同的程序得到不同的 hashes
+		// 如下所示：
+		// 范例1：A.id = 1  B.id = 2
+		// DataStream<String> A = ...
+		// DataStream<String> B = ...
+		// A.union(B).print();
+		// 范例2：A.id = 2  B.id = 1
+		// DataStream<String> B = ...
+		// DataStream<String> A = ...
+		// A.union(B).print();
+		// 上面的两个 job 是完全一样的拓扑，但是 source 的 id 却不一样
 		generateNodeLocalHash(hasher, hashes.size());
 
 		// Include chained nodes to hash
@@ -321,18 +331,18 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 	 * 判断是否是链式的
 	 */
 	private boolean isChainable(StreamEdge edge, boolean isChainingEnabled, StreamGraph streamGraph) {
-		StreamNode upStreamVertex = streamGraph.getSourceVertex(edge);
-		StreamNode downStreamVertex = streamGraph.getTargetVertex(edge);
+		StreamNode upStreamVertex = streamGraph.getSourceVertex(edge);  // 获取边的源节点
+		StreamNode downStreamVertex = streamGraph.getTargetVertex(edge);  // 获取边的目标节点
 
-		StreamOperator<?> headOperator = upStreamVertex.getOperator();
-		StreamOperator<?> outOperator = downStreamVertex.getOperator();
+		StreamOperator<?> headOperator = upStreamVertex.getOperator();  // 获取源头节点的操作符
+		StreamOperator<?> outOperator = downStreamVertex.getOperator();  // 获取目标节点的操作符
 
-		return downStreamVertex.getInEdges().size() == 1
-				&& outOperator != null
-				&& headOperator != null
-				&& upStreamVertex.isSameSlotSharingGroup(downStreamVertex)
+		return downStreamVertex.getInEdges().size() == 1  // 目标节点的入度为 1
+				&& outOperator != null  // 目标节点操作符不能为空
+				&& headOperator != null  // 源节点操作符不能为空
+				&& upStreamVertex.isSameSlotSharingGroup(downStreamVertex)  // 源头节点和目标节点的 slot sharing group 相同
 				&& outOperator.getChainingStrategy() == ChainingStrategy.ALWAYS
-				&& (headOperator.getChainingStrategy() == ChainingStrategy.HEAD ||
+				&& (headOperator.getChainingStrategy() == ChainingStrategy.HEAD || // HEAD 模式允许后续节点链式连接
 				headOperator.getChainingStrategy() == ChainingStrategy.ALWAYS)
 				&& (edge.getPartitioner() instanceof ForwardPartitioner)
 				&& upStreamVertex.getParallelism() == downStreamVertex.getParallelism()

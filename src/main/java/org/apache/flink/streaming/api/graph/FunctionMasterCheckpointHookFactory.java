@@ -27,6 +27,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * Utility class that turns a {@link WithMasterCheckpointHook} into a
  * {@link org.apache.flink.runtime.checkpoint.MasterTriggerRestoreHook.Factory}.
  */
+/**
+ * 工具类
+ * 用于将 WithMasterCheckpointHook -> MasterTriggerRestoreHook.Factory
+ */
 class FunctionMasterCheckpointHookFactory implements MasterTriggerRestoreHook.Factory {
 
 	private static final long serialVersionUID = 2L;

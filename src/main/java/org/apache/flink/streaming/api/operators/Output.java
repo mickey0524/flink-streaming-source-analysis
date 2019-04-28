@@ -32,6 +32,9 @@ import org.apache.flink.util.OutputTag;
  *
  * @param <T> The type of the elements that can be emitted.
  */
+/**
+ * 配备了实现这个接口的对象的 StreamOperator 能够 emit elements，barriers 和 watermarks
+ */
 @PublicEvolving
 public interface Output<T> extends Collector<T> {
 
@@ -41,6 +44,10 @@ public interface Output<T> extends Collector<T> {
 	 *
 	 * <p>A watermark specifies that no element with a timestamp lower or equal to the watermark
 	 * timestamp will be emitted in the future.
+	 */
+	/**
+	 * emit 一个 watermark。watermark 会被广播到下游的所有操作符
+	 * 一个 watermark 有一个 timestamp 变量，不会有 StreamRecord.ts <= watermark.ts 的 element 被 emit
 	 */
 	void emitWatermark(Watermark mark);
 

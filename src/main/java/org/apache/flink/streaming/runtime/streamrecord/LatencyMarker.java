@@ -28,6 +28,11 @@ import org.apache.flink.runtime.jobgraph.OperatorID;
  * <p>At sinks, the marker can be used to approximate the time a record needs to travel
  * through the dataflow.
  */
+/**
+ * 这是一种特别的 record 类型，携带着一个 ts 指代它在源操作符中创建的时间
+ * 同时它还携带着 vertexId 和 operator 的 subtask index
+ * 在 sink 的时候，这个 marker 可以被用于估算一个 record 通过 dataflow 需要多少时间
+ */
 @PublicEvolving
 public final class LatencyMarker extends StreamElement {
 
@@ -42,6 +47,9 @@ public final class LatencyMarker extends StreamElement {
 
 	/**
 	 * Creates a latency mark with the given timestamp.
+	 */
+	/**
+	 * 创建一个 latency mark
 	 */
 	public LatencyMarker(long markedTime, OperatorID operatorId, int subtaskIndex) {
 		this.markedTime = markedTime;

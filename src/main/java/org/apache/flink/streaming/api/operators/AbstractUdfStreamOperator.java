@@ -59,9 +59,11 @@ public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
 
 
 	/** The user function. */
+	// 用户定义的函数 UDF
 	protected final F userFunction;
 
 	/** Flag to prevent duplicate function.close() calls in close() and dispose(). */
+	// 这个变量是为了防止 close 方法和 dispose 方法重复调用 userFunction.close 方法
 	private transient boolean functionsClosed = false;
 
 	public AbstractUdfStreamOperator(F userFunction) {
@@ -127,6 +129,7 @@ public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
 	// ------------------------------------------------------------------------
 
 	@Override
+	// 通知检查点工作完成
 	public void notifyCheckpointComplete(long checkpointId) throws Exception {
 		super.notifyCheckpointComplete(checkpointId);
 

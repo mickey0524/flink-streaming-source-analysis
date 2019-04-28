@@ -58,6 +58,7 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 		this.chainingStrategy = ChainingStrategy.HEAD;
 	}
 
+	// run 方法在 SourceStreamTask 的 run 方法中被调用
 	public void run(final Object lockingObject, final StreamStatusMaintainer streamStatusMaintainer) throws Exception {
 		run(lockingObject, streamStatusMaintainer, output);
 	}
@@ -95,6 +96,7 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 			-1);
 
 		try {
+			// 调用 SourceFunction 的 run 方法来 emit element
 			userFunction.run(ctx);
 
 			// if we get here, then the user function either exited after being done (finite source)

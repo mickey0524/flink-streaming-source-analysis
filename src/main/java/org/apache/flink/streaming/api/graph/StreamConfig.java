@@ -96,8 +96,9 @@ public class StreamConfig implements Serializable {
 	// ------------------------------------------------------------------------
 	//  Default Values
 	// ------------------------------------------------------------------------
-
+	// 默认的 timeout 时间为 100
 	private static final long DEFAULT_TIMEOUT = 100;
+	// 默认的检查点工作模式为 EXACTLY_ONCE
 	private static final CheckpointingMode DEFAULT_CHECKPOINTING_MODE = CheckpointingMode.EXACTLY_ONCE;
 
 
@@ -118,19 +119,22 @@ public class StreamConfig implements Serializable {
 	// ------------------------------------------------------------------------
 	//  Configured Properties
 	// ------------------------------------------------------------------------
-
+	// 配置节点 id，由 StreamTransformation.java 的 getNewNodeId 方法得到
 	public void setVertexID(Integer vertexID) {
 		config.setInteger(VERTEX_NAME, vertexID);
 	}
 
+	// 获取节点 id
 	public Integer getVertexID() {
 		return config.getInteger(VERTEX_NAME, -1);
 	}
 
+	// 配置 flink 时间模式
 	public void setTimeCharacteristic(TimeCharacteristic characteristic) {
 		config.setInteger(TIME_CHARACTERISTIC, characteristic.ordinal());
 	}
 
+	// 得到 flink 时间模式
 	public TimeCharacteristic getTimeCharacteristic() {
 		int ordinal = config.getInteger(TIME_CHARACTERISTIC, -1);
 		if (ordinal >= 0) {
@@ -205,15 +209,17 @@ public class StreamConfig implements Serializable {
 		return config.getLong(BUFFER_TIMEOUT, DEFAULT_TIMEOUT);
 	}
 
+	// 是否没有 buffer 直接 flush
 	public boolean isFlushAlwaysEnabled() {
 		return getBufferTimeout() == 0;
 	}
 
 	public void setStreamOperator(StreamOperator<?> operator) {
 		if (operator != null) {
-			config.setClass(USER_FUNCTION, operator.getClass());
+			config.setClass(USER_FUNCTION, operator.getClass());  // 存储操作符类名
 
 			try {
+				// 序列化操作符实例
 				InstantiationUtil.writeObjectToConfig(operator, this.config, SERIALIZEDUDF);
 			} catch (IOException e) {
 				throw new StreamTaskException("Cannot serialize operator object "
@@ -294,6 +300,7 @@ public class StreamConfig implements Serializable {
 		return config.getInteger(NUMBER_OF_OUTPUTS, 0);
 	}
 
+	// 设置节点的非链式出边
 	public void setNonChainedOutputs(List<StreamEdge> outputvertexIDs) {
 		try {
 			InstantiationUtil.writeObjectToConfig(outputvertexIDs, this.config, NONCHAINED_OUTPUTS);
@@ -311,6 +318,7 @@ public class StreamConfig implements Serializable {
 		}
 	}
 
+	// 设置节点的链式出边
 	public void setChainedOutputs(List<StreamEdge> chainedOutputs) {
 		try {
 			InstantiationUtil.writeObjectToConfig(chainedOutputs, this.config, CHAINED_OUTPUTS);
@@ -328,6 +336,7 @@ public class StreamConfig implements Serializable {
 		}
 	}
 
+	// 设置出边（节点在 StreamGraph 的出边）
 	public void setOutEdges(List<StreamEdge> outEdges) {
 		try {
 			InstantiationUtil.writeObjectToConfig(outEdges, this.config, OUT_STREAM_EDGES);
@@ -345,6 +354,7 @@ public class StreamConfig implements Serializable {
 		}
 	}
 
+	// 设置物理上的入边
 	public void setInPhysicalEdges(List<StreamEdge> inEdges) {
 		try {
 			InstantiationUtil.writeObjectToConfig(inEdges, this.config, IN_STREAM_EDGES);
@@ -363,7 +373,7 @@ public class StreamConfig implements Serializable {
 	}
 
 	// --------------------- checkpointing -----------------------
-
+	// 设置是否开启检查点
 	public void setCheckpointingEnabled(boolean enabled) {
 		config.setBoolean(CHECKPOINTING_ENABLED, enabled);
 	}
@@ -372,6 +382,7 @@ public class StreamConfig implements Serializable {
 		return config.getBoolean(CHECKPOINTING_ENABLED, false);
 	}
 
+	// 设置检查点模式（exactly once || at least once）
 	public void setCheckpointMode(CheckpointingMode mode) {
 		config.setInteger(CHECKPOINT_MODE, mode.ordinal());
 	}
@@ -385,6 +396,7 @@ public class StreamConfig implements Serializable {
 		}
 	}
 
+	// 设置链式的出边
 	public void setOutEdgesInOrder(List<StreamEdge> outEdgeList) {
 		try {
 			InstantiationUtil.writeObjectToConfig(outEdgeList, this.config, EDGES_IN_ORDER);
@@ -402,6 +414,7 @@ public class StreamConfig implements Serializable {
 		}
 	}
 
+	// 设置 chain 中所有节点的 StreamConfig
 	public void setTransitiveChainedTaskConfigs(Map<Integer, StreamConfig> chainedTaskConfigs) {
 
 		try {
@@ -427,6 +440,7 @@ public class StreamConfig implements Serializable {
 		return chainedTaskConfigs;
 	}
 
+	// 设置 OperatorID
 	public void setOperatorID(OperatorID operatorID) {
 		this.config.setBytes(OPERATOR_ID, operatorID.getBytes());
 	}

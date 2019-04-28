@@ -28,6 +28,9 @@ import org.apache.flink.streaming.api.transformations.SourceTransformation;
  *
  * @param <T> Type of the elements in the DataStream created from the this source.
  */
+/**
+ * DataStreamSource 指代了一个 DataStream 的开端
+ */
 @Public
 public class DataStreamSource<T> extends SingleOutputStreamOperator<T> {
 

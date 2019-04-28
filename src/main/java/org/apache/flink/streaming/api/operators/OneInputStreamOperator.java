@@ -57,5 +57,8 @@ public interface OneInputStreamOperator<IN, OUT> extends StreamOperator<OUT> {
 	 */
 	void processWatermark(Watermark mark) throws Exception;
 
+	/**
+	 * 处理 latencyMarker
+	 */
 	void processLatencyMarker(LatencyMarker latencyMarker) throws Exception;
 }

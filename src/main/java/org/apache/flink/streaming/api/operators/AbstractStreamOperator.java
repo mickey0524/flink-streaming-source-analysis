@@ -105,18 +105,23 @@ public abstract class AbstractStreamOperator<OUT>
 	// ----------- configuration properties -------------
 
 	// A sane default for most operators
+	// 默认的链式操作策略
 	protected ChainingStrategy chainingStrategy = ChainingStrategy.HEAD;
 
 	// ---------------- runtime fields ------------------
 
 	/** The task that contains this operator (and other operators in the same chain). */
+	// StreamTask 包括了这个操作符（以及 chain 中的其他操作符）
 	private transient StreamTask<?, ?> container;
 
+	// 流配置文件
 	protected transient StreamConfig config;
 
+	// operator 通过 output 来 emit element -> output.collect()
 	protected transient Output<StreamRecord<OUT>> output;
 
 	/** The runtime context for UDFs. */
+	// 用户定义函数的运行时上下文
 	private transient StreamingRuntimeContext runtimeContext;
 
 	// ---------------- key/value state ------------------
@@ -127,6 +132,9 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * <p>This is for elements from the first input.
 	 */
+	/**
+	 * KeySelector 从正在被处理的 element 中提取出一个 key，用于 first input 的元素
+	 */
 	private transient KeySelector<?, ?> stateKeySelector1;
 
 	/**
@@ -135,17 +143,23 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * <p>This is for elements from the second input.
 	 */
+	/**
+	 * KeySelector 从正在被处理的 element 中提取出一个 key，用于 second input 的元素
+	 */
 	private transient KeySelector<?, ?> stateKeySelector2;
 
 	/** Backend for keyed state. This might be empty if we're not on a keyed stream. */
+	// 关键状态的 backend，当不是一个 keyed stream 的时候为空
 	private transient AbstractKeyedStateBackend<?> keyedStateBackend;
 
 	/** Keyed state store view on the keyed backend. */
+	// 关键状态存储快照在 keyed stream 中
 	private transient DefaultKeyedStateStore keyedStateStore;
 
 	// ---------------- operator state ------------------
 
 	/** Operator state backend / store. */
+	// 操作符状态 backend/store
 	private transient OperatorStateBackend operatorStateBackend;
 
 	// --------------- Metrics ---------------------------
@@ -153,6 +167,7 @@ public abstract class AbstractStreamOperator<OUT>
 	/** Metric group for the operator. */
 	protected transient OperatorMetricGroup metrics;
 
+	// 延迟状态
 	protected transient LatencyStats latencyStats;
 
 	// ---------------- time handler ------------------
@@ -163,6 +178,7 @@ public abstract class AbstractStreamOperator<OUT>
 
 	// We keep track of watermarks from both inputs, the combined input is the minimum
 	// Once the minimum advances we emit a new watermark for downstream operators
+	// 我们从所有输入跟踪 watermark
 	private long combinedWatermark = Long.MIN_VALUE;
 	private long input1Watermark = Long.MIN_VALUE;
 	private long input2Watermark = Long.MIN_VALUE;

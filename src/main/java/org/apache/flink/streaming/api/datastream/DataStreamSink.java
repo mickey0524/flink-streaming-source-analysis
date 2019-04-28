@@ -31,6 +31,9 @@ import org.apache.flink.util.Preconditions;
  *
  * @param <T> The type of the elements in the Stream
  */
+/**
+ * 流的下沉操作。用于从一个流拓扑中 emit element
+ */
 @Public
 public class DataStreamSink<T> {
 

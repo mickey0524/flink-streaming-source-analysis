@@ -65,6 +65,7 @@ public class StreamSink<IN> extends AbstractUdfStreamOperator<Object, SinkFuncti
 	@Override
 	protected void reportOrForwardLatencyMarker(LatencyMarker marker) {
 		// all operators are tracking latencies
+		// 所有的操作符都要处理延迟
 		this.latencyStats.reportLatency(marker);
 
 		// sinks don't forward latency markers
@@ -76,27 +77,39 @@ public class StreamSink<IN> extends AbstractUdfStreamOperator<Object, SinkFuncti
 		this.currentWatermark = mark.getTimestamp();
 	}
 
+	/**
+	 * 简单的 SinkFunction.Context 的实现
+	 */
 	private class SimpleContext<IN> implements SinkFunction.Context<IN> {
 
-		private StreamRecord<IN> element;
+		private StreamRecord<IN> element;  // 当前最后处理的 StreamRecord
 
-		private final ProcessingTimeService processingTimeService;
+		private final ProcessingTimeService processingTimeService;  // 通用的进程时间服务
 
 		public SimpleContext(ProcessingTimeService processingTimeService) {
 			this.processingTimeService = processingTimeService;
 		}
 
 		@Override
+		/**
+		 * 获取当前的时间
+		 */
 		public long currentProcessingTime() {
 			return processingTimeService.getCurrentProcessingTime();
 		}
 
 		@Override
+		/**
+		 * 获取当前的 watermark
+		 */
 		public long currentWatermark() {
 			return currentWatermark;
 		}
 
 		@Override
+		/**
+		 * 获取当前 StreamRecord 的 ts
+		 */
 		public Long timestamp() {
 			if (element.hasTimestamp()) {
 				return element.getTimestamp();

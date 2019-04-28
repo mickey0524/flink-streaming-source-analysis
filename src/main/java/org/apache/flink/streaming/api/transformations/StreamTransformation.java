@@ -42,14 +42,23 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * {@link org.apache.flink.streaming.api.datastream.DataStream} has an underlying
  * {@code StreamTransformation} that is the origin of said DataStream.
  *
+ * 一个 StreamTransformation 代表了创建一个 DataStream 的操作
+ * 每一个 DataStream 都有一个 StreamTransformation 与之对应
+ * 
  * <p>API operations such as {@link org.apache.flink.streaming.api.datastream.DataStream#map} create
  * a tree of {@code StreamTransformation}s underneath. When the stream program is to be executed
  * this graph is translated to a {@link StreamGraph} using
  * {@link org.apache.flink.streaming.api.graph.StreamGraphGenerator}.
  *
+ * 像 map 这样的 API 创建了一个如下所示的 StreamTransformation 树
+ * 当流程序执行的时候，StreamGraphGenerator 将 StreamTransformation 树转换为 StreamGraph
+ *
  * <p>A {@code StreamTransformation} does not necessarily correspond to a physical operation
  * at runtime. Some operations are only logical concepts. Examples of this are union,
  * split/select data stream, partitioning.
+ *
+ * 一个 StreamTransformation 在执行的时候不一定会对应到一个物理操作。一些操作仅仅是逻辑上的概念。
+ * 例如，union，split/select 和 partitioning
  *
  * <p>The following graph of {@code StreamTransformations}:
  * <pre>{@code
@@ -94,6 +103,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * <p>The information about partitioning, union, split/select end up being encoded in the edges
  * that connect the sources to the map operation.
+ * 
+ * partitioning，split/select 最后都序列化成连接 map 和 source 的边
  *
  * @param <T> The type of the elements that result from this {@code StreamTransformation}
  */
@@ -126,17 +137,27 @@ public abstract class StreamTransformation<T> {
 	 * The maximum parallelism for this stream transformation. It defines the upper limit for
 	 * dynamic scaling and the number of key groups used for partitioned state.
 	 */
+	/**
+	 * 这个 StreamTransformation 的最大并行度
+	 * 定义了动态扩容和用于 partition 的 key group 数目的最大上限
+	 */
 	private int maxParallelism = -1;
 
 	/**
 	 *  The minimum resources for this stream transformation. It defines the lower limit for
 	 *  dynamic resources resize in future plan.
 	 */
+	/**
+	 * 这个 StreamTransformation 的最小资源
+	 */
 	private ResourceSpec minResources = ResourceSpec.DEFAULT;
 
 	/**
 	 *  The preferred resources for this stream transformation. It defines the upper limit for
 	 *  dynamic resource resize in future plan.
+	 */
+	/**
+	 * 这个 StreamTransformation 的最大资源
 	 */
 	private ResourceSpec preferredResources = ResourceSpec.DEFAULT;
 
@@ -147,7 +168,8 @@ public abstract class StreamTransformation<T> {
 	 * field is independent from this.
 	 */
 	/**
-	 * 用户指定的 id，用于在 job 重启的时候安排相同的 operator
+	 * 用户指定的 id，用于在 job 重启的时候安排相同的 operator id
+	 * 同样是动态生成的，不过是独立于 flink 的程序生成的
 	 */
 	private String uid;
 
@@ -297,6 +319,10 @@ public abstract class StreamTransformation<T> {
 	 * @param uidHash The user provided hash for this operator. This will become the JobVertexID, which is shown in the
 	 *                 logs and web ui.
 	 */
+	/**
+	 * 对这个 StreamTransformation 设置用户定义的 hash，这会被用于创建 JobGraph 中的 JobVertexID
+	 * graph/StreamGraphUserHashHasher.java 里有对 userProvidedNodeHash 的解释与使用
+	 */
 	public void setUidHash(String uidHash) {
 
 		Preconditions.checkNotNull(uidHash);
@@ -326,6 +352,11 @@ public abstract class StreamTransformation<T> {
 	 * transformation and job. Otherwise, job submission will fail.
 	 *
 	 * @param uid The unique user-specified ID of this transformation.
+	 */
+	/**
+	 * 用于生成 StreamTransformation 的 hash
+	 * 当 uid 存在的时候，StreamGraphHasherV2 优先使用 uid 生成 hash
+	 * 具体逻辑见 graph/StreamGraphHasherV2.java 的 generateNodeHash 函数
 	 */
 	public void setUid(String uid) {
 		this.uid = uid;

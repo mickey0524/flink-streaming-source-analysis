@@ -29,6 +29,7 @@ import org.apache.flink.util.FlinkException;
 
 /**
  * {@link StreamTask} for executing a {@link StreamSource}.
+ * 执行 StreamSource 和 StreamTask
  *
  * <p>One important aspect of this is that the checkpointing and the emission of elements must never
  * occur at the same time. The execution must be serial. This is achieved by having the contract
@@ -36,6 +37,9 @@ import org.apache.flink.util.FlinkException;
  * a synchronized block that locks on the lock Object. Also, the modification of the state
  * and the emission of elements must happen in the same block of code that is protected by the
  * synchronized block.
+ *
+ * 一个很重要的方面是检查点操作和元素的 emit 不能同时发送，执行一定要是串行的
+ * 这个是通过加锁来实现的，同一，状态的更改和元素的 emit 也需要加锁互斥执行
  *
  * @param <OUT> Type of the output elements of this source.
  * @param <SRC> Type of the source function for the stream source operator
@@ -93,7 +97,10 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 	}
 
 	@Override
+	// 重写父类的 run 方法，run 方法会在 StreamTask 的 invoke 方法里被调用
+	// 父类的 invoke 方法会被 TaskManager 执行
 	protected void run() throws Exception {
+		// chain 的头部操作符 run 起来
 		headOperator.run(getCheckpointLock(), getStreamStatusMaintainer());
 	}
 

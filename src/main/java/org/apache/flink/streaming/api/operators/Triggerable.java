@@ -26,16 +26,25 @@ import org.apache.flink.annotation.Internal;
  * @param <K> Type of the keys to which timers are scoped.
  * @param <N> Type of the namespace to which timers are scoped.
  */
+/**
+ * 这个能被 InternalTimerService 调用的接口
+ */
 @Internal
 public interface Triggerable<K, N> {
 
 	/**
 	 * Invoked when an event-time timer fires.
 	 */
+	/**
+	 * 当事件时间计时器触发时调用
+	 */
 	void onEventTime(InternalTimer<K, N> timer) throws Exception;
 
 	/**
 	 * Invoked when a processing-time timer fires.
+	 */
+	/**
+	 * 当事件时间计时器触发时调用
 	 */
 	void onProcessingTime(InternalTimer<K, N> timer) throws Exception;
 }

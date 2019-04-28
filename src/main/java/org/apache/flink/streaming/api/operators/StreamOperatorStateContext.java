@@ -28,26 +28,41 @@ import org.apache.flink.util.CloseableIterable;
  * This interface represents a context from which a stream operator can initialize everything connected to state such
  * as e.g. backends, raw state, and timer service manager.
  */
+/**
+ * 此接口表示一个上下文，流操作符可以从中初始化连接到状态的所有内容，例如 backend 、原始状态和计时器服务管理器
+ */
 public interface StreamOperatorStateContext {
 
 	/**
 	 * Returns true, the states provided by this context are restored from a checkpoint/savepoint.
+	 */
+	/**
+	 * 返回 true，由这个上下文提供的 state 存储于 checkpoint/savepoint
 	 */
 	boolean isRestored();
 
 	/**
 	 * Returns the operator state backend for the stream operator.
 	 */
+	/**
+	 * 返回操作符的状态 backend
+	 */
 	OperatorStateBackend operatorStateBackend();
 
 	/**
 	 * Returns the keyed state backend for the stream operator. This method returns null for non-keyed operators.
+	 */
+	/**
+	 * 返回操作符的关键状态 backend
 	 */
 	AbstractKeyedStateBackend<?> keyedStateBackend();
 
 	/**
 	 * Returns the internal timer service manager for the stream operator. This method returns null for non-keyed
 	 * operators.
+	 */
+	/**
+	 * 返回操作符的内部时间管理器
 	 */
 	InternalTimeServiceManager<?> internalTimerServiceManager();
 

@@ -28,6 +28,9 @@ import java.util.Map;
 /**
  * The {@link LatencyStats} objects are used to track and report on the behavior of latencies across measurements.
  */
+/**
+ * LatencyStats 对象被用于跟踪和报道测量中的延迟行为
+ */
 public class LatencyStats {
 	private final Map<String, DescriptiveStatisticsHistogram> latencyStats = new HashMap<>();
 	private final MetricGroup metricGroup;
@@ -68,6 +71,9 @@ public class LatencyStats {
 
 	/**
 	 * Granularity for latency metrics.
+	 */
+	/**
+	 * 延迟度量的粒度
 	 */
 	public enum Granularity {
 		SINGLE {

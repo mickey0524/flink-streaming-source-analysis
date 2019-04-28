@@ -31,6 +31,10 @@ import javax.annotation.Nullable;
  * Operators, in turn, can use the context to initialize everything connected to their state, such as backends or
  * a timer service manager.
  */
+/**
+ * 这是流任务向其运算符公开 StreamOperatorStateContext 的接口
+ * 运算符可以使用上下文初始化与其状态相关的所有内容，如 backend 或计时器服务管理器
+ */
 public interface StreamTaskStateInitializer {
 
 	/**

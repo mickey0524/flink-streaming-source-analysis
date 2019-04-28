@@ -78,19 +78,33 @@ import java.util.concurrent.atomic.AtomicReference;
  * the Task's operator chain. Operators that are chained together execute synchronously in the
  * same thread and hence on the same stream partition. A common case for these chains
  * are successive map/flatmap/filter tasks.
+ * 
+ * 所有流式任务的基类。一个 task 是本地进程的单位，由 TaskManagers 部署和执行
+ * 每个 task 执行一个或多个 StreamOperator，这些 StreamOperators 组成了 Task 的操作链
+ * 链在一起的 Operators 在相同的线程内同步执行，因此也存在于相同的流分区中
+ * 一个典型的 chains case 是 map/flatmap/filter tasks
  *
  * <p>The task chain contains one "head" operator and multiple chained operators.
  * The StreamTask is specialized for the type of the head operator: one-input and two-input tasks,
  * as well as for sources, iteration heads and iteration tails.
+ * 
+ * task 链包括一个 head operator 和多个链式相连的 operators
+ * StreamTask 是这些类型的 head operator 专用的：one-input、two-input task、
+ * source，iteration heads 和 iteration tails
  *
  * <p>The Task class deals with the setup of the streams read by the head operator, and the streams
  * produced by the operators at the ends of the operator chain. Note that the chain may fork and
  * thus have multiple ends.
  *
+ * StreamTask 通过读取 head operator 建立 stream
+ * 并且 stream 由操作链的末端操作符产生
+ * 需要注意的是，chain 可能 fork 因此出现多个末端
+ *
  * <p>The life cycle of the task is set up as follows:
+ * task 生命周期的建立如下所示：
  * <pre>{@code
  *  -- setInitialState -> provides state of all operators in the chain
- *
+ *  -- 设置操作链中所有操作符的初始状态
  *  -- invoke()
  *        |
  *        +----> Create basic utils (config, etc) and load the chain of operators
@@ -108,6 +122,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>The {@code StreamTask} has a lock object called {@code lock}. All calls to methods on a
  * {@code StreamOperator} must be synchronized on this lock object to ensure that no methods
  * are called concurrently.
+ *
+ * StreamTask 有一个锁对象叫做 lock。StreamOperator 必须竞争这个锁来保证没有方法被并发调用
  *
  * @param <OUT>
  * @param <OP>

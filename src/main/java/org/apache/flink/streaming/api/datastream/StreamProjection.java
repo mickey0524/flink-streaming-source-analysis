@@ -53,12 +53,23 @@ import org.apache.flink.util.Preconditions;
  * The result of {@link DataStream#project(int...)}. This can be used to add more fields to the
  * projection.
  */
+/**
+ * DataStream.project(int...) 的结果
+ * DataStream<Tuple4<Integer, Double, String, String>> in = // [...] 
+ * DataStream<Tuple2<String, String>> out = in.project(3,2);
+ */
 @PublicEvolving
 public class StreamProjection<IN> {
 
 	private DataStream<IN> dataStream;
 	private int[] fieldIndexes;
 
+	/**
+	 * 构造函数，主要做一些检查
+	 * 例如流的输入类型必须是 Tuple 的
+	 * 新 Tuple 的长度不能比 flink 允许的 Tuple 最大长度更大
+	 * fieldIndexes 的 index 必须在原 Tuple indexs 范围内等
+	 */
 	protected StreamProjection(DataStream<IN> dataStream, int[] fieldIndexes) {
 		if (!dataStream.getType().isTupleType()) {
 			throw new RuntimeException("Only Tuple DataStreams can be projected");
@@ -474,6 +485,7 @@ public class StreamProjection<IN> {
 		return dataStream.transform("Projection", tType, new StreamProject<IN, Tuple25<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24>>(fieldIndexes, tType.createSerializer(dataStream.getExecutionConfig())));
 	}
 
+	// 获取 project 之后的类型
 	public static TypeInformation<?>[] extractFieldTypes(int[] fields, TypeInformation<?> inType) {
 
 		TupleTypeInfo<?> inTupleType = (TupleTypeInfo<?>) inType;

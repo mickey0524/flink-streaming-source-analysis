@@ -93,6 +93,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @param <T> The type of the elements in the Keyed Stream.
  * @param <KEY> The type of the key in the Keyed Stream.
  */
+/**
+ * 一个 KeyedStream 代表一个 DataStream 用 KeySelector 分区过的流
+ * 典型的 DataStream 操作在 KeyedStream 中同样支持
+ */
 @Public
 public class KeyedStream<T, KEY> extends DataStream<T> {
 

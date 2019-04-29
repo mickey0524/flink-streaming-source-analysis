@@ -43,6 +43,10 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  *
  * @param <T> The type of the elements in this stream.
  */
+/**
+ * SingleOutputStreamOperator 代表了一个应用了用户预定义输出类型的 transformation 算子
+ * 的 DataStream 
+ */
 @Public
 public class SingleOutputStreamOperator<T> extends DataStream<T> {
 

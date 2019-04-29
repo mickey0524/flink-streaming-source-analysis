@@ -30,6 +30,9 @@ import java.util.Random;
  * @param <T>
  *            Type of the Tuple
  */
+/**
+ * ShufflePartitioner 给每个元素随机一个输出 Channel
+ */
 @Internal
 public class ShufflePartitioner<T> extends StreamPartitioner<T> {
 	private static final long serialVersionUID = 1L;
@@ -42,6 +45,7 @@ public class ShufflePartitioner<T> extends StreamPartitioner<T> {
 	}
 
 	@Override
+	// 因为是随机数选择，copy 要返回一个新的实例
 	public StreamPartitioner<T> copy() {
 		return new ShufflePartitioner<T>();
 	}

@@ -27,6 +27,8 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  */
 /**
  * 一个在流中执行映射的操作符
+ * DataStream<Tuple4<Integer, Double, String, String>> in = // [...] 
+ * DataStream<Tuple2<String, String>> out = in.project(3,2);
  */
 @Internal
 public class StreamProject<IN, OUT extends Tuple>
@@ -52,6 +54,7 @@ public class StreamProject<IN, OUT extends Tuple>
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		for (int i = 0; i < this.numFields; i++) {
+			// 这里可以把 element.getValue() 提到循环外面去...
 			outTuple.setField(((Tuple) element.getValue()).getField(fields[i]), i);
 		}
 		output.collect(element.replace(outTuple));

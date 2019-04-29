@@ -29,6 +29,9 @@ import org.apache.flink.util.Preconditions;
  *
  * @param <T> Type of the elements in the Stream being partitioned
  */
+/**
+ * KeyGroupStreamPartitioner 根据 key group 的下标将元素分到目标 channel
+ */
 @Internal
 public class KeyGroupStreamPartitioner<T, K> extends StreamPartitioner<T> implements ConfigurableStreamPartitioner {
 	private static final long serialVersionUID = 1L;

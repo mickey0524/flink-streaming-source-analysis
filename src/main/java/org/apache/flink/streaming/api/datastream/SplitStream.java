@@ -56,6 +56,10 @@ public class SplitStream<OUT> extends DataStream<OUT> {
 	 *            input.
 	 * @return Returns the selected DataStream
 	 */
+	/**
+	 * split 操作会得到一个 SplitStream，outputSelector 会输出 element 属于的 name 组
+	 * select 方法可以通过输入 name 来从流中获取部分元素
+	 */
 	public DataStream<OUT> select(String... outputNames) {
 		return selectOutput(outputNames);
 	}

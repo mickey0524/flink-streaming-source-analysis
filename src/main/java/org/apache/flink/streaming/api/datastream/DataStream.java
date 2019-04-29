@@ -127,6 +127,8 @@ public class DataStream<T> {
 	 */
 	/**
 	 * 构造函数
+	 * @param environment 执行环境
+	 * @param transformation 算子
 	 */
 	public DataStream(StreamExecutionEnvironment environment, StreamTransformation<T> transformation) {
 		this.environment = Preconditions.checkNotNull(environment, "Execution Environment must not be null.");
@@ -138,6 +140,10 @@ public class DataStream<T> {
 	 *
 	 * @return ID of the DataStream
 	 */
+	/**
+	 * 返回 DataStream 的 id，transformation 的 id 是用 static 方法生成的，用 transformation 的 id
+	 * 指代 DataStream 的 id
+	 */
 	@Internal
 	public int getId() {
 		return transformation.getId();
@@ -148,6 +154,9 @@ public class DataStream<T> {
 	 *
 	 * @return The parallelism set for this operator.
 	 */
+	/**
+	 * 获取并行度
+	 */
 	public int getParallelism() {
 		return transformation.getParallelism();
 	}
@@ -156,6 +165,9 @@ public class DataStream<T> {
 	 * Gets the minimum resources for this operator.
 	 *
 	 * @return The minimum resources set for this operator.
+	 */
+	/**
+	 * 获取最小资源
 	 */
 	@PublicEvolving
 	public ResourceSpec getMinResources() {
@@ -167,6 +179,9 @@ public class DataStream<T> {
 	 *
 	 * @return The preferred resources set for this operator.
 	 */
+	/**
+	 * 获取最大资源
+	 */
 	@PublicEvolving
 	public ResourceSpec getPreferredResources() {
 		return transformation.getPreferredResources();
@@ -176,6 +191,9 @@ public class DataStream<T> {
 	 * Gets the type of the stream.
 	 *
 	 * @return The type of the datastream.
+	 */
+	/**
+	 * 获取 DataStream 的下游类型
 	 */
 	public TypeInformation<T> getType() {
 		return transformation.getOutputType();
@@ -201,6 +219,9 @@ public class DataStream<T> {
 		return environment;
 	}
 
+	/**
+	 * 获取执行配置
+	 */
 	public ExecutionConfig getExecutionConfig() {
 		return environment.getConfig();
 	}
@@ -302,6 +323,9 @@ public class DataStream<T> {
 	 *            The KeySelector to be used for extracting the key for partitioning
 	 * @return The {@link DataStream} with partitioned state (i.e. KeyedStream)
 	 */
+	/**
+	 * 使用 key 来对流进行分区，返回一个 KeyedStream
+	 */
 	public <K> KeyedStream<T, K> keyBy(KeySelector<T, K> key) {
 		Preconditions.checkNotNull(key);
 		return new KeyedStream<>(this, clean(key));
@@ -314,6 +338,9 @@ public class DataStream<T> {
 	 * @param key The KeySelector to be used for extracting the key for partitioning.
 	 * @param keyType The type information describing the key type.
 	 * @return The {@link DataStream} with partitioned state (i.e. KeyedStream)
+	 */
+	/**
+	 * 使用 key 以及明确的 keyType 来对流进行分区，返回一个 KeyedStream
 	 */
 	public <K> KeyedStream<T, K> keyBy(KeySelector<T, K> key, TypeInformation<K> keyType) {
 		Preconditions.checkNotNull(key);
@@ -328,6 +355,9 @@ public class DataStream<T> {
 	 *            The position of the fields on which the {@link DataStream}
 	 *            will be grouped.
 	 * @return The {@link DataStream} with partitioned state (i.e. KeyedStream)
+	 */
+	/**
+	 * 使用 key 的位置来对流进行分区，返回一个 KeyedStream
 	 */
 	public KeyedStream<T, Tuple> keyBy(int... fields) {
 		if (getType() instanceof BasicArrayTypeInfo || getType() instanceof PrimitiveArrayTypeInfo) {
@@ -597,6 +627,11 @@ public class DataStream<T> {
 	 *            output type
 	 * @return The transformed {@link DataStream}.
 	 */
+	/**
+	 * 在 DataStream 上应用一个 map transformation
+	 * 这个 transformation 对数据流中的每个元素调用 MapFunction
+	 * 每一个 MapFunction 调用返回仅仅一个元素
+	 */
 	public <R> SingleOutputStreamOperator<R> map(MapFunction<T, R> mapper) {
 
 		TypeInformation<R> outType = TypeExtractor.getMapReturnTypes(clean(mapper), getType(),
@@ -612,6 +647,10 @@ public class DataStream<T> {
 	 * including none. The user can also extend {@link RichFlatMapFunction} to
 	 * gain access to other features provided by the
 	 * {@link org.apache.flink.api.common.functions.RichFunction} interface.
+	 *
+	 * 在 DataStream 上应用一个 FlatMap transformation
+	 * 这个 transformation 对数据流中的每一个元素执行 FlatMapFunction
+	 * 每一个 FlatMapFunction 可以返回任意数量的元素（可能没有）
 	 *
 	 * @param flatMapper
 	 *            The FlatMapFunction that is called for each element of the
@@ -694,6 +733,10 @@ public class DataStream<T> {
 	 * features provided by the
 	 * {@link org.apache.flink.api.common.functions.RichFunction} interface.
 	 *
+	 * 在 DataStream 上应用一个 filter transformation(OneInputTransformation)
+	 * 这个 transformation 对数据流中的每个元素调用 FilterFunction
+	 * 每一个 FilterFunction 要么返回当前元素，要么不返回任何元素
+	 *
 	 * @param filter
 	 *            The FilterFunction that is called for each element of the
 	 *            DataStream.
@@ -707,6 +750,10 @@ public class DataStream<T> {
 	/**
 	 * Initiates a Project transformation on a {@link Tuple} {@link DataStream}.<br>
 	 * <b>Note: Only Tuple DataStreams can be projected.</b>
+     *
+	 * 对数据流执行映射操作，只有 Tuple 数据流能够被映射
+	 * DataStream<Tuple4<Integer, Double, String, String>> in = // [...] 
+	 * DataStream<Tuple2<String, String>> out = in.project(3,2);
 	 *
 	 * <p>The transformation projects each Tuple of the DataSet onto a (sub)set of
 	 * fields.
@@ -1188,6 +1235,9 @@ public class DataStream<T> {
 	 *            type of the return stream
 	 * @return the data stream constructed
 	 */
+	/**
+	 * 传递用户定义的操作符，同时转换 DataStream 的方法
+	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> transform(String operatorName, TypeInformation<R> outTypeInfo, OneInputStreamOperator<T, R> operator) {
 
@@ -1204,6 +1254,7 @@ public class DataStream<T> {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		SingleOutputStreamOperator<R> returnStream = new SingleOutputStreamOperator(environment, resultTransform);
 
+		// 给执行环境的 transformations 加入一个 算子
 		getExecutionEnvironment().addOperator(resultTransform);
 
 		return returnStream;

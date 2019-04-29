@@ -65,7 +65,11 @@ public final class KeySelectorUtil {
 		return new ComparableKeySelector<>(comparator, numKeyFields, new TupleTypeInfo<>(typeInfos));
 	}
 
+	/**
+	 * 输入一个位置数组和输入类型，返回一个 ArrayKeySelector
+	 */
 	public static <X> ArrayKeySelector<X> getSelectorForArray(int[] positions, TypeInformation<X> typeInfo) {
+		// positions.length > Tuple.MAX_ARITY 的原因是 KeyBy 操作的一定是一个 Tuple
 		if (positions == null || positions.length == 0 || positions.length > Tuple.MAX_ARITY) {
 			throw new IllegalArgumentException("Array keys must have between 1 and " + Tuple.MAX_ARITY + " fields.");
 		}

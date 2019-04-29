@@ -27,12 +27,19 @@ import org.apache.flink.util.OutputTag;
 
 /**
  * A function that processes elements of a stream.
+ * 一个在流中处理元素的函数
  *
  * <p>For every element in the input stream {@link #processElement(Object, Context, Collector)}
  * is invoked. This can produce zero or more elements as output. Implementations can also
  * query the time and set timers through the provided {@link Context}. For firing timers
  * {@link #onTimer(long, OnTimerContext, Collector)} will be invoked. This can again produce
  * zero or more elements as output and register further timers.
+ *
+ * 对于输入流中的每一个元素，调用 processElement 方法
+ * 这个可能产生一个或者多个元素作为输出
+ * 实例可以通过 Context 请求时间或者设置定时器
+ * 定时器触发的时候，onTimer 会被调用
+ * 这也能产生一个或多个元素作为输出，而且可以注册更多定时器
  *
  * <p><b>NOTE:</b> Access to keyed state and timers (which are also scoped to a key) is only
  * available if the {@code ProcessFunction} is applied on a {@code KeyedStream}.

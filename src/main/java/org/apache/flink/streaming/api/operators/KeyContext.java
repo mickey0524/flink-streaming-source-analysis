@@ -24,6 +24,10 @@ package org.apache.flink.streaming.api.operators;
  * <p>This is mainly used by the timer system to query the key when creating timers
  * and to set the correct key context when firing a timer.
  */
+/**
+ * 设置和获取当前 keyed 操作的 key 的接口
+ * 当时间系统创建定时器请求 key 的时候，以及当时间系统触发一个定时器设置正确的 key 上下文的时候，使用这个接口
+ */
 public interface KeyContext {
 
 	void setCurrentKey(Object key);

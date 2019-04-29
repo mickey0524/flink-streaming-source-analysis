@@ -25,6 +25,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 /**
  * A {@link StreamOperator} for executing projections on streams.
  */
+/**
+ * 一个在流中执行映射的操作符
+ */
 @Internal
 public class StreamProject<IN, OUT extends Tuple>
 		extends AbstractStreamOperator<OUT>

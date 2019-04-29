@@ -31,6 +31,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  * A {@link org.apache.flink.streaming.api.operators.StreamOperator} for executing
  * {@link ProcessFunction ProcessFunctions}.
  */
+/**
+ * 一个执行 ProcessFunction 的操作符
+ */
 @Internal
 public class ProcessOperator<IN, OUT>
 		extends AbstractUdfStreamOperator<OUT, ProcessFunction<IN, OUT>>

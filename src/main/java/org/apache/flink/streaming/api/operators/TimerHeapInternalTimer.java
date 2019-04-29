@@ -35,18 +35,21 @@ public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, 
 
 	/** The key for which the timer is scoped. */
 	@Nonnull
-	private final K key;
+	private final K key;  // 定时器的范围 key
 
 	/** The namespace for which the timer is scoped. */
 	@Nonnull
-	private final N namespace;
+	private final N namespace;  // 定时器的范围 namespace
 
 	/** The expiration timestamp. */
-	private final long timestamp;
+	private final long timestamp;  // 触发时间
 
 	/**
 	 * This field holds the current physical index of this timer when it is managed by a timer heap so that we can
 	 * support fast deletes.
+	 */
+	/**
+	 * timerHeapIndex 存储了物理下标，由 timer heap 管理，我们可以通过这个支持快速删除
 	 */
 	private transient int timerHeapIndex;
 
@@ -54,7 +57,7 @@ public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, 
 		this.timestamp = timestamp;
 		this.key = key;
 		this.namespace = namespace;
-		this.timerHeapIndex = NOT_CONTAINED;
+		this.timerHeapIndex = NOT_CONTAINED;  // Integer.MIN_VALUE
 	}
 
 	@Override
@@ -104,6 +107,9 @@ public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, 
 	 * This method can be called to indicate that the timer is no longer managed be a timer heap, e.g. because it as
 	 * removed.
 	 */
+	/**
+	 * 执行这个方法表明定时器已经不再被 time heap 管理了
+	 */
 	void removedFromTimerQueue() {
 		setInternalIndex(NOT_CONTAINED);
 	}
@@ -126,6 +132,7 @@ public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, 
 	}
 
 	@Override
+	// 比较优先级
 	public int comparePriorityTo(@Nonnull InternalTimer<?, ?> other) {
 		return Long.compare(timestamp, other.getTimestamp());
 	}

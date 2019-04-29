@@ -43,14 +43,21 @@ import java.util.Map;
  *
  * @param <K> The type of keys used for the timers and the registry.
  */
+/**
+ * 这个实体提供时间相关的服务给所有继承 AbstractStreamOperator 的操作符
+ * 目前，只有一个 InternalTimerServiceImpl 时间服务
+ */
 @Internal
 public class InternalTimeServiceManager<K> {
 
 	@VisibleForTesting
+	// 时间状态前缀
 	static final String TIMER_STATE_PREFIX = "_timer_state";
 	@VisibleForTesting
+	// 进程定时器前缀
 	static final String PROCESSING_TIMER_PREFIX = TIMER_STATE_PREFIX + "/processing_";
 	@VisibleForTesting
+	// 事件定时器前缀
 	static final String EVENT_TIMER_PREFIX = TIMER_STATE_PREFIX + "/event_";
 
 	private final KeyGroupRange localKeyGroupRange;
@@ -79,6 +86,8 @@ public class InternalTimeServiceManager<K> {
 	}
 
 	@SuppressWarnings("unchecked")
+	// 获取内部时间服务
+	// 目前内部时间服务仅仅支持 InternalTimerServiceImpl.java
 	public <N> InternalTimerService<N> getInternalTimerService(
 		String name,
 		TimerSerializer<K, N> timerSerializer,
@@ -123,6 +132,7 @@ public class InternalTimeServiceManager<K> {
 			timerSerializer);
 	}
 
+	// 更新 watermark	
 	public void advanceWatermark(Watermark watermark) throws Exception {
 		for (InternalTimerServiceImpl<?, ?> service : timerServices.values()) {
 			service.advanceWatermark(watermark.getTimestamp());

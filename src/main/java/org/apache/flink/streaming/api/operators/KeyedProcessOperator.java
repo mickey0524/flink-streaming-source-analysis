@@ -33,6 +33,9 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * A {@link StreamOperator} for executing {@link KeyedProcessFunction KeyedProcessFunctions}.
  */
+/**
+ * 一个执行 KeyedProcessFunction 的操作符
+ */
 @Internal
 public class KeyedProcessOperator<K, IN, OUT>
 		extends AbstractUdfStreamOperator<OUT, KeyedProcessFunction<K, IN, OUT>>

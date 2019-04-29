@@ -32,6 +32,7 @@ public interface OnWatermarkCallback<KEY> {
 
 	/**
 	 * The action to be triggered upon reception of a watermark.
+	 * 接受 watermark 要触发的操作
 	 *
 	 * @param key The current key.
 	 * @param watermark The current watermark.

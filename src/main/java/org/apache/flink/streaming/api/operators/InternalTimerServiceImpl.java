@@ -41,6 +41,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * {@link InternalTimerService} that stores timers on the Java heap.
+ * InternalTimerService 在 Java 堆上存储定时器
  */
 public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, ProcessingTimeCallback {
 
@@ -51,15 +52,24 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	/**
 	 * Processing time timers that are currently in-flight.
 	 */
+	/**
+	 * 已经注册的进程时间定时器
+	 */
 	private final KeyGroupedInternalPriorityQueue<TimerHeapInternalTimer<K, N>> processingTimeTimersQueue;
 
 	/**
 	 * Event time timers that are currently in-flight.
 	 */
+	/**
+	 * 已经注册的时间时间定时器
+	 */
 	private final KeyGroupedInternalPriorityQueue<TimerHeapInternalTimer<K, N>> eventTimeTimersQueue;
 
 	/**
 	 * Information concerning the local key-group range.
+	 */
+	/**
+	 * 有关本地 key-group 范围的信息
 	 */
 	private final KeyGroupRange localKeyGroupRange;
 
@@ -92,6 +102,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	private TypeSerializer<N> namespaceDeserializer;
 
 	/** The restored timers snapshot, if any. */
+	// 存储定时器快照
 	private InternalTimersSnapshot<K, N> restoredTimersSnapshot;
 
 	InternalTimerServiceImpl(
@@ -108,6 +119,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 		this.eventTimeTimersQueue = checkNotNull(eventTimeTimersQueue);
 
 		// find the starting index of the local key-group range
+		// 寻找本地 key-group 范围开始的下标
 		int startIdx = Integer.MAX_VALUE;
 		for (Integer keyGroupIdx : localKeyGroupRange) {
 			startIdx = Math.min(keyGroupIdx, startIdx);
@@ -123,6 +135,12 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	 *     <li>Re-registering timers that were retrieved after recovering from a node failure, if any.</li>
 	 * </ol>
 	 * This method can be called multiple times, as long as it is called with the same serializers.
+	 */
+	/**
+	 * 开启本地定时器服务：
+	 * 1. 给相关定时器设置 keySerialized 和 namespaceSerializer
+	 * 2. 给定时器触发的时候有后续操作的设置 triggerTarget
+	 * 3. 重启失败的定时器
 	 */
 	public void startTimerService(
 			TypeSerializer<K> keySerializer,
@@ -140,6 +158,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 			}
 
 			// the following is the case where we restore
+			// 从快照中恢复
 			if (restoredTimersSnapshot != null) {
 				TypeSerializerSchemaCompatibility<K> keySerializerCompatibility =
 					restoredTimersSnapshot.getKeySerializerSnapshot().resolveSchemaCompatibility(keySerializer);
@@ -172,6 +191,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 			this.triggerTarget = Preconditions.checkNotNull(triggerTarget);
 
 			// re-register the restored timers (if any)
+			// 如果存在的话，重新注册存储的定时器
 			final InternalTimer<K, N> headTimer = processingTimeTimersQueue.peek();
 			if (headTimer != null) {
 				nextTimer = processingTimeService.registerTimer(headTimer.getTimestamp(), this);
@@ -186,49 +206,61 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	}
 
 	@Override
+	// 当前的进程时间
 	public long currentProcessingTime() {
 		return processingTimeService.getCurrentProcessingTime();
 	}
 
 	@Override
+	// 当前的 watermark
 	public long currentWatermark() {
 		return currentWatermark;
 	}
 
 	@Override
+	// 注册进程时间定时器
 	public void registerProcessingTimeTimer(N namespace, long time) {
 		InternalTimer<K, N> oldHead = processingTimeTimersQueue.peek();
 		if (processingTimeTimersQueue.add(new TimerHeapInternalTimer<>(time, (K) keyContext.getCurrentKey(), namespace))) {
+			// 获取当前堆顶的定时器触发时间
 			long nextTriggerTime = oldHead != null ? oldHead.getTimestamp() : Long.MAX_VALUE;
 			// check if we need to re-schedule our timer to earlier
+			// 检查我们是否需要更早的调度定时器
 			if (time < nextTriggerTime) {
 				if (nextTimer != null) {
 					nextTimer.cancel(false);
 				}
+				// 重新注册定时器
 				nextTimer = processingTimeService.registerTimer(time, this);
 			}
 		}
 	}
 
 	@Override
+	// 注册事件时间定时器
 	public void registerEventTimeTimer(N namespace, long time) {
 		eventTimeTimersQueue.add(new TimerHeapInternalTimer<>(time, (K) keyContext.getCurrentKey(), namespace));
 	}
 
 	@Override
+	// 删除进程时间定时器
 	public void deleteProcessingTimeTimer(N namespace, long time) {
 		processingTimeTimersQueue.remove(new TimerHeapInternalTimer<>(time, (K) keyContext.getCurrentKey(), namespace));
 	}
 
 	@Override
+	// 删除事件时间定时器
 	public void deleteEventTimeTimer(N namespace, long time) {
 		eventTimeTimersQueue.remove(new TimerHeapInternalTimer<>(time, (K) keyContext.getCurrentKey(), namespace));
 	}
 
 	@Override
+	// 当进程时间定时器触发的时候，执行的方法
 	public void onProcessingTime(long time) throws Exception {
 		// null out the timer in case the Triggerable calls registerProcessingTimeTimer()
 		// inside the callback.
+		// 先将 nextTimer 设置为 null
+		// 防止 triggerTarget.onProcessingTime 调用 registerProcessingTimeTimer
 		nextTimer = null;
 
 		InternalTimer<K, N> timer;
@@ -244,11 +276,12 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 		}
 	}
 
+	// 更新 watermark
 	public void advanceWatermark(long time) throws Exception {
 		currentWatermark = time;
 
 		InternalTimer<K, N> timer;
-
+		// 查看是否 eventTimeTimersQueue 有可以触发的定时器
 		while ((timer = eventTimeTimersQueue.peek()) != null && timer.getTimestamp() <= time) {
 			eventTimeTimersQueue.poll();
 			keyContext.setCurrentKey(timer.getKey());
@@ -312,25 +345,30 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	}
 
 	@VisibleForTesting
+	// 当前进程时间定时器的数量
 	public int numProcessingTimeTimers() {
 		return this.processingTimeTimersQueue.size();
 	}
 
 	@VisibleForTesting
+	// 当前事件时间定时器的数量
 	public int numEventTimeTimers() {
 		return this.eventTimeTimersQueue.size();
 	}
 
 	@VisibleForTesting
+	// 命名空间为 namespace 的进程时间定时器的数量
 	public int numProcessingTimeTimers(N namespace) {
 		return countTimersInNamespaceInternal(namespace, processingTimeTimersQueue);
 	}
 
 	@VisibleForTesting
+	// 命名空间为 namespace 的事件时间定时器的数量
 	public int numEventTimeTimers(N namespace) {
 		return countTimersInNamespaceInternal(namespace, eventTimeTimersQueue);
 	}
 
+	// 获取对应命名空间的定时器数量
 	private int countTimersInNamespaceInternal(N namespace, InternalPriorityQueue<TimerHeapInternalTimer<K, N>> queue) {
 		int count = 0;
 		try (final CloseableIterator<TimerHeapInternalTimer<K, N>> iterator = queue.iterator()) {
@@ -361,6 +399,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 		return partitionElementsByKeyGroup(processingTimeTimersQueue);
 	}
 
+	// 通过 key 划分元素
 	private <T> List<Set<T>> partitionElementsByKeyGroup(KeyGroupedInternalPriorityQueue<T> keyGroupedQueue) {
 		List<Set<T>> result = new ArrayList<>(localKeyGroupRange.getNumberOfKeyGroups());
 		for (int keyGroup : localKeyGroupRange) {

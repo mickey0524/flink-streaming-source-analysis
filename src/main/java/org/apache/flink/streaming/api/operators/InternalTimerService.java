@@ -28,23 +28,35 @@ import org.apache.flink.annotation.Internal;
  *
  * @param <N> Type of the namespace to which timers are scoped.
  */
+/**
+ * 与时间和定时器有关的接口
+ */
 @Internal
 public interface InternalTimerService<N> {
 
 	/** Returns the current processing time. */
+	// 返回当前的进程时间
 	long currentProcessingTime();
 
 	/** Returns the current event-time watermark. */
+	// 返回当前的 event-time watermark
 	long currentWatermark();
 
 	/**
 	 * Registers a timer to be fired when processing time passes the given time. The namespace
 	 * you pass here will be provided when the timer fires.
 	 */
+	/**
+	 * 注册一个定时器，当进程时间大于给定的时间的时候，触发定时器
+	 * 当定时器触发的时候 namespace 参数会被提供
+	 */
 	void registerProcessingTimeTimer(N namespace, long time);
 
 	/**
 	 * Deletes the timer for the given key and namespace.
+	 */
+	/**
+	 * 删除进程定时器
 	 */
 	void deleteProcessingTimeTimer(N namespace, long time);
 
@@ -52,10 +64,17 @@ public interface InternalTimerService<N> {
 	 * Registers a timer to be fired when event time watermark passes the given time. The namespace
 	 * you pass here will be provided when the timer fires.
 	 */
+	/**
+	 * 注册一个定时器，当 event-time watermark 的 ts 大于给定的时间的时候触发
+	 * 当定时器触发的时候 namespace 参数会被提供
+	 */
 	void registerEventTimeTimer(N namespace, long time);
 
 	/**
 	 * Deletes the timer for the given key and namespace.
+	 */
+	/**
+	 * 删除时间定时器
 	 */
 	void deleteEventTimeTimer(N namespace, long time);
 }

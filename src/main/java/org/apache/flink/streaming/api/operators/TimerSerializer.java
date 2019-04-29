@@ -39,6 +39,10 @@ import java.util.Objects;
  * @param <K> type of the timer key.
  * @param <N> type of the timer namespace.
  */
+/**
+ * 一个序列器，能够给 TimerHeapInternalTimer 产生一个序列化的格式
+ * 用来代表定时器在堆中的优先级
+ */
 public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer<K, N>> {
 
 	private static final long serialVersionUID = 1L;
@@ -48,16 +52,20 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 
 	/** Serializer for the key. */
 	@Nonnull
+	// key 的序列器
 	private final TypeSerializer<K> keySerializer;
 
 	/** Serializer for the namespace. */
 	@Nonnull
+	// 命名空间的序列器
 	private final TypeSerializer<N> namespaceSerializer;
 
 	/** The bytes written for one timer, or -1 if variable size. */
+	// 一个定时器的字节长度，-1 代表可变长度
 	private final int length;
 
 	/** True iff the serialized type (and composite objects) are immutable. */
+	// 指代序列化的类型是否是稳定不变的
 	private final boolean immutableType;
 
 	TimerSerializer(
@@ -82,11 +90,13 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 		this.immutableType = immutableType;
 	}
 
+	// 计算整个的字节长度
 	private static int computeTotalByteLength(
 		TypeSerializer<?> keySerializer,
 		TypeSerializer<?> namespaceSerializer) {
 		if (keySerializer.getLength() >= 0 && namespaceSerializer.getLength() >= 0) {
 			// timestamp + key + namespace
+			// Long.BYTES = 8
 			return Long.BYTES + keySerializer.getLength() + namespaceSerializer.getLength();
 		} else {
 			return -1;
@@ -104,11 +114,13 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 		final TypeSerializer<K> keySerializerDuplicate = keySerializer.duplicate();
 		final TypeSerializer<N> namespaceSerializerDuplicate = namespaceSerializer.duplicate();
 
+		// 所有的 serializers 都是无状态的（用 == 来比较实例，只有指向一个地址，才返回 true），直接返回 this 完事
 		if (keySerializerDuplicate == keySerializer &&
 			namespaceSerializerDuplicate == namespaceSerializer) {
 			// all delegate serializers seem stateless, so this is also stateless.
 			return this;
 		} else {
+			// 否则新建一个
 			// at least one delegate serializer seems to be stateful, so we return a new instance.
 			return new TimerSerializer<>(
 				keySerializerDuplicate,
@@ -119,6 +131,7 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 	}
 
 	@Override
+	// 生成一个 TimerHeapInternalTimer 实例
 	public TimerHeapInternalTimer<K, N> createInstance() {
 		return new TimerHeapInternalTimer<>(
 			0L,
@@ -127,10 +140,12 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 	}
 
 	@Override
+	// 复制一个 TimerHeapInternalTimer 实例
 	public TimerHeapInternalTimer<K, N> copy(TimerHeapInternalTimer<K, N> from) {
 
 		K keyDuplicate;
 		N namespaceDuplicate;
+		// 如果是不变的，直接等号赋值，否则还需要拷贝
 		if (isImmutableType()) {
 			keyDuplicate = from.getKey();
 			namespaceDuplicate = from.getNamespace();
@@ -153,6 +168,7 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 	}
 
 	@Override
+	// 序列化
 	public void serialize(TimerHeapInternalTimer<K, N> record, DataOutputView target) throws IOException {
 		target.writeLong(MathUtils.flipSignBit(record.getTimestamp()));
 		keySerializer.serialize(record.getKey(), target);
@@ -160,6 +176,7 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 	}
 
 	@Override
+	// 反序列化
 	public TimerHeapInternalTimer<K, N> deserialize(DataInputView source) throws IOException {
 		long timestamp = MathUtils.flipSignBit(source.readLong());
 		K key = keySerializer.deserialize(source);
@@ -168,6 +185,7 @@ public class TimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer
 	}
 
 	@Override
+	// 反序列化
 	public TimerHeapInternalTimer<K, N> deserialize(
 		TimerHeapInternalTimer<K, N> reuse,
 		DataInputView source) throws IOException {

@@ -44,6 +44,9 @@ import org.apache.flink.util.OutputTag;
  * @param <IN2> Type of the second input.
  * @param <OUT> Output type.
  */
+/**
+ * 一个处理两个类型的输入流，然后产生一个类型的输出流的函数
+ */
 @PublicEvolving
 public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunction {
 
@@ -64,6 +67,9 @@ public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunct
 	 * @throws Exception The function may throw exceptions which cause the streaming program
 	 *                   to fail and go into recovery.
 	 */
+	/**
+	 * 连接流的第一个输入流的每个元素都需要执行本方法
+	 */
 	public abstract void processElement1(IN1 value, Context ctx, Collector<OUT> out) throws Exception;
 
 	/**
@@ -81,6 +87,9 @@ public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunct
 	 * @throws Exception The function may throw exceptions which cause the streaming program
 	 *                   to fail and go into recovery.
 	 */
+	/**
+	 * 连接流的第二个输入流的每个元素都需要执行本方法
+	 */
 	public abstract void processElement2(IN2 value, Context ctx, Collector<OUT> out) throws Exception;
 
 	/**
@@ -95,6 +104,9 @@ public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunct
 	 *
 	 * @throws Exception This method may throw exceptions. Throwing an exception will cause the operation
 	 *                   to fail and may trigger recovery.
+	 */
+	/**
+	 * 当设置的定时器触发的时候执行本方法
 	 */
 	public void onTimer(long timestamp, OnTimerContext ctx, Collector<OUT> out) throws Exception {}
 
@@ -111,10 +123,16 @@ public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunct
 		 * <p>This might be {@code null}, for example if the time characteristic of your program
 		 * is set to {@link org.apache.flink.streaming.api.TimeCharacteristic#ProcessingTime}.
 		 */
+		/**
+		 * 当前被处理的元素的 ts 或是一个被触发的定时器的 ts
+		 */
 		public abstract Long timestamp();
 
 		/**
 		 * A {@link TimerService} for querying time and registering timers.
+		 */
+		/**
+		 * 一个请求时间和注册定时器的时间服务
 		 */
 		public abstract TimerService timerService();
 
@@ -123,6 +141,9 @@ public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunct
 		 *
 		 * @param outputTag the {@code OutputTag} that identifies the side output to emit to.
 		 * @param value The record to emit.
+		 */
+		/**
+		 * 侧边输出记录
 		 */
 		public abstract <X> void output(OutputTag<X> outputTag, X value);
 	}
@@ -133,6 +154,9 @@ public abstract class CoProcessFunction<IN1, IN2, OUT> extends AbstractRichFunct
 	public abstract class OnTimerContext extends Context {
 		/**
 		 * The {@link TimeDomain} of the firing timer.
+		 */
+		/**
+		 * 定时器依赖的时间域
 		 */
 		public abstract TimeDomain timeDomain();
 	}

@@ -40,6 +40,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  * A {@link org.apache.flink.streaming.api.operators.StreamOperator} for executing keyed
  * {@link CoProcessFunction CoProcessFunctions}.
  */
+/**
+ * 一个执行 keyed CoProcessFunction 的流操作符
+ */
 @Internal
 public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 		extends AbstractUdfStreamOperator<OUT, CoProcessFunction<IN1, IN2, OUT>>
@@ -53,6 +56,9 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 
 	private transient OnTimerContextImpl<IN1, IN2, OUT> onTimerContext;
 
+	/**
+	 * 注册函数，设置 userFunction
+	 */
 	public KeyedCoProcessOperator(CoProcessFunction<IN1, IN2, OUT> coProcessFunction) {
 		super(coProcessFunction);
 	}
@@ -62,6 +68,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 		super.open();
 		collector = new TimestampedCollector<>(output);
 
+		// 这里没有使用 getProcessingTimeService 而是使用了 getInternalTimerService
 		InternalTimerService<VoidNamespace> internalTimerService =
 				getInternalTimerService("user-timers", VoidNamespaceSerializer.INSTANCE, this);
 

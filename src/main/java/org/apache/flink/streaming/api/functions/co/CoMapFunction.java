@@ -35,6 +35,10 @@ import java.io.Serializable;
  * @param <IN2> Type of the second input.
  * @param <OUT> Output type.
  */
+/**
+ * 一个 CoFlatMapFunction 实现了一个 map 方法转换两个连接的流
+ * 下方的 map1 和 map2 方法的输出类型都是 OUT
+ */
 @Public
 public interface CoMapFunction<IN1, IN2, OUT> extends Function, Serializable {
 
@@ -46,6 +50,9 @@ public interface CoMapFunction<IN1, IN2, OUT> extends Function, Serializable {
 	 * @throws Exception The function may throw exceptions which cause the streaming program
 	 *                   to fail and go into recovery.
 	 */
+	/**
+	 * 连接流的第一个输入流的每个元素都要调用这个方法
+	 */
 	OUT map1(IN1 value) throws Exception;
 
 	/**
@@ -55,6 +62,9 @@ public interface CoMapFunction<IN1, IN2, OUT> extends Function, Serializable {
 	 * @return The resulting element
 	 * @throws Exception The function may throw exceptions which cause the streaming program
 	 *                   to fail and go into recovery.
+	 */
+	/**
+	 * 连接流的第二个输入流的每个元素都要调用这个方法
 	 */
 	OUT map2(IN2 value) throws Exception;
 }

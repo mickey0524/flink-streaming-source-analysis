@@ -23,6 +23,9 @@ import org.apache.flink.annotation.PublicEvolving;
 /**
  * Interface for working with time and timers.
  */
+/**
+ * 与时间和定时器相关的接口
+ */
 @PublicEvolving
 public interface TimerService {
 
@@ -33,9 +36,15 @@ public interface TimerService {
 	String UNSUPPORTED_DELETE_TIMER_MSG = "Deleting timers is only supported on a keyed streams.";
 
 	/** Returns the current processing time. */
+	/**
+	 * 返回当前的进程时间
+	 */
 	long currentProcessingTime();
 
 	/** Returns the current event-time watermark. */
+	/**
+	 * 返回当前的 event-time watermark
+	 */
 	long currentWatermark();
 
 	/**
@@ -45,6 +54,12 @@ public interface TimerService {
 	 * in a keyed context, such as in an operation on
 	 * {@link org.apache.flink.streaming.api.datastream.KeyedStream} then that context
 	 * will also be active when you receive the timer notification.
+	 */
+	/**
+	 * 注册一个定时器，当进程时间大于给定的 time 参数的时候，定时器被触发
+	 * 定时器可能作用在 keys 和 windows 的内部
+	 * 当你在分区上下文中设置了一个定时器
+	 * 当你收到定时器通知的时候，上下文也是可以用的
 	 */
 	void registerProcessingTimeTimer(long time);
 
@@ -56,6 +71,12 @@ public interface TimerService {
 	 * {@link org.apache.flink.streaming.api.datastream.KeyedStream} then that context
 	 * will also be active when you receive the timer notification.
 	 */
+	/**
+	 * 注册一个定时器，当 event-time watermark 时间大于给定的 time 参数的时候，定时器被触发
+	 * 定时器可能作用在 keys 和 windows 的内部
+	 * 当你在分区上下文中设置了一个定时器
+	 * 当你收到定时器通知的时候，上下文也是可以用的
+	 */
 	void registerEventTimeTimer(long time);
 
 	/**
@@ -65,6 +86,12 @@ public interface TimerService {
 	 * <p>Timers can internally be scoped to keys and/or windows. When you delete a timer,
 	 * it is removed from the current keyed context.
 	 */
+	/**
+	 * 根据给出的触发时间删除进程时间定时器
+	 * 只有当定时器先前被注册了并且还未触发的时候本方法有作用
+	 * 当你在分区上下文中设置了一个定时器，然后执行本方法将其删除之后
+	 * 它会从当前的 keyed 上下文中被移除
+	 */
 	void deleteProcessingTimeTimer(long time);
 
 	/**
@@ -73,6 +100,12 @@ public interface TimerService {
 	 *
 	 * <p>Timers can internally be scoped to keys and/or windows. When you delete a timer,
 	 * it is removed from the current keyed context.
+	 */
+	/**
+	 * 根据给出的触发时间删除事件时间定时器
+	 * 只有当定时器先前被注册了并且还未触发的时候本方法有作用
+	 * 当你在分区上下文中设置了一个定时器，然后执行本方法将其删除之后
+	 * 它会从当前的 keyed 上下文中被移除
 	 */
 	void deleteEventTimeTimer(long time);
 }

@@ -36,6 +36,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  * A {@link org.apache.flink.streaming.api.operators.StreamOperator} for executing
  * {@link CoProcessFunction CoProcessFunctions}.
  */
+/**
+ * 一个执行 CoProcessFunction 的流操作符
+ */
 @Internal
 public class CoProcessOperator<IN1, IN2, OUT>
 		extends AbstractUdfStreamOperator<OUT, CoProcessFunction<IN1, IN2, OUT>>
@@ -84,6 +87,9 @@ public class CoProcessOperator<IN1, IN2, OUT>
 		currentWatermark = mark.getTimestamp();
 	}
 
+	/**
+	 * CoProcessFunction.Context 的实现类
+	 */
 	private class ContextImpl
 			extends CoProcessFunction<IN1, IN2, OUT>.Context
 			implements TimerService {

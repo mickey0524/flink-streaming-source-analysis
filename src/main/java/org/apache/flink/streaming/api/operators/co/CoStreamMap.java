@@ -27,6 +27,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * {@link org.apache.flink.streaming.api.operators.StreamOperator} for processing
  * {@link CoMapFunction CoMapFunctions}.
  */
+/**
+ * 处理 CoMapFunction 的流操作符
+ */
 @Internal
 public class CoStreamMap<IN1, IN2, OUT>
 		extends AbstractUdfStreamOperator<OUT, CoMapFunction<IN1, IN2, OUT>>
@@ -34,8 +37,11 @@ public class CoStreamMap<IN1, IN2, OUT>
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * 构造函数
+	 */
 	public CoStreamMap(CoMapFunction<IN1, IN2, OUT> mapper) {
-		super(mapper);
+		super(mapper);  // 设置 userFunction
 	}
 
 	@Override

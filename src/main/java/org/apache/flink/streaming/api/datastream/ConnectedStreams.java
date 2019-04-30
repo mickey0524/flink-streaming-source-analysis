@@ -42,6 +42,10 @@ import static java.util.Objects.requireNonNull;
  * Connected streams are useful for cases where operations on one stream directly
  * affect the operations on the other stream, usually via shared state between the streams.
  *
+ * ConnectedStreams 代表两个数据类型有可能不同的流的 connect
+ * 连通流在一个流的操作直接影响其他一个流的 case 下非常有用
+ * 连通的两个流之间会共享状态
+ *
  * <p>An example for the use of connected streams would be to apply rules that change over time
  * onto another stream. One of the connected streams has the rules, the other stream the
  * elements to apply the rules to. The operation on the connected stream maintains the
@@ -57,16 +61,22 @@ import static java.util.Objects.requireNonNull;
 @Public
 public class ConnectedStreams<IN1, IN2> {
 
-	protected final StreamExecutionEnvironment environment;
-	protected final DataStream<IN1> inputStream1;
-	protected final DataStream<IN2> inputStream2;
+	protected final StreamExecutionEnvironment environment;  // 执行环境
+	protected final DataStream<IN1> inputStream1;  // 第一个输入流
+	protected final DataStream<IN2> inputStream2;  // 第二个输入流
 
+	/**
+	 * 构造函数
+	 */
 	protected ConnectedStreams(StreamExecutionEnvironment env, DataStream<IN1> input1, DataStream<IN2> input2) {
 		this.environment = requireNonNull(env);
 		this.inputStream1 = requireNonNull(input1);
 		this.inputStream2 = requireNonNull(input2);
 	}
 
+	/**
+	 * 返回执行环境
+	 */
 	public StreamExecutionEnvironment getExecutionEnvironment() {
 		return environment;
 	}
@@ -75,6 +85,9 @@ public class ConnectedStreams<IN1, IN2> {
 	 * Returns the first {@link DataStream}.
 	 *
 	 * @return The first DataStream.
+	 */
+	/**
+	 * 返回第一个输入流
 	 */
 	public DataStream<IN1> getFirstInput() {
 		return inputStream1;
@@ -85,6 +98,9 @@ public class ConnectedStreams<IN1, IN2> {
 	 *
 	 * @return The second DataStream.
 	 */
+	/**
+	 * 返回第二个输入流
+	 */
 	public DataStream<IN2> getSecondInput() {
 		return inputStream2;
 	}
@@ -94,6 +110,9 @@ public class ConnectedStreams<IN1, IN2> {
 	 *
 	 * @return The type of the first input
 	 */
+	/**
+	 * 获取第一个流的输入 type
+	 */
 	public TypeInformation<IN1> getType1() {
 		return inputStream1.getType();
 	}
@@ -102,6 +121,9 @@ public class ConnectedStreams<IN1, IN2> {
 	 * Gets the type of the second input.
 	 *
 	 * @return The type of the second input
+	 */
+	/**
+	 * 获取第二个流的输入 type
 	 */
 	public TypeInformation<IN2> getType2() {
 		return inputStream2.getType();
@@ -119,6 +141,10 @@ public class ConnectedStreams<IN1, IN2> {
 	 *            second input stream.
 	 * @return The grouped {@link ConnectedStreams}
 	 */
+	/**
+	 * 连接流的 KeyBy 操作。根据 keyPosition1 和 keyPosition2 为 input1 和 input2
+	 * 分配 key
+	 */
 	public ConnectedStreams<IN1, IN2> keyBy(int keyPosition1, int keyPosition2) {
 		return new ConnectedStreams<>(this.environment, inputStream1.keyBy(keyPosition1),
 				inputStream2.keyBy(keyPosition2));
@@ -133,6 +159,10 @@ public class ConnectedStreams<IN1, IN2> {
 	 * @param keyPositions2
 	 *            The fields used to group the second input stream.
 	 * @return The grouped {@link ConnectedStreams}
+	 */
+	/**
+	 * 连接流的 KeyBy 操作。根据 keyPosition1 和 keyPosition2 为 input1 和 input2
+	 * 分配 key
 	 */
 	public ConnectedStreams<IN1, IN2> keyBy(int[] keyPositions1, int[] keyPositions2) {
 		return new ConnectedStreams<>(environment, inputStream1.keyBy(keyPositions1),
@@ -223,6 +253,11 @@ public class ConnectedStreams<IN1, IN2> {
 	 * @param coMapper The CoMapFunction used to jointly transform the two input DataStreams
 	 * @return The transformed {@link DataStream}
 	 */
+	/**
+	 * 在 ConnectedStream 上应用一个 CoMap 算子用来将输入变为相同的类型
+	 * CoMapFunction 会应用在 input1 和 input2 的每个元素上
+	 * 并且会返回仅仅一个元素
+	 */
 	public <R> SingleOutputStreamOperator<R> map(CoMapFunction<IN1, IN2, R> coMapper) {
 
 		TypeInformation<R> outTypeInfo = TypeExtractor.getBinaryOperatorReturnType(
@@ -253,6 +288,13 @@ public class ConnectedStreams<IN1, IN2> {
 	 *            The CoFlatMapFunction used to jointly transform the two input
 	 *            DataStreams
 	 * @return The transformed {@link DataStream}
+	 */
+	/**
+	 * 在 ConnectedStream 上应用一个 CoFlatMap 算子，将输入转换为相同的类型
+	 * 这个算子给第一个输入流的每个元素调用 flatMap1 方法
+	 * 给第二个输入流的每个元素调用 flatMap2 方法
+	 * 每个 CoFlatMapFunction 可以返回任意数量的元素
+	 * 也可以不返回
 	 */
 	public <R> SingleOutputStreamOperator<R> flatMap(
 			CoFlatMapFunction<IN1, IN2, R> coFlatMapper) {
@@ -287,6 +329,14 @@ public class ConnectedStreams<IN1, IN2> {
 	 * @param <R> The type of elements emitted by the {@code CoProcessFunction}.
 	 *
 	 * @return The transformed {@link DataStream}.
+	 */
+	/**
+	 * 在相连的输入流上应用一个 CoProcessFunction 函数，从而创建一个转换的输出流
+	 * 
+	 * 算子会在输入流的每一个元素上应用 CoProcessFunction，可以产生零个或者多个输出元素
+	 * 与 CoFlatMapFunction 相比，CoProcessFunction 能够请求时间和设置定时器
+	 * 当设置的定时器触发的时候，CoProcessFunction 能够 emit elements
+	 * 或者注册更多的定时器
 	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> process(
@@ -331,8 +381,10 @@ public class ConnectedStreams<IN1, IN2> {
 		TwoInputStreamOperator<IN1, IN2, R> operator;
 
 		if ((inputStream1 instanceof KeyedStream) && (inputStream2 instanceof KeyedStream)) {
+			// 当两个输入流都是 KeyedStream，创建 KeyedCoProcessOperator
 			operator = new KeyedCoProcessOperator<>(inputStream1.clean(coProcessFunction));
 		} else {
+			// 反之创建 CoProcessOperator
 			operator = new CoProcessOperator<>(inputStream1.clean(coProcessFunction));
 		}
 
@@ -345,9 +397,11 @@ public class ConnectedStreams<IN1, IN2> {
 			TwoInputStreamOperator<IN1, IN2, R> operator) {
 
 		// read the output type of the input Transforms to coax out errors about MissingTypeInfo
+		// 读取两个输入流的 output type
 		inputStream1.getType();
 		inputStream2.getType();
 
+		// 生成一个 TwoInputTransformation instance
 		TwoInputTransformation<IN1, IN2, R> transform = new TwoInputTransformation<>(
 				inputStream1.getTransformation(),
 				inputStream2.getTransformation(),
@@ -362,11 +416,13 @@ public class ConnectedStreams<IN1, IN2> {
 
 			TypeInformation<?> keyType1 = keyedInput1.getKeyType();
 			TypeInformation<?> keyType2 = keyedInput2.getKeyType();
+			// 如果两个输入流的输出类型不能转成相等的，那么抛出异常
 			if (!(keyType1.canEqual(keyType2) && keyType1.equals(keyType2))) {
 				throw new UnsupportedOperationException("Key types if input KeyedStreams " +
 						"don't match: " + keyType1 + " and " + keyType2 + ".");
 			}
 
+			// 如果是 KeyedStream，设置 key 的状态
 			transform.setStateKeySelectors(keyedInput1.getKeySelector(), keyedInput2.getKeySelector());
 			transform.setStateKeyType(keyType1);
 		}

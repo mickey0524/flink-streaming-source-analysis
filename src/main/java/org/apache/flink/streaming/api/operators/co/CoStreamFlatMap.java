@@ -28,6 +28,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * {@link org.apache.flink.streaming.api.operators.StreamOperator} for processing
  * {@link CoFlatMapFunction CoFlatMapFunctions}.
  */
+/**
+ * 应用 CoFlatMapFunction 方法的流操作符
+ */
 @Internal
 public class CoStreamFlatMap<IN1, IN2, OUT>
 		extends AbstractUdfStreamOperator<OUT, CoFlatMapFunction<IN1, IN2, OUT>>
@@ -35,6 +38,7 @@ public class CoStreamFlatMap<IN1, IN2, OUT>
 
 	private static final long serialVersionUID = 1L;
 
+	// 应用 collector 来保证 collect 出去的 record 都有相同的 ts
 	private transient TimestampedCollector<OUT> collector;
 
 	public CoStreamFlatMap(CoFlatMapFunction<IN1, IN2, OUT> flatMapper) {
@@ -48,6 +52,7 @@ public class CoStreamFlatMap<IN1, IN2, OUT>
 	}
 
 	@Override
+	// 对第一个输入流的每一个元素执行 flatMap1 方法
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		collector.setTimestamp(element);
 		userFunction.flatMap1(element.getValue(), collector);
@@ -55,6 +60,7 @@ public class CoStreamFlatMap<IN1, IN2, OUT>
 	}
 
 	@Override
+	// 对第二个输入流的每一个元素执行 flatMap2 方法
 	public void processElement2(StreamRecord<IN2> element) throws Exception {
 		collector.setTimestamp(element);
 		userFunction.flatMap2(element.getValue(), collector);

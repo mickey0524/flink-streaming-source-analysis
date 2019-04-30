@@ -76,6 +76,9 @@ public class ProcessOperator<IN, OUT>
 		this.currentWatermark = mark.getTimestamp();
 	}
 
+	/**
+	 * ProcessFunction.Context 的实现类
+	 */
 	private class ContextImpl extends ProcessFunction<IN, OUT>.Context implements TimerService {
 		private StreamRecord<IN> element;
 

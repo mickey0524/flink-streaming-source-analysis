@@ -24,6 +24,10 @@ import java.io.Serializable;
 /**
  * Internal function for summing up contents of fields. This is used with {@link SumAggregator}.
  */
+/**
+ * 内部函数，用于 sum field，根据不同的类型选择不同的 SumFunction
+ * 在 SumAggregator 中使用
+ */
 @Internal
 public abstract class SumFunction implements Serializable {
 

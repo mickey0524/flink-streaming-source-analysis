@@ -686,6 +686,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * values based on the key value. Only input values with the same key will
 	 * go to the same reducer.
 	 *
+	 * 在分区流上应用 reduce transformation
+	 * ReduceFunction 会根据 key 接受到输入值
+	 * 只有 key 相同的输入值会进入相同的 reducer
+	 *
 	 * @param reducer
 	 *            The {@link ReduceFunction} that will be called for every
 	 *            element of the input values with the same key.
@@ -701,6 +705,13 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * the given key position. The {@link FoldFunction} will receive input
 	 * values based on the key value. Only input values with the same key will
 	 * go to the same folder.
+	 *
+	 * 在分区流上应用 fold transformation
+	 * FoldFunction 会根据 key 接受到输入值
+	 * 只有 key 相同的输入值会进入相同的 folder
+	 * 这个 API 在将来会被 remove
+	 * fold 可以用 map + keyBy + reduce 来替代
+	 * 但是没有初始值了
 	 *
 	 * @param folder
 	 *            The {@link FoldFunction} that will be called for every element
@@ -724,6 +735,8 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * Applies an aggregation that gives a rolling sum of the data stream at the
 	 * given position grouped by the given key. An independent aggregate is kept
 	 * per key.
+	 *
+	 * sum 操作会被转为一个 reduce 操作
 	 *
 	 * @param positionToSum
 	 *            The field position in the data points to sum. This is applicable to
@@ -749,6 +762,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            (which is considered as having only one field).
 	 * @return The transformed DataStream.
 	 */
+	/**
+	 * sum 操作会被转为一个 reduce 操作
+	 */
 	public SingleOutputStreamOperator<T> sum(String field) {
 		return aggregate(new SumAggregator<>(field, getType(), getExecutionConfig()));
 	}
@@ -763,6 +779,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Tuple types, Scala case classes, and primitive types (which is considered
 	 *            as having one field).
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 positionToMin 位置最小的元素，会被转为一个 reduce 操作
 	 */
 	public SingleOutputStreamOperator<T> min(int positionToMin) {
 		return aggregate(new ComparableAggregator<>(positionToMin, getType(), AggregationFunction.AggregationType.MIN,
@@ -786,6 +805,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            (which is considered as having only one field).
 	 * @return The transformed DataStream.
 	 */
+	/**
+	 * 获取分区流中 field 字段最小的元素，会被转为一个 reduce 操作
+	 */
 	public SingleOutputStreamOperator<T> min(String field) {
 		return aggregate(new ComparableAggregator<>(field, getType(), AggregationFunction.AggregationType.MIN,
 				false, getExecutionConfig()));
@@ -801,6 +823,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Tuple types, Scala case classes, and primitive types (which is considered
 	 *            as having one field).
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 positionToMin 位置最大的元素，会被转为一个 reduce 操作
 	 */
 	public SingleOutputStreamOperator<T> max(int positionToMax) {
 		return aggregate(new ComparableAggregator<>(positionToMax, getType(), AggregationFunction.AggregationType.MAX,
@@ -823,6 +848,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Furthermore "*" can be specified in case of a basic type
 	 *            (which is considered as having only one field).
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 field 字段最大的元素，会被转为一个 reduce 操作
 	 */
 	public SingleOutputStreamOperator<T> max(String field) {
 		return aggregate(new ComparableAggregator<>(field, getType(), AggregationFunction.AggregationType.MAX,
@@ -848,6 +876,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            If True then in case of field equality the first object will
 	 *            be returned
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 field 字段最小的元素，会被转为一个 reduce 操作
+	 * first 为 true 的话，当字段大小相同，选择首次出现的元素
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public SingleOutputStreamOperator<T> minBy(String field, boolean first) {
@@ -875,6 +907,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            be returned
 	 * @return The transformed DataStream.
 	 */
+	/**
+	 * 获取分区流中 field 字段最大的元素，会被转为一个 reduce 操作
+	 * first 为 true 的话，当字段大小相同，选择首次出现的元素
+	 */
 	public SingleOutputStreamOperator<T> maxBy(String field, boolean first) {
 		return aggregate(new ComparableAggregator<>(field, getType(), AggregationFunction.AggregationType.MAXBY,
 				first, getExecutionConfig()));
@@ -891,6 +927,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Tuple types, Scala case classes, and primitive types (which is considered
 	 *            as having one field).
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 positionToMinBy 位置最小的元素，会被转为一个 reduce 操作
+	 * 当字段大小相同，选择首次出现的元素
 	 */
 	public SingleOutputStreamOperator<T> minBy(int positionToMinBy) {
 		return this.minBy(positionToMinBy, true);
@@ -910,6 +950,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Furthermore "*" can be specified in case of a basic type
 	 *            (which is considered as having only one field).
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 positionToMinBy 位置最小的元素，会被转为一个 reduce 操作
+	 * 当字段大小相同，选择首次出现的元素
 	 */
 	public SingleOutputStreamOperator<T> minBy(String positionToMinBy) {
 		return this.minBy(positionToMinBy, true);
@@ -931,6 +975,11 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            minimal value, otherwise returns the last
 	 * @return The transformed DataStream.
 	 */
+	/**
+	 * 获取分区流中 positionToMinBy 位置最小的元素，会被转为一个 reduce 操作
+	 * first 为 true 的时候，当字段大小相同，选择首次出现的元素
+	 * 反之，选择随后出现的元素
+	 */
 	public SingleOutputStreamOperator<T> minBy(int positionToMinBy, boolean first) {
 		return aggregate(new ComparableAggregator<T>(positionToMinBy, getType(), AggregationFunction.AggregationType.MINBY, first,
 				getExecutionConfig()));
@@ -947,6 +996,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Tuple types, Scala case classes, and primitive types (which is considered
 	 *            as having one field).
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 positionToMinBy 位置最大的元素，会被转为一个 reduce 操作
+	 * 当字段大小相同，选择首次出现的元素
 	 */
 	public SingleOutputStreamOperator<T> maxBy(int positionToMaxBy) {
 		return this.maxBy(positionToMaxBy, true);
@@ -967,6 +1020,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            (which is considered as having only one field).
 	 * @return The transformed DataStream.
 	 */
+	/**
+	 * 获取分区流中 positionToMinBy 位置最大的元素，会被转为一个 reduce 操作
+	 * 当字段大小相同，选择首次出现的元素
+	 */
 	public SingleOutputStreamOperator<T> maxBy(String positionToMaxBy) {
 		return this.maxBy(positionToMaxBy, true);
 	}
@@ -986,6 +1043,11 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            If true, then the operator return the first element with the
 	 *            maximum value, otherwise returns the last
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 获取分区流中 positionToMinBy 位置最大的元素，会被转为一个 reduce 操作
+	 * first 为 true 的时候，当字段大小相同，选择首次出现的元素
+	 * 反之，选择随后出现的元素
 	 */
 	public SingleOutputStreamOperator<T> maxBy(int positionToMaxBy, boolean first) {
 		return aggregate(new ComparableAggregator<>(positionToMaxBy, getType(), AggregationFunction.AggregationType.MAXBY, first,

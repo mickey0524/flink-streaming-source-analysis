@@ -25,6 +25,9 @@ import java.io.Serializable;
 /**
  * Internal comparator implementation, for use with {@link ComparableAggregator}.
  */
+/**
+ * 内部的比较器实现，用于 ComparableAggregator
+ */
 @Internal
 public abstract class Comparator implements Serializable {
 
@@ -32,6 +35,9 @@ public abstract class Comparator implements Serializable {
 
 	public abstract <R> int isExtremal(Comparable<R> o1, R o2);
 
+	/**
+	 * 根据不同的聚合类型选择不同的比较器
+	 */
 	public static Comparator getForAggregation(AggregationType type) {
 		switch (type) {
 		case MAX:

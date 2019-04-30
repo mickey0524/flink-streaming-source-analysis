@@ -23,6 +23,9 @@ import org.apache.flink.api.common.functions.ReduceFunction;
 /**
  * Holder class for aggregation types that can be used on a windowed stream or keyed stream.
  */
+/**
+ * 可用于窗口流或键控流的聚合类型的 holder 类
+ */
 @Internal
 public abstract class AggregationFunction<T> implements ReduceFunction<T> {
 	private static final long serialVersionUID = 1L;

@@ -29,13 +29,16 @@ import org.apache.flink.streaming.util.typeutils.FieldAccessorFactory;
 /**
  * An {@link AggregationFunction} that sums up fields.
  */
+/**
+ * 一个聚合函数用于 sum field
+ */
 @Internal
 public class SumAggregator<T> extends AggregationFunction<T> {
 
 	private static final long serialVersionUID = 1L;
 
-	private final FieldAccessor<T, Object> fieldAccessor;
-	private final SumFunction adder;
+	private final FieldAccessor<T, Object> fieldAccessor;  // field 访问器，会根据 type 选择合适的访问器
+	private final SumFunction adder;  // sum 工具，将流中的数据 sum 起来
 	private final TypeSerializer<T> serializer;
 	private final boolean isTuple;
 

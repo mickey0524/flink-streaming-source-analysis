@@ -27,6 +27,9 @@ import org.apache.flink.streaming.util.typeutils.FieldAccessorFactory;
  * An {@link AggregationFunction} that computes values based on comparisons of
  * {@link Comparable Comparables}.
  */
+/**
+ * 依靠 Comparator 来进行数值的比较
+ */
 @Internal
 public class ComparableAggregator<T> extends AggregationFunction<T> {
 
@@ -73,11 +76,14 @@ public class ComparableAggregator<T> extends AggregationFunction<T> {
 		Comparable<Object> o1 = (Comparable<Object>) fieldAccessor.get(value1);
 		Object o2 = fieldAccessor.get(value2);
 
-		int c = comparator.isExtremal(o1, o2);
+		int c = comparator.isExtremal(o1, o2);  // 取出 value1 和 value2 的键进行大小比较
 
 		if (byAggregate) {
+			// MAXBY/MINBY 直接返回符合条件的键
 			// if they are the same we choose based on whether we want to first or last
 			// element with the min/max.
+			// 当 value1 和 value2 相等的时候
+			// 根据 first 属性来选择 value1 还是 value2
 			if (c == 0) {
 				return first ? value1 : value2;
 			}
@@ -85,6 +91,8 @@ public class ComparableAggregator<T> extends AggregationFunction<T> {
 			return c == 1 ? value1 : value2;
 
 		} else {
+			// MAX/MIN 将符合条件的 key 写入 value1，MAX/MIN 返回的永远是 value1，主要注意的是，当 o2 等于 o1 的时候，选择 o2
+			// 也就是说当数据相等的时候，选择后来的
 			if (c == 0) {
 				value1 = fieldAccessor.set(value1, o2);
 			}

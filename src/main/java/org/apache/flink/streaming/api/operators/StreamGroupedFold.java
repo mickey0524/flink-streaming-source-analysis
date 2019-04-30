@@ -36,6 +36,9 @@ import java.io.IOException;
  * A {@link StreamOperator} for executing a {@link FoldFunction} on a
  * {@link org.apache.flink.streaming.api.datastream.KeyedStream}.
  *
+ * 一个在 KeyedStream 上执行 FoldFunction 的操作符
+ * 会在未来的版本被 remove
+ *
  * @deprecated will be removed in a future version
  */
 @Internal
@@ -85,11 +88,13 @@ public class StreamGroupedFold<IN, OUT, KEY>
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		OUT value = values.value();
 
+		// 如果 element 不是第一个到来
 		if (value != null) {
 			OUT folded = userFunction.fold(outTypeSerializer.copy(value), element.getValue());
 			values.update(folded);
 			output.collect(element.replace(folded));
 		} else {
+			// element 是第一个到来的
 			OUT first = userFunction.fold(outTypeSerializer.copy(initialValue), element.getValue());
 			values.update(first);
 			output.collect(element.replace(first));

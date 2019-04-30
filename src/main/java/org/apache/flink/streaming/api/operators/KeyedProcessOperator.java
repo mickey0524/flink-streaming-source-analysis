@@ -43,11 +43,11 @@ public class KeyedProcessOperator<K, IN, OUT>
 
 	private static final long serialVersionUID = 1L;
 
-	private transient TimestampedCollector<OUT> collector;
+	private transient TimestampedCollector<OUT> collector;  // 保证 process 出来的元素 ts 相同
 
-	private transient ContextImpl context;
+	private transient ContextImpl context;  // 实现 KeyedProcessFunction.Context
 
-	private transient OnTimerContextImpl onTimerContext;
+	private transient OnTimerContextImpl onTimerContext;  // 实现 KeyedProcessFunction.OnTimerContext
 
 	public KeyedProcessOperator(KeyedProcessFunction<K, IN, OUT> function) {
 		super(function);
@@ -60,6 +60,7 @@ public class KeyedProcessOperator<K, IN, OUT>
 		super.open();
 		collector = new TimestampedCollector<>(output);
 
+		// 这里没有用 ProcessTimeService 而是使用了 InternalTimerService
 		InternalTimerService<VoidNamespace> internalTimerService =
 				getInternalTimerService("user-timers", VoidNamespaceSerializer.INSTANCE, this);
 

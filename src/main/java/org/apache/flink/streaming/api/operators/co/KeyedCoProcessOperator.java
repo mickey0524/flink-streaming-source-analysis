@@ -50,11 +50,11 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 
 	private static final long serialVersionUID = 1L;
 
-	private transient TimestampedCollector<OUT> collector;
+	private transient TimestampedCollector<OUT> collector;  // 保证 process 出来的元素 ts 相同
 
-	private transient ContextImpl<IN1, IN2, OUT> context;
+	private transient ContextImpl<IN1, IN2, OUT> context;  // 实现 CoProcessFunction.Context
 
-	private transient OnTimerContextImpl<IN1, IN2, OUT> onTimerContext;
+	private transient OnTimerContextImpl<IN1, IN2, OUT> onTimerContext;  // 实现 CoProcessFunction.OnTimerContext
 
 	/**
 	 * 注册函数，设置 userFunction

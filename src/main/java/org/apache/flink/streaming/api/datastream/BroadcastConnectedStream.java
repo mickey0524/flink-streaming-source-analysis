@@ -44,6 +44,8 @@ import static java.util.Objects.requireNonNull;
  * where operations on one stream directly affect the operations on the other stream, usually via
  * shared state between the streams.
  *
+ * 一个 BroadcastConnectedStream 是 DataStream／KeyedStream 和 BroadcastStream 连接得到的
+ *
  * <p>An example for the use of such connected streams would be to apply rules that change over time
  * onto another, possibly keyed stream. The stream with the broadcast state has the rules, and will
  * store them in the broadcast state, while the other stream will contain the elements to apply the
@@ -81,6 +83,9 @@ public class BroadcastConnectedStream<IN1, IN2> {
 	 *
 	 * @return The stream which, by convention, is not broadcasted.
 	 */
+	/**
+	 * 返回 DataStream
+	 */
 	public DataStream<IN1> getFirstInput() {
 		return inputStream1;
 	}
@@ -89,6 +94,9 @@ public class BroadcastConnectedStream<IN1, IN2> {
 	 * Returns the {@link BroadcastStream}.
 	 *
 	 * @return The stream which, by convention, is the broadcast one.
+	 */
+	/**
+	 * 返回 BroadcastStream
 	 */
 	public BroadcastStream<IN2> getSecondInput() {
 		return inputStream2;
@@ -120,6 +128,9 @@ public class BroadcastConnectedStream<IN1, IN2> {
 	 * @param <KS> The type of the keys in the keyed stream.
 	 * @param <OUT> The type of the output elements.
 	 * @return The transformed {@link DataStream}.
+	 */
+	/**
+	 * 输入的两个流是 BroadcastStream 和 KeyedStream
 	 */
 	@PublicEvolving
 	public <KS, OUT> SingleOutputStreamOperator<OUT> process(final KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT> function) {
@@ -170,6 +181,9 @@ public class BroadcastConnectedStream<IN1, IN2> {
 	 * @param function The {@link BroadcastProcessFunction} that is called for each element in the stream.
 	 * @param <OUT> The type of the output elements.
 	 * @return The transformed {@link DataStream}.
+	 */
+	/**
+	 * 输入的两个流是 DataStream 和 BroadcastStream
 	 */
 	@PublicEvolving
 	public <OUT> SingleOutputStreamOperator<OUT> process(final BroadcastProcessFunction<IN1, IN2, OUT> function) {

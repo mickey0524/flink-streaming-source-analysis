@@ -59,6 +59,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  * @param <IN2> The input type of the broadcast side.
  * @param <OUT> The output type of the operator.
  */
+/**
+ * 一个 TwoInputStreamOperator 执行 KeyedBroadcastProcessFunction
+ */
 @Internal
 public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		extends AbstractUdfStreamOperator<OUT, KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT>>
@@ -89,6 +92,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 	public void open() throws Exception {
 		super.open();
 
+		// 内部定时器服务
 		InternalTimerService<VoidNamespace> internalTimerService =
 				getInternalTimerService("user-timers", VoidNamespaceSerializer.INSTANCE, this);
 

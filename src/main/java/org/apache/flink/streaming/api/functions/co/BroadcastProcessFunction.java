@@ -61,6 +61,10 @@ public abstract class BroadcastProcessFunction<IN1, IN2, OUT> extends BaseBroadc
 	 * Finally, it has <b>read-only</b> access to the broadcast state.
 	 * The context is only valid during the invocation of this method, do not store it.
 	 *
+	 * 非广播侧流的每个元素都要执行这个方法
+	 * 这个函数能输出零个或者多个元素，请求当前的进程／事件时间，也能够请求和更新当前的 keyed state
+	 * 需要注意的是，这个方法对于 broadcast state 只有读的权限
+	 *
 	 * @param value The stream element.
 	 * @param ctx A {@link ReadOnlyContext} that allows querying the timestamp of the element,
 	 *            querying the current processing/event time and updating the broadcast state.
@@ -80,6 +84,9 @@ public abstract class BroadcastProcessFunction<IN1, IN2, OUT> extends BaseBroadc
 	 * {@link org.apache.flink.api.common.state.BroadcastState broadcast state}. These can be done
 	 * through the provided {@link Context}.
 	 * The context is only valid during the invocation of this method, do not store it.
+	 *
+	 * 广播侧流的每个元素都要执行这个方法
+	 * 这个函数能输出零个或者多个元素，请求当前的进程／事件时间，能够读取和更新 broadcast state
 	 *
 	 * @param value The stream element.
 	 * @param ctx A {@link Context} that allows querying the timestamp of the element,

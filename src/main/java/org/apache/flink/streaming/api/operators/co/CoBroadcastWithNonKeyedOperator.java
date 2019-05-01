@@ -49,6 +49,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  * @param <IN2> The input type of the broadcast side.
  * @param <OUT> The output type of the operator.
  */
+/**
+ * 一个 TwoInputStreamOperator 执行 BroadcastProcessFunctions
+ */
 @Internal
 public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 		extends AbstractUdfStreamOperator<OUT, BroadcastProcessFunction<IN1, IN2, OUT>>
@@ -65,9 +68,9 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 
 	private transient Map<MapStateDescriptor<?, ?>, BroadcastState<?, ?>> broadcastStates;
 
-	private transient ReadWriteContextImpl rwContext;
+	private transient ReadWriteContextImpl rwContext;  // 给广播流使用的
 
-	private transient ReadOnlyContextImpl rContext;
+	private transient ReadOnlyContextImpl rContext;  // 给非广播流使用的
 
 	public CoBroadcastWithNonKeyedOperator(
 			final BroadcastProcessFunction<IN1, IN2, OUT> function,

@@ -70,6 +70,11 @@ public abstract class KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT> extends B
 	 * Finally, it has <b>read-only</b> access to the broadcast state.
 	 * The context is only valid during the invocation of this method, do not store it.
 	 *
+	 * 非广播侧流的每一个元素都要执行本方法
+	 * 这个方法能输出零个或多个元素，请求当前的进程／事件时间，也能够请求和更新 local keyed state
+	 * 此外，这个方法能够获取 TimerService 用来注册定时器以及请求时间
+	 * 需要注意的是，这个方法只能访问 broadcast state，不能修改
+	 *
 	 * @param value The stream element.
 	 * @param ctx A {@link ReadOnlyContext} that allows querying the timestamp of the element,
 	 *            querying the current processing/event time and iterating the broadcast state
@@ -91,6 +96,11 @@ public abstract class KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT> extends B
 	 * can register a {@link KeyedStateFunction function} to be applied to all keyed states on
 	 * the local partition. These can be done through the provided {@link Context}.
 	 * The context is only valid during the invocation of this method, do not store it.
+	 *
+	 * 广播侧流的每个元素都要执行这个方法
+	 * 这个函数能输出零个或者多个元素，请求当前的进程／事件时间，能够读取和更新 broadcast state
+	 * 此外，这个方法能够注册一个 KeyedStateFunction，本地分区的所有 keyed states 都会应用
+	 * 这个函数
 	 *
 	 * @param value The stream element.
 	 * @param ctx A {@link Context} that allows querying the timestamp of the element,
@@ -117,6 +127,9 @@ public abstract class KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT> extends B
 	 *
 	 * @throws Exception This method may throw exceptions. Throwing an exception will cause the operation
 	 *                   to fail and may trigger recovery.
+	 */
+	/**
+	 * 当 TimerService 设置的定时器触发的时候调用
 	 */
 	public void onTimer(final long timestamp, final OnTimerContext ctx, final Collector<OUT> out) throws Exception {
 		// the default implementation does nothing.

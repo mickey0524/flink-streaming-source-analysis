@@ -35,10 +35,17 @@ import static java.util.Objects.requireNonNull;
  * implicitly creates states where the user can store elements of the created {@code BroadcastStream}.
  * (see {@link BroadcastConnectedStream}).
  *
+ * 一个 BroadcastStream 是一个有着 BroadcastState 的流
+ * BroadcastStream 能够被任何流执行 broadcast(MapStateDescriptor[]) 生成
+ * BroadcastStream 隐式的创建了 states，用户可以在 states 里面存储元素
+ *
  * <p>Note that no further operation can be applied to these streams. The only available option is to connect them
  * with a keyed or non-keyed stream, using the {@link KeyedStream#connect(BroadcastStream)} and the
  * {@link DataStream#connect(BroadcastStream)} respectively. Applying these methods will result it a
  * {@link BroadcastConnectedStream} for further processing.
+ *
+ * 需要注意的是，BroadcastStream 没有其他的操作
+ * 唯一的操作是 DataStream 或 KeyedStream 能够 connect BroadcastStream 生成 BroadcastConnectedStream
  *
  * @param <T> The type of input/output elements.
  */

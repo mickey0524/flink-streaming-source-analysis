@@ -295,6 +295,8 @@ public class DataStream<T> {
 	 * Creates a new {@link BroadcastConnectedStream} by connecting the current
 	 * {@link DataStream} or {@link KeyedStream} with a {@link BroadcastStream}.
 	 *
+	 * 连接当前的流和一个 BroadcastStream 生成一个 BroadcastConnectedStream
+	 *
 	 * <p>The latter can be created using the {@link #broadcast(MapStateDescriptor[])} method.
 	 *
 	 * <p>The resulting stream can be further processed using the {@code BroadcastConnectedStream.process(MyFunction)}
@@ -433,6 +435,9 @@ public class DataStream<T> {
 	 * @return The partitioned DataStream.
 	 * @see KeySelector
 	 */
+	/**
+	 * 自定义 partition
+	 */
 	public <K> DataStream<T> partitionCustom(Partitioner<K> partitioner, KeySelector<T, K> keySelector) {
 		return setConnectionType(new CustomPartitionerWrapper<>(clean(partitioner),
 				clean(keySelector)));
@@ -453,6 +458,10 @@ public class DataStream<T> {
 	 * are broadcasted to every parallel instance of the next operation.
 	 *
 	 * @return The DataStream with broadcast partitioning set.
+	 */
+	/**
+	 * 给 DataStream 设置 broadcast partitioner，输出元素会被广播到
+	 * 下一个操作的全部并行实例上
 	 */
 	public DataStream<T> broadcast() {
 		return setConnectionType(new BroadcastPartitioner<T>());

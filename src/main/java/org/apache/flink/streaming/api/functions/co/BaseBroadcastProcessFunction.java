@@ -29,6 +29,10 @@ import org.apache.flink.util.OutputTag;
  * The base class containing the functionality available to all broadcast process function.
  * These include the {@link BroadcastProcessFunction} and the {@link KeyedBroadcastProcessFunction}.
  */
+/**
+ * 这个基类包含了可用于所有广播处理的函数
+ * BroadcastProcessFunction 和 KeyedBroadcastProcessFunction 继承了本类
+ */
 @PublicEvolving
 public abstract class BaseBroadcastProcessFunction extends AbstractRichFunction {
 
@@ -47,6 +51,9 @@ public abstract class BaseBroadcastProcessFunction extends AbstractRichFunction 
 		 * <p>This might be {@code null}, for example if the time characteristic of your program
 		 * is set to {@link org.apache.flink.streaming.api.TimeCharacteristic#ProcessingTime}.
 		 */
+		/**
+		 * 当前处理的元素的 ts 或者触发的定时器的时间
+		 */
 		public abstract Long timestamp();
 
 		/**
@@ -55,12 +62,21 @@ public abstract class BaseBroadcastProcessFunction extends AbstractRichFunction 
 		 * @param outputTag the {@code OutputTag} that identifies the side output to emit to.
 		 * @param value The record to emit.
 		 */
+		/**
+		 * 侧边输出
+		 */
 		public abstract <X> void output(final OutputTag<X> outputTag, final X value);
 
 		/** Returns the current processing time. */
+		/**
+		 * 返回当前的进程时间
+		 */
 		public abstract long currentProcessingTime();
 
 		/** Returns the current event-time watermark. */
+		/**
+		 * 返回当前的 watermark
+		 */
 		public abstract long currentWatermark();
 	}
 
@@ -72,6 +88,9 @@ public abstract class BaseBroadcastProcessFunction extends AbstractRichFunction 
 	 * this also allows to get and update the elements stored in the
 	 * {@link BroadcastState broadcast state}.
 	 * In other words, it gives read/write access to the broadcast state.
+	 */
+	/**
+	 * 提供了 broadcast state 的读写接口，给广播连通流广播侧流使用的
 	 */
 	public abstract class Context extends BaseContext {
 
@@ -91,6 +110,9 @@ public abstract class BaseBroadcastProcessFunction extends AbstractRichFunction 
 	 * <p>Apart from the basic functionality of a {@link BaseContext context},
 	 * this also allows to get a <b>read-only</b> {@link Iterable} over the elements stored in the
 	 * broadcast state.
+	 */
+	/**
+	 * 提供了 broadcast state 的读接口，给广播连通流非广播侧流使用的
 	 */
 	public abstract class ReadOnlyContext extends BaseContext {
 

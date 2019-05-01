@@ -23,6 +23,9 @@ package org.apache.flink.streaming.runtime.partitioner;
  * of the stream transformation. The configure method is called by the StreamGraph when adding
  * internal edges.
  *
+ * 配置 stream transformation 最大并行度的 streamPartitioner 的接口
+ * 添加内部边时，流图会调用配置方法
+ *
  * <p>This interface is required since the stream partitioners are instantiated eagerly. Due to that
  * the maximum parallelism might not have been determined and needs to be set at a stage when the
  * maximum parallelism could have been determined.

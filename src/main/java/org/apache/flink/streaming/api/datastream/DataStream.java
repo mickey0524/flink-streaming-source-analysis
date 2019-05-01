@@ -481,6 +481,9 @@ public class DataStream<T> {
 	 *
 	 * @return The DataStream with shuffle partitioning set.
 	 */
+	/**
+	 * 给 DataStream 设置 shuffle partitioner，这样输出元素会被均匀随机的打散到下一个操作中
+	 */
 	@PublicEvolving
 	public DataStream<T> shuffle() {
 		return setConnectionType(new ShufflePartitioner<T>());
@@ -492,6 +495,9 @@ public class DataStream<T> {
 	 *
 	 * @return The DataStream with forward partitioning set.
 	 */
+	/**
+	 * 给 DataStream 设置 forward partitioner，这样输出元素直接送到本地 subtask 的下一个操作中
+	 */
 	public DataStream<T> forward() {
 		return setConnectionType(new ForwardPartitioner<T>());
 	}
@@ -502,6 +508,10 @@ public class DataStream<T> {
 	 * fashion.
 	 *
 	 * @return The DataStream with rebalance partitioning set.
+	 */
+	/**
+	 * 给 DataStream 设置 rebalance partitioner，这样输出元素按照轮询的方式送到
+	 * 下一个操作中去
 	 */
 	public DataStream<T> rebalance() {
 		return setConnectionType(new RebalancePartitioner<T>());
@@ -527,6 +537,15 @@ public class DataStream<T> {
 	 *
 	 * @return The DataStream with rescale partitioning set.
 	 */
+	/**
+	 * 给 DataStream 设置 rescale partitioner，这样输出元素按照轮询的方式送到下一个操作中去
+	 *
+	 * rescale 和 rebalance 有些类似，但是不是全局的，通过轮询调度将元素从上游的 task 一个子集
+	 * 发送到下游 task 的一个子集
+	 * 
+	 * rescale 只在 TaskManager 内，rebalance 会在跨 TaskManager 分配
+	 * 有网络传输代价，但是数据倾斜非常有用
+	 */
 	@PublicEvolving
 	public DataStream<T> rescale() {
 		return setConnectionType(new RescalePartitioner<T>());
@@ -539,6 +558,11 @@ public class DataStream<T> {
 	 * in the application.
 	 *
 	 * @return The DataStream with shuffle partitioning set.
+	 */
+	/**
+	 * 给 DataStream 设置 global partitioner，输出元素会被全部送到下一个
+	 * 操作的第一个实例里面去，使用这个方法需要非常谨慎，因为很可能会造成
+	 * 性能瓶颈
 	 */
 	@PublicEvolving
 	public DataStream<T> global() {
@@ -557,18 +581,31 @@ public class DataStream<T> {
 	 * {@link ConnectedStreams} be calling
 	 * {@link IterativeStream#withFeedbackType(TypeInformation)}
 	 *
+	 * 启动程序中的迭代部分，这部分将反馈数据流。迭代部分需要调用 IterativeStream 的
+	 * closeWith(DataStream) 方法来关闭。IterativeStream 的算子是迭代的头部。
+	 * closeWith 的参数是将被反馈并用作迭代头输入的数据流。
+	 * 通过调用 withFeedbackType 用户还可以使用不同于迭代输入的反馈类型，并将输入流和反馈流视为正在调用的连接流
+	 *
 	 * <p>A common usage pattern for streaming iterations is to use output
 	 * splitting to send a part of the closing data stream to the head. Refer to
 	 * {@link #split(OutputSelector)} for more information.
+	 *
+	 * 流迭代的一个常见使用模式是使用输出拆分将关闭的数据流的一部分发送到头部
 	 *
 	 * <p>The iteration edge will be partitioned the same way as the first input of
 	 * the iteration head unless it is changed in the
 	 * {@link IterativeStream#closeWith(DataStream)} call.
 	 *
+	 * 迭代边将以迭代头的第一个输入相同的方式进行分区
+	 * 除非在 closewith（datastream）调用中对其进行了更改。
+	 *
 	 * <p>By default a DataStream with iteration will never terminate, but the user
 	 * can use the maxWaitTime parameter to set a max waiting time for the
 	 * iteration head. If no data received in the set time, the stream
 	 * terminates.
+	 *
+	 * 默认情况下，具有迭代的数据流永远不会终止，但用户可以使用 maxWaitTime 参数
+	 * 为迭代头设置最大等待时间。如果在这段时间内没有数据到来，数据流停止
 	 *
 	 * @return The iterative data stream created.
 	 */
@@ -713,6 +750,9 @@ public class DataStream<T> {
 	 * @param <R> The type of elements emitted by the {@code ProcessFunction}.
 	 *
 	 * @return The transformed {@link DataStream}.
+	 */
+	/**
+	 * process 是较为底层处理数据的方法，和 flatMap 差不多，但是能够访问定时器
 	 */
 	@Internal
 	public <R> SingleOutputStreamOperator<R> process(
@@ -1266,6 +1306,9 @@ public class DataStream<T> {
 	 * @param partitioner
 	 *            Partitioner to set.
 	 * @return The modified DataStream.
+	 */
+	/**
+	 * 为 DataStream 设置 Partitioner
 	 */
 	protected DataStream<T> setConnectionType(StreamPartitioner<T> partitioner) {
 		return new DataStream<>(this.getExecutionEnvironment(), new PartitionTransformation<>(this.getTransformation(), partitioner));

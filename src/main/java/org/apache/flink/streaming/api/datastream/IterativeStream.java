@@ -33,12 +33,16 @@ import java.util.Collection;
  *
  * @param <T> Type of the elements in this Stream
  */
+/**
+ * 迭代数据流指代了数据流中迭代的开始
+ */
 @PublicEvolving
 public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 
 	// We store these so that we can create a co-iteration if we need to
+	// 我们存储原始输入，这样我们能在需要的时候创建一个 co-iteration
 	private DataStream<T> originalInput;
-	private long maxWaitTime;
+	private long maxWaitTime;  // 迭代头的最大等待时间
 
 	protected IterativeStream(DataStream<T> dataStream, long maxWaitTime) {
 		super(dataStream.getExecutionEnvironment(),
@@ -63,6 +67,9 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 	 *
 	 * @return The feedback stream.
 	 *
+	 */
+	/**
+	 * 关闭迭代。该方法定义了迭代程序部分的结束，该部分将反馈到迭代的开始
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public DataStream<T> closeWith(DataStream<T> feedbackStream) {
@@ -105,6 +112,9 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 	 *            Class of the elements in the feedback stream.
 	 * @return A {@link ConnectedIterativeStreams}.
 	 */
+	/**
+	 * 
+	 */
 	public <F> ConnectedIterativeStreams<T, F> withFeedbackType(TypeHint<F> feedbackTypeHint) {
 		return withFeedbackType(TypeInformation.of(feedbackTypeHint));
 	}
@@ -119,6 +129,10 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 	 * @param feedbackType
 	 *            The type information of the feedback stream.
 	 * @return A {@link ConnectedIterativeStreams}.
+	 */
+	/**
+	 * 修改迭代的反馈类型，允许用户在输入流和反馈流上使用 co-transformations
+	 * 就像 ConnectedStreams 一样
 	 */
 	public <F> ConnectedIterativeStreams<T, F> withFeedbackType(TypeInformation<F> feedbackType) {
 		return new ConnectedIterativeStreams<>(originalInput, feedbackType, maxWaitTime);
@@ -138,6 +152,10 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 	 *            Type of the input of the iteration
 	 * @param <F>
 	 *            Type of the feedback of the iteration
+	 */
+	/**
+	 * ConnectedIterativeStreams 指代流程序开始迭代的部分
+	 * 原始的输入流和迭代的反馈连接成一个 ConnectedStreams
 	 */
 	@Public
 	public static class ConnectedIterativeStreams<I, F> extends ConnectedStreams<I, F> {

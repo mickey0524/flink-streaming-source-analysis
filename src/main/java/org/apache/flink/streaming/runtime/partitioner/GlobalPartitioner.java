@@ -26,6 +26,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  *
  * @param <T> Type of the elements in the Stream being partitioned
  */
+/**
+ * global 将所有的元素送到下游 subtask = 0 的操作符中
+ */
 @Internal
 public class GlobalPartitioner<T> extends StreamPartitioner<T> {
 	private static final long serialVersionUID = 1L;

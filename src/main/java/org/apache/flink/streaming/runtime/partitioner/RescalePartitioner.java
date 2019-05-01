@@ -39,6 +39,11 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * distribute to one downstream operation while the other two upstream operations will
  * distribute to the other downstream operations.
  *
+ * 上游操作 send 元素到下游操作的子集，这由上下游操作的并行度同时决定。举个例子，如果上游操作的并行度为 2
+ * 下游操作的并行度为 4，一个上游操作将会分配元素到两个操作，另一个上游操作将分配元素到剩下的两个下游操作
+ * 如果，从另一方面来说，上游操作的并行度为 4，下游操作的并行度为 2 的话，2 个上游操作会分配元素到一个下游
+ * 操作，另外两个上游操作分配到剩下的一个下游操作中
+ *
  * <p>In cases where the different parallelisms are not multiples of each other one or several
  * downstream operations will have a differing number of inputs from upstream operations.
  *
@@ -66,4 +71,4 @@ public class RescalePartitioner<T> extends StreamPartitioner<T> {
 	public String toString() {
 		return "RESCALE";
 	}
-}
+

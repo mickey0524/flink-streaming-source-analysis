@@ -51,6 +51,10 @@ import java.util.List;
  * @param <F> The type of the feedback elements.
  *
  */
+/**
+ * 代表拓扑中的反馈点，在 ConnectedIterativeStreams 中使用
+ * ConnectedIterativeStreams 是原始输入流和当前反馈流相连形成的连接流
+ */
 @Internal
 public class CoFeedbackTransformation<F> extends StreamTransformation<F> {
 

@@ -31,6 +31,10 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * @param <T>
  *            Type of the data
  */
+/**
+ * 用户自定义 Partitioner，用户给出一个 key
+ * 然后根据这个 key 来选择下游
+ */
 @Internal
 public class CustomPartitionerWrapper<K, T> extends StreamPartitioner<T> {
 	private static final long serialVersionUID = 1L;

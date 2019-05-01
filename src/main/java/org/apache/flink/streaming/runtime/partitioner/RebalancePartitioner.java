@@ -41,7 +41,7 @@ public class RebalancePartitioner<T> extends StreamPartitioner<T> {
 	@Override
 	public void setup(int numberOfChannels) {
 		super.setup(numberOfChannels);
-		// 初始化随机的选择一个下游 channel
+
 		nextChannelToSendTo = ThreadLocalRandom.current().nextInt(numberOfChannels);
 	}
 

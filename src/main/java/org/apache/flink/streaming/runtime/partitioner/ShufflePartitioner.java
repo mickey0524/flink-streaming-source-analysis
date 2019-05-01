@@ -45,7 +45,7 @@ public class ShufflePartitioner<T> extends StreamPartitioner<T> {
 	}
 
 	@Override
-	// 因为是随机数选择，copy 要返回一个新的实例
+	// 因为 ShufflePartitioner 有一个 Random 参数，因此需要创建新的
 	public StreamPartitioner<T> copy() {
 		return new ShufflePartitioner<T>();
 	}

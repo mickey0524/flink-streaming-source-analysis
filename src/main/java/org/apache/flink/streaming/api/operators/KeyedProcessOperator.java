@@ -71,12 +71,14 @@ public class KeyedProcessOperator<K, IN, OUT>
 	}
 
 	@Override
+	// 会在 InternalTimerServiceImpl 中的 advanceWatermark 函数内被调用
 	public void onEventTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.setAbsoluteTimestamp(timer.getTimestamp());
 		invokeUserFunction(TimeDomain.EVENT_TIME, timer);
 	}
 
 	@Override
+	// 会在 InternalTimerServiceImpl 中的 onProcessingTime 函数内被调用
 	public void onProcessingTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.eraseTimestamp();
 		invokeUserFunction(TimeDomain.PROCESSING_TIME, timer);

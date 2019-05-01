@@ -47,6 +47,11 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 
 	private final ProcessingTimeService processingTimeService;
 
+	/**
+	 * Inteface for setting and querying the current key of keyed operations
+	 * 设置和获取当前 keyed 操作的 key 的接口
+	 * setCurrentKey() 和 getCurrentKey() 两个方法
+	 */
 	private final KeyContext keyContext;
 
 	/**
@@ -54,6 +59,8 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	 */
 	/**
 	 * 已经注册的进程时间定时器
+	 * KeyGroupedInternalPriorityQueue 中有一个方法 getSubsetForKeyGroup(int keyGroupId)
+	 * 根据 keyGroupId 从优先级队列中找到属于 keyGroupId 的子集
 	 */
 	private final KeyGroupedInternalPriorityQueue<TimerHeapInternalTimer<K, N>> processingTimeTimersQueue;
 
@@ -85,6 +92,9 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	 * The one and only Future (if any) registered to execute the
 	 * next {@link Triggerable} action, when its (processing) time arrives.
 	 * */
+	/**
+	 * 接受定时器的回调
+	 */
 	private ScheduledFuture<?> nextTimer;
 
 	// Variables to be set when the service is started.
@@ -146,7 +156,9 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 			TypeSerializer<K> keySerializer,
 			TypeSerializer<N> namespaceSerializer,
 			Triggerable<K, N> triggerTarget) {
-
+		
+		// InternalTimerServiceManager 里 getInternalTimerService 函数会多次调用 startTimerService
+		// 所以这里需要判断
 		if (!isInitialized) {
 
 			if (keySerializer == null || namespaceSerializer == null) {

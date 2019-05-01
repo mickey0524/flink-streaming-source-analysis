@@ -104,6 +104,7 @@ public class InternalTimeServiceManager<K> {
 	}
 
 	@SuppressWarnings("unchecked")
+	// 新建或者返回 timerService
 	<N> InternalTimerServiceImpl<K, N> registerOrGetTimerService(String name, TimerSerializer<K, N> timerSerializer) {
 		InternalTimerServiceImpl<K, N> timerService = (InternalTimerServiceImpl<K, N>) timerServices.get(name);
 		if (timerService == null) {
@@ -124,6 +125,7 @@ public class InternalTimeServiceManager<K> {
 		return Collections.unmodifiableMap(timerServices);
 	}
 
+	// 创建定时器优先级队列
 	private <N> KeyGroupedInternalPriorityQueue<TimerHeapInternalTimer<K, N>> createTimerPriorityQueue(
 		String name,
 		TimerSerializer<K, N> timerSerializer) {
@@ -132,7 +134,7 @@ public class InternalTimeServiceManager<K> {
 			timerSerializer);
 	}
 
-	// 更新 watermark	
+	// 更新 watermark，每个 timeService 都会检查是否触发 event-time 定时器
 	public void advanceWatermark(Watermark watermark) throws Exception {
 		for (InternalTimerServiceImpl<?, ?> service : timerServices.values()) {
 			service.advanceWatermark(watermark.getTimestamp());

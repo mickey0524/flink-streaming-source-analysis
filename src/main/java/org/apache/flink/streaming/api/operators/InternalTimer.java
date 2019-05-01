@@ -32,6 +32,10 @@ import javax.annotation.Nonnull;
  * @param <K> Type of the keys to which timers are scoped.
  * @param <N> Type of the namespace to which timers are scoped.
  */
+/**
+ * 等待触发的定时器的内部接口
+ * TimeHeapInternalTimer 实现了该接口
+ */
 @Internal
 public interface InternalTimer<K, N> extends PriorityComparable<InternalTimer<?, ?>>, Keyed<K> {
 

@@ -95,6 +95,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 	}
 
 	@Override
+	// 会在 internalTimerServiceImpl 的 advanceWatermark 函数内被调用
 	public void onEventTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.setAbsoluteTimestamp(timer.getTimestamp());
 		onTimerContext.timeDomain = TimeDomain.EVENT_TIME;
@@ -105,6 +106,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 	}
 
 	@Override
+	// 会在 internalTimerServiceImpl 的 onProcessingTime 函数中被调用
 	public void onProcessingTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.eraseTimestamp();
 		onTimerContext.timeDomain = TimeDomain.PROCESSING_TIME;

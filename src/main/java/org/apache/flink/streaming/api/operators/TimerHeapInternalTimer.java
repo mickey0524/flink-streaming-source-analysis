@@ -31,6 +31,9 @@ import javax.annotation.Nonnull;
  * @param <N> Type of the namespace to which timers are scoped.
  */
 @Internal
+/**
+ * InternalTimer 的实现类
+ */
 public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, HeapPriorityQueueElement {
 
 	/** The key for which the timer is scoped. */
@@ -108,7 +111,7 @@ public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, 
 	 * removed.
 	 */
 	/**
-	 * 执行这个方法表明定时器已经不再被 time heap 管理了
+	 * 执行这个方法表明定时器已经不再被 timer heap 管理了
 	 */
 	void removedFromTimerQueue() {
 		setInternalIndex(NOT_CONTAINED);
@@ -132,7 +135,7 @@ public final class TimerHeapInternalTimer<K, N> implements InternalTimer<K, N>, 
 	}
 
 	@Override
-	// 比较优先级
+	// 比较定时器优先级，触发时间早的优先级高
 	public int comparePriorityTo(@Nonnull InternalTimer<?, ?> other) {
 		return Long.compare(timestamp, other.getTimestamp());
 	}

@@ -416,7 +416,7 @@ public class ConnectedStreams<IN1, IN2> {
 
 			TypeInformation<?> keyType1 = keyedInput1.getKeyType();
 			TypeInformation<?> keyType2 = keyedInput2.getKeyType();
-			// 如果两个输入流的输出类型不能转成相等的，那么抛出异常
+			// 如果两个 keyed 输入流的 key 类型不能转成相等的，那么抛出异常
 			if (!(keyType1.canEqual(keyType2) && keyType1.equals(keyType2))) {
 				throw new UnsupportedOperationException("Key types if input KeyedStreams " +
 						"don't match: " + keyType1 + " and " + keyType2 + ".");

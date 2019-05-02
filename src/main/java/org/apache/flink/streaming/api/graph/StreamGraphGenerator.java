@@ -505,7 +505,7 @@ public class StreamGraphGenerator {
 			InputFormatSourceFunction<T> fs = (InputFormatSourceFunction<T>) source.getOperator().getUserFunction();
 			streamGraph.setInputFormat(source.getId(), fs.getFormat());
 		}
-		// 给 StreamGraph 源节点设置并行度，source.getParallelism() 等于 1，因为源节点是一个 SingleOutputStreamOperator
+		// 给 StreamGraph 源节点设置并行度
 		streamGraph.setParallelism(source.getId(), source.getParallelism());
 		// 给 StreamGraph 源节点设置最大并行度
 		streamGraph.setMaxParallelism(source.getId(), source.getMaxParallelism());

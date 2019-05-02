@@ -83,15 +83,15 @@ public class StreamGraph extends StreamingPlan {
 
 	private String jobName = StreamExecutionEnvironment.DEFAULT_JOB_NAME;  // Flink Streaming Job
 
-	private final StreamExecutionEnvironment environment;
-	private final ExecutionConfig executionConfig;
-	private final CheckpointConfig checkpointConfig;
+	private final StreamExecutionEnvironment environment;  // 执行环境
+	private final ExecutionConfig executionConfig;  // 执行配置
+	private final CheckpointConfig checkpointConfig;  // 检查点配置
 
 	private boolean chaining;
 
-	private Map<Integer, StreamNode> streamNodes;
-	private Set<Integer> sources;
-	private Set<Integer> sinks;
+	private Map<Integer, StreamNode> streamNodes;  // 节点 map，key 是 transformation 的 id
+	private Set<Integer> sources;  // 图中所有的数据源头节点
+	private Set<Integer> sinks;  // 图中所有的下沉节点
 	private Map<Integer, Tuple2<Integer, List<String>>> virtualSelectNodes;
 	private Map<Integer, Tuple2<Integer, OutputTag>> virtualSideOutputNodes;
 	private Map<Integer, Tuple2<Integer, StreamPartitioner<?>>> virtualPartitionNodes;
@@ -182,6 +182,9 @@ public class StreamGraph extends StreamingPlan {
 		sources.add(vertexID);
 	}
 
+	/**
+	 * 添加 sink transformation
+	 */
 	public <IN, OUT> void addSink(Integer vertexID,
 		String slotSharingGroup,
 		@Nullable String coLocationGroup,

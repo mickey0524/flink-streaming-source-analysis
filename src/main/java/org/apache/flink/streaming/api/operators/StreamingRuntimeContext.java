@@ -51,17 +51,24 @@ import java.util.Map;
  * Implementation of the {@link org.apache.flink.api.common.functions.RuntimeContext},
  * for streaming operators.
  */
+/**
+ * RuntimeContext 的实现，流操作符的运行时上下文
+ */
 @Internal
 public class StreamingRuntimeContext extends AbstractRuntimeUDFContext {
 
 	/** The operator to which this function belongs. */
+	// 此函数所属的运算符
 	private final AbstractStreamOperator<?> operator;
 
 	/** The task environment running the operator. */
+	// 执行操作符的任务环境
 	private final Environment taskEnvironment;
 
+	// 流配置
 	private final StreamConfig streamConfig;
 
+	// 操作符 ID
 	private final String operatorUniqueID;
 
 	public StreamingRuntimeContext(AbstractStreamOperator<?> operator,

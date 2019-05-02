@@ -313,7 +313,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 			// let the task do its work
 			isRunning = true;
-			run();
+			run();  // SourceStreamTask 重写了这个方法，会调用头部操作符的 run 方法，启动服务
 
 			// if this left the run() method cleanly despite the fact that this was canceled,
 			// make sure the "clean shutdown" is not attempted
@@ -1173,10 +1173,12 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	}
 
 	@VisibleForTesting
+	// 构造函数初始化的时候调用
 	public static <OUT> List<RecordWriter<SerializationDelegate<StreamRecord<OUT>>>> createRecordWriters(
 			StreamConfig configuration,
 			Environment environment) {
 		List<RecordWriter<SerializationDelegate<StreamRecord<OUT>>>> recordWriters = new ArrayList<>();
+		// 以下两个都是生成 JobGraph 的时候生成并写入 Config 的
 		List<StreamEdge> outEdgesInOrder = configuration.getOutEdgesInOrder(environment.getUserClassLoader());
 		Map<Integer, StreamConfig> chainedConfigs = configuration.getTransitiveChainedTaskConfigsWithSelf(environment.getUserClassLoader());
 
@@ -1200,6 +1202,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			String taskName,
 			long bufferTimeout) {
 		@SuppressWarnings("unchecked")
+		// 边上的 partitioner，没有显示设置的话，会使用 ForwardPartitioner 或 RebalancePartitioner
 		StreamPartitioner<OUT> outputPartitioner = (StreamPartitioner<OUT>) edge.getPartitioner();
 
 		LOG.debug("Using partitioner {} for output {} of task {}", outputPartitioner, outputIndex, taskName);

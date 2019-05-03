@@ -42,14 +42,17 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Implementation of {@link Output} that sends data using a {@link RecordWriter}.
  */
+/**
+ * Output 的实现，使用 RecordWriter 来发送数据
+ */
 @Internal
 public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExposingOutput<StreamRecord<OUT>> {
 
 	private RecordWriter<SerializationDelegate<StreamElement>> recordWriter;
 
-	private SerializationDelegate<StreamElement> serializationDelegate;
+	private SerializationDelegate<StreamElement> serializationDelegate;  // 序列化委托
 
-	private final StreamStatusProvider streamStatusProvider;
+	private final StreamStatusProvider streamStatusProvider;  // 流状态提供者
 
 	private final OutputTag outputTag;
 
@@ -81,6 +84,7 @@ public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExpo
 
 	@Override
 	public void collect(StreamRecord<OUT> record) {
+		// 这个方法只负责 emit 主输出
 		if (this.outputTag != null) {
 			// we are only responsible for emitting to the main input
 			return;
@@ -91,6 +95,7 @@ public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExpo
 
 	@Override
 	public <X> void collect(OutputTag<X> outputTag, StreamRecord<X> record) {
+		// 这个方法只负责 emit 侧边输出，且 output 需要相同
 		if (this.outputTag == null || !this.outputTag.equals(outputTag)) {
 			// we are only responsible for emitting to the side-output specified by our
 			// OutputTag.
@@ -100,6 +105,7 @@ public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExpo
 		pushToRecordWriter(record);
 	}
 
+	// 将元素 emit 到缓冲区
 	private <X> void pushToRecordWriter(StreamRecord<X> record) {
 		serializationDelegate.setInstance(record);
 
@@ -112,6 +118,7 @@ public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExpo
 	}
 
 	@Override
+	// 广播 emit watermark
 	public void emitWatermark(Watermark mark) {
 		watermarkGauge.setCurrentWatermark(mark.getTimestamp());
 		serializationDelegate.setInstance(mark);
@@ -125,6 +132,7 @@ public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExpo
 		}
 	}
 
+	// 广播流状态
 	public void emitStreamStatus(StreamStatus streamStatus) {
 		serializationDelegate.setInstance(streamStatus);
 
@@ -137,6 +145,7 @@ public class RecordWriterOutput<OUT> implements OperatorChain.WatermarkGaugeExpo
 	}
 
 	@Override
+	// 延迟 marker，随机发送
 	public void emitLatencyMarker(LatencyMarker latencyMarker) {
 		serializationDelegate.setInstance(latencyMarker);
 

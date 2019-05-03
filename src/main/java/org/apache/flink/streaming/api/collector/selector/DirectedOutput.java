@@ -42,15 +42,18 @@ import java.util.Set;
  * Wrapping {@link Output} that forwards to other {@link Output Outputs } based on a list of
  * {@link OutputSelector OutputSelectors}.
  */
+/**
+ * 包装根据输出选择器列表转发到其他输出的输出
+ */
 public class DirectedOutput<OUT> implements OperatorChain.WatermarkGaugeExposingOutput<StreamRecord<OUT>> {
 
-	protected final OutputSelector<OUT>[] outputSelectors;
+	protected final OutputSelector<OUT>[] outputSelectors;  // 输出选择器
 
 	protected final Output<StreamRecord<OUT>>[] selectAllOutputs;
 
 	protected final HashMap<String, Output<StreamRecord<OUT>>[]> outputMap;
 
-	protected final Output<StreamRecord<OUT>>[] allOutputs;
+	protected final Output<StreamRecord<OUT>>[] allOutputs;  // 所有的输出
 
 	private final Random random = new XORShiftRandom();
 
@@ -71,8 +74,8 @@ public class DirectedOutput<OUT> implements OperatorChain.WatermarkGaugeExposing
 		HashMap<String, ArrayList<Output<StreamRecord<OUT>>>> outputMap = new HashMap<String, ArrayList<Output<StreamRecord<OUT>>>>();
 
 		for (Tuple2<? extends Output<StreamRecord<OUT>>, StreamEdge> outputPair : outputs) {
-			final Output<StreamRecord<OUT>> output = outputPair.f0;
-			final StreamEdge edge = outputPair.f1;
+			final Output<StreamRecord<OUT>> output = outputPair.f0;  // collector output
+			final StreamEdge edge = outputPair.f1;  // 输出边
 
 			List<String> selectedNames = edge.getSelectedNames();
 

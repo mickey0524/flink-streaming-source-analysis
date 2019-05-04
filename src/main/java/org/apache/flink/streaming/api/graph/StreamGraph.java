@@ -92,9 +92,9 @@ public class StreamGraph extends StreamingPlan {
 	private Map<Integer, StreamNode> streamNodes;  // 节点 map，key 是 transformation 的 id
 	private Set<Integer> sources;  // 图中所有的数据源头节点
 	private Set<Integer> sinks;  // 图中所有的下沉节点
-	private Map<Integer, Tuple2<Integer, List<String>>> virtualSelectNodes;
+	private Map<Integer, Tuple2<Integer, List<String>>> virtualSelectNodes;  // 图中所有的 select 虚拟节点
 	private Map<Integer, Tuple2<Integer, OutputTag>> virtualSideOutputNodes;
-	private Map<Integer, Tuple2<Integer, StreamPartitioner<?>>> virtualPartitionNodes;
+	private Map<Integer, Tuple2<Integer, StreamPartitioner<?>>> virtualPartitionNodes;  // 图中所有的 partition 虚拟节点
 
 	protected Map<Integer, String> vertexIDtoBrokerID;
 	protected Map<Integer, Long> vertexIDtoLoopTimeout;
@@ -220,6 +220,7 @@ public class StreamGraph extends StreamingPlan {
 
 		TypeSerializer<OUT> outSerializer = outTypeInfo != null && !(outTypeInfo instanceof MissingTypeInfo) ? outTypeInfo.createSerializer(executionConfig) : null;
 
+		// 根据输入输出类型设置类型序列器
 		setSerializers(vertexID, inSerializer, null, outSerializer);
 
 		if (operatorObject instanceof OutputTypeConfigurable && outTypeInfo != null) {
@@ -239,6 +240,9 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	/**
+	 * 添加连通操作符，有两个输入
+	 */
 	public <IN1, IN2, OUT> void addCoOperator(
 			Integer vertexID,
 			String slotSharingGroup,
@@ -306,8 +310,12 @@ public class StreamGraph extends StreamingPlan {
 	 * Adds a new virtual node that is used to connect a downstream vertex to only the outputs
 	 * with the selected names.
 	 *
+	 * 添加用于将下游顶点仅连接到具有选定名称的输出的新虚拟节点
+	 *
 	 * <p>When adding an edge from the virtual node to a downstream node the connection will be made
 	 * to the original node, only with the selected names given here.
+	 *
+	 * 当在虚拟节点和下游节点间添加一条边的时候，将只使用此处给定的 selected names 连接到原始节点
 	 *
 	 * @param originalId ID of the node that should be connected to.
 	 * @param virtualId ID of the virtual node.
@@ -363,8 +371,12 @@ public class StreamGraph extends StreamingPlan {
 	 * Adds a new virtual node that is used to connect a downstream vertex to an input with a
 	 * certain partitioning.
 	 *
+	 * 添加用于将下游顶点仅连接到具有确定分区的输出的新虚拟节点
+	 *
 	 * <p>When adding an edge from the virtual node to a downstream node the connection will be made
 	 * to the original node, but with the partitioning given here.
+	 *
+	 * 当在虚拟节点和下游节点间添加一条边的时候，将只使用此处给定的 partitioner 连接到原始节点
 	 *
 	 * @param originalId ID of the node that should be connected to.
 	 * @param virtualId ID of the virtual node.
@@ -478,6 +490,9 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	/**
+	 * 为 StreamNode 添加 outputSelector
+	 */
 	public <T> void addOutputSelector(Integer vertexID, OutputSelector<T> outputSelector) {
 		if (virtualPartitionNodes.containsKey(vertexID)) {
 			addOutputSelector(virtualPartitionNodes.get(vertexID).f0, outputSelector);
@@ -630,7 +645,10 @@ public class StreamGraph extends StreamingPlan {
 	public long getLoopTimeout(Integer vertexID) {
 		return vertexIDtoLoopTimeout.get(vertexID);
 	}
-
+	
+	/**
+	 * 创建迭代的 source 和 sink
+	 */
 	public Tuple2<StreamNode, StreamNode> createIterationSourceAndSink(
 		int loopId,
 		int sourceId,
@@ -640,10 +658,11 @@ public class StreamGraph extends StreamingPlan {
 		int maxParallelism,
 		ResourceSpec minResources,
 		ResourceSpec preferredResources) {
+		// 创建迭代源头节点
 		StreamNode source = this.addNode(sourceId,
 			null,
 			null,
-			StreamIterationHead.class,
+			StreamIterationHead.class,  // task 类
 			null,
 			"IterationSource-" + loopId);
 		sources.add(source.getId());
@@ -654,7 +673,7 @@ public class StreamGraph extends StreamingPlan {
 		StreamNode sink = this.addNode(sinkId,
 			null,
 			null,
-			StreamIterationTail.class,
+			StreamIterationTail.class,  // task 类
 			null,
 			"IterationSink-" + loopId);
 		sinks.add(sink.getId());

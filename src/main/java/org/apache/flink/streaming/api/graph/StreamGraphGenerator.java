@@ -236,6 +236,12 @@ public class StreamGraphGenerator {
 	 * <p>This is easy, we only have to transform the inputs and return all the IDs in a list so
 	 * that downstream operations can connect to all upstream nodes.
 	 */
+	/**
+	 * 转换一个 UnionTransformation
+	 * 
+	 * 这个转换非常简单，我们仅仅需要转换所有输入，然后返回所有的输入 transformations 的 id
+	 * 这样下游操作符能够连接所有的上游节点
+	 */
 	private <T> Collection<Integer> transformUnion(UnionTransformation<T> union) {
 		List<StreamTransformation<T>> inputs = union.getInputs();
 		List<Integer> resultIds = new ArrayList<>();
@@ -252,6 +258,11 @@ public class StreamGraphGenerator {
 	 *
 	 * <p>For this we create a virtual node in the {@code StreamGraph} that holds the partition
 	 * property. @see StreamGraphGenerator
+	 */
+	/**
+	 * 转换一个 PartitionTransformation
+	 *
+	 * 针对 PartitionTransformation，我们在 StreamGraph 中创建一个虚拟节点持有分区属性
 	 */
 	private <T> Collection<Integer> transformPartition(PartitionTransformation<T> partition) {
 		StreamTransformation<T> input = partition.getInput();
@@ -272,19 +283,26 @@ public class StreamGraphGenerator {
 	 *
 	 * <p>We add the output selector to previously transformed nodes.
 	 */
+	/**
+	 * 转换一个 SplitTransformation
+	 *
+	 * 我们在之前的 transformed 节点上添加一个输出选择符
+	 */
 	private <T> Collection<Integer> transformSplit(SplitTransformation<T> split) {
 
-		StreamTransformation<T> input = split.getInput();
+		StreamTransformation<T> input = split.getInput();  // 获取输入 transformation
 		Collection<Integer> resultIds = transform(input);
 
 		validateSplitTransformation(input);
 
 		// the recursive transform call might have transformed this already
+		// 递归的 transform 调用可能已经转换了这个 transformation
 		if (alreadyTransformed.containsKey(split)) {
 			return alreadyTransformed.get(split);
 		}
 
 		for (int inputId : resultIds) {
+			// 为所有输入添加 OutputSelector
 			streamGraph.addOutputSelector(inputId, split.getOutputSelector());
 		}
 
@@ -298,19 +316,26 @@ public class StreamGraphGenerator {
 	 *
 	 * @see org.apache.flink.streaming.api.graph.StreamGraphGenerator
 	 */
+	/**
+	 * 转换一个 SelectTransformation
+	 *
+	 * 针对这个 transformation，我们在 StreamGraph 中创建一个虚拟节点持有这些 selected name
+	 */
 	private <T> Collection<Integer> transformSelect(SelectTransformation<T> select) {
-		StreamTransformation<T> input = select.getInput();
+		StreamTransformation<T> input = select.getInput();  // SplitTransformation
 		Collection<Integer> resultIds = transform(input);
 
 		// the recursive transform might have already transformed this
+		// 在递归的 transform 执行中，这个 transform 可能已经被转换过了
 		if (alreadyTransformed.containsKey(select)) {
 			return alreadyTransformed.get(select);
 		}
 
-		List<Integer> virtualResultIds = new ArrayList<>();
+		List<Integer> virtualResultIds = new ArrayList<>();  // 虚拟结果 id 集合
 
 		for (int inputId : resultIds) {
-			int virtualId = StreamTransformation.getNewNodeId();
+			int virtualId = StreamTransformation.getNewNodeId();  // 和真实节点相同的方式获取虚拟节点的 id
+			// select.getSelectedNames() 返回的就是 SplitStream.select() 中传递的参数
 			streamGraph.addVirtualSelectNode(inputId, virtualId, select.getSelectedNames());
 			virtualResultIds.add(virtualId);
 		}
@@ -354,8 +379,17 @@ public class StreamGraphGenerator {
 	 * <p>This is responsible for creating the IterationSource and IterationSink which are used to
 	 * feed back the elements.
 	 */
+	/**
+	 * 转换一个 FeedbackTransformation
+	 *
+	 * FeedbackTransformation 将递归转换输入和反馈边。我们返回输入 ids 和反馈 ids 的级联
+	 * 这样，下游操作符能够连接到输入和反馈
+	 *
+	 * 这负责创建用于反馈元素的 IterationSource 和 IterationSink
+	 */
 	private <T> Collection<Integer> transformFeedback(FeedbackTransformation<T> iterate) {
 
+		// 如果没有对 IterativeStream 方法执行 closeWith 方法，报错
 		if (iterate.getFeedbackEdges().size() <= 0) {
 			throw new IllegalStateException("Iteration " + iterate + " does not have any feedback edges.");
 		}
@@ -364,15 +398,18 @@ public class StreamGraphGenerator {
 		List<Integer> resultIds = new ArrayList<>();
 
 		// first transform the input stream(s) and store the result IDs
+		// 首先转换输入流并且存储 result IDs
 		Collection<Integer> inputIds = transform(input);
 		resultIds.addAll(inputIds);
 
 		// the recursive transform might have already transformed this
+		// 转换是递归的，执行到这里的时候可能已经转换过了
 		if (alreadyTransformed.containsKey(iterate)) {
 			return alreadyTransformed.get(iterate);
 		}
 
 		// create the fake iteration source/sink pair
+		// 创建假的迭代 source/sink 对
 		Tuple2<StreamNode, StreamNode> itSourceAndSink = streamGraph.createIterationSourceAndSink(
 			iterate.getId(),
 			getNewIterationNodeId(),
@@ -392,17 +429,20 @@ public class StreamGraphGenerator {
 
 		// also add the feedback source ID to the result IDs, so that downstream operators will
 		// add both as input
+		// 将反馈源 id 加入到 result ids 中去，这样下游操作符会将 输入 + 反馈 一起当作输入
 		resultIds.add(itSource.getId());
 
 		// at the iterate to the already-seen-set with the result IDs, so that we can transform
 		// the feedback edges and let them stop when encountering the iterate node
+		// 使用结果 ID 迭代到已经看到的集合时，这样我们可以转换反馈边，并在遇到迭代节点时让它们停止
 		alreadyTransformed.put(iterate, resultIds);
 
 		// so that we can determine the slot sharing group from all feedback edges
+		// 我们能够从所有的反馈边来决定 slotSharingGroup
 		List<Integer> allFeedbackIds = new ArrayList<>();
 
 		for (StreamTransformation<T> feedbackEdge : iterate.getFeedbackEdges()) {
-			Collection<Integer> feedbackIds = transform(feedbackEdge);
+			Collection<Integer> feedbackIds = transform(feedbackEdge);  // 生成反馈节点
 			allFeedbackIds.addAll(feedbackIds);
 			for (Integer feedbackId: feedbackIds) {
 				streamGraph.addEdge(feedbackId,
@@ -559,17 +599,24 @@ public class StreamGraphGenerator {
 	 * <p>This recursively transforms the inputs, creates a new {@code StreamNode} in the graph and
 	 * wired the inputs to this new node.
 	 */
+	/**
+	 * 转换一个 OneInputTransformation
+	 * 这将递归地转换输入，在图中创建新的streamnode，并将输入连接到此新节点，节点之间连接 StreamEdge
+	 */
 	private <IN, OUT> Collection<Integer> transformOneInputTransform(OneInputTransformation<IN, OUT> transform) {
 
 		Collection<Integer> inputIds = transform(transform.getInput());
 
 		// the recursive call might have already transformed this
+		// 递归的调用可能已经转换了这个
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
 		}
 
+		// 根据输入 transform 来决定 slotSharingGroup
 		String slotSharingGroup = determineSlotSharingGroup(transform.getSlotSharingGroup(), inputIds);
 
+		// 在 StreamGraph 中添加一个操作符
 		streamGraph.addOperator(transform.getId(),
 				slotSharingGroup,
 				transform.getCoLocationGroupKey(),
@@ -583,7 +630,9 @@ public class StreamGraphGenerator {
 			streamGraph.setOneInputStateKey(transform.getId(), transform.getStateKeySelector(), keySerializer);
 		}
 
+		// 设置并行度，默认情况下是环境的并发度
 		streamGraph.setParallelism(transform.getId(), transform.getParallelism());
+		// 设置最大并发度
 		streamGraph.setMaxParallelism(transform.getId(), transform.getMaxParallelism());
 
 		for (Integer inputId: inputIds) {
@@ -599,12 +648,18 @@ public class StreamGraphGenerator {
 	 * <p>This recursively transforms the inputs, creates a new {@code StreamNode} in the graph and
 	 * wired the inputs to this new node.
 	 */
+	/**
+	 * 转换一个 TwoInputTransformation
+	 *
+	 * 这将递归地转换输入，在图中创建新的streamnode，并将输入连接到此新节点
+	 */
 	private <IN1, IN2, OUT> Collection<Integer> transformTwoInputTransform(TwoInputTransformation<IN1, IN2, OUT> transform) {
-
+		// TwoInputTransformation 有两个输入，需要 inputIds1 和 inputIds2
 		Collection<Integer> inputIds1 = transform(transform.getInput1());
 		Collection<Integer> inputIds2 = transform(transform.getInput2());
 
 		// the recursive call might have already transformed this
+		// 递归的调用可能已经转换了这个 transform
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
 		}
@@ -613,6 +668,7 @@ public class StreamGraphGenerator {
 		allInputIds.addAll(inputIds1);
 		allInputIds.addAll(inputIds2);
 
+		// 根据本 transformation 和输入 transformations 来决定 slotSharingGroup
 		String slotSharingGroup = determineSlotSharingGroup(transform.getSlotSharingGroup(), allInputIds);
 
 		streamGraph.addCoOperator(
@@ -636,14 +692,14 @@ public class StreamGraphGenerator {
 		for (Integer inputId: inputIds1) {
 			streamGraph.addEdge(inputId,
 					transform.getId(),
-					1
+					1  // 第一个输入流的 typeNumber 为 1，只有第一个输入的时候，typeNumber 为 0
 			);
 		}
 
 		for (Integer inputId: inputIds2) {
 			streamGraph.addEdge(inputId,
 					transform.getId(),
-					2
+					2  // 第二个输入流的 typeNumber 为 2
 			);
 		}
 
@@ -681,7 +737,11 @@ public class StreamGraphGenerator {
 		}
 	}
 
+	/**
+	 * 验证 SplitTransformation
+	 */
 	private <T> void validateSplitTransformation(StreamTransformation<T> input) {
+		// 不支持连续 split，请使用 sideOutput 替代
 		if (input instanceof SelectTransformation || input instanceof SplitTransformation) {
 			throw new IllegalStateException("Consecutive multiple splits are not supported. Splits are deprecated. Please use side-outputs.");
 		} else if (input instanceof SideOutputTransformation) {

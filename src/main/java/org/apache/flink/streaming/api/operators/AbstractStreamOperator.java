@@ -114,10 +114,11 @@ public abstract class AbstractStreamOperator<OUT>
 	// StreamTask 包括了这个操作符（以及 chain 中的其他操作符）
 	private transient StreamTask<?, ?> container;
 
-	// 流配置文件
+	// 流配置文件，JobGraphGenerator 会将一个 chain 压缩为一个 JobVertex，头部操作符的 config 包括了链中后续操作符的 StreamConfig
 	protected transient StreamConfig config;
 
 	// operator 通过 output 来 emit element -> output.collect()
+	// output 的生成位于 operatorChain.java 文件中
 	protected transient Output<StreamRecord<OUT>> output;
 
 	/** The runtime context for UDFs. */
@@ -134,6 +135,7 @@ public abstract class AbstractStreamOperator<OUT>
 	 */
 	/**
 	 * KeySelector 从正在被处理的 element 中提取出一个 key，用于 first input 的元素
+	 * 当操作符不是 keyed 操作符的时候为空
 	 */
 	private transient KeySelector<?, ?> stateKeySelector1;
 
@@ -145,6 +147,7 @@ public abstract class AbstractStreamOperator<OUT>
 	 */
 	/**
 	 * KeySelector 从正在被处理的 element 中提取出一个 key，用于 second input 的元素
+	 * 当操作符不为 keyed 操作符的时候为空
 	 */
 	private transient KeySelector<?, ?> stateKeySelector2;
 
@@ -153,7 +156,7 @@ public abstract class AbstractStreamOperator<OUT>
 	private transient AbstractKeyedStateBackend<?> keyedStateBackend;
 
 	/** Keyed state store view on the keyed backend. */
-	// 关键状态存储快照在 keyed stream 中
+	// keyedStateBackend 中 keyed Stream 的存储快照
 	private transient DefaultKeyedStateStore keyedStateStore;
 
 	// ---------------- operator state ------------------
@@ -172,13 +175,15 @@ public abstract class AbstractStreamOperator<OUT>
 
 	// ---------------- time handler ------------------
 
+	// 内部时间服务管理器
 	protected transient InternalTimeServiceManager<?> timeServiceManager;
 
 	// ---------------- two-input operator watermarks ------------------
 
 	// We keep track of watermarks from both inputs, the combined input is the minimum
 	// Once the minimum advances we emit a new watermark for downstream operators
-	// 我们从所有输入跟踪 watermark
+	// 我们从所有输入跟踪 watermark，组合输入是其中 ts 较大的数值
+	// 一旦最小值更新（新的 watermark ts 大于现在），我们向下游的所有操作符发送一个新的 watermark
 	private long combinedWatermark = Long.MIN_VALUE;
 	private long input1Watermark = Long.MIN_VALUE;
 	private long input2Watermark = Long.MIN_VALUE;
@@ -186,8 +191,9 @@ public abstract class AbstractStreamOperator<OUT>
 	// ------------------------------------------------------------------------
 	//  Life Cycle
 	// ------------------------------------------------------------------------
-
+	// 以下是生命周期方法
 	@Override
+	// setup 方法添加操作符对 context 和 output 的访问
 	public void setup(StreamTask<?, ?> containingTask, StreamConfig config, Output<StreamRecord<OUT>> output) {
 		final Environment environment = containingTask.getEnvironment();
 		this.container = containingTask;
@@ -246,6 +252,7 @@ public abstract class AbstractStreamOperator<OUT>
 
 		this.runtimeContext = new StreamingRuntimeContext(this, environment, container.getAccumulatorMap());
 
+		// 从 StreamConfig 中获取 stateKeySelector
 		stateKeySelector1 = config.getStatePartitioner(0, getUserCodeClassloader());
 		stateKeySelector2 = config.getStatePartitioner(1, getUserCodeClassloader());
 	}
@@ -256,17 +263,23 @@ public abstract class AbstractStreamOperator<OUT>
 	}
 
 	@Override
+	/**
+	 * 初始化操作符状态
+	 */
 	public final void initializeState() throws Exception {
 
 		final TypeSerializer<?> keySerializer = config.getStateKeySerializer(getUserCodeClassloader());
 
+		// 获取 containingTask，setup 方法中定义的，在 operatorChain.java 中会调用 setup 方法
 		final StreamTask<?, ?> containingTask =
 			Preconditions.checkNotNull(getContainingTask());
+		// 获取 StreamTask 的关闭策略
 		final CloseableRegistry streamTaskCloseableRegistry =
 			Preconditions.checkNotNull(containingTask.getCancelables());
+		// 获取 StreamTask 状态初始化工具
 		final StreamTaskStateInitializer streamTaskStateManager =
 			Preconditions.checkNotNull(containingTask.createStreamTaskStateInitializer());
-
+		// 获取流操作符状态上下文
 		final StreamOperatorStateContext context =
 			streamTaskStateManager.streamOperatorStateContext(
 				getOperatorID(),
@@ -303,6 +316,7 @@ public abstract class AbstractStreamOperator<OUT>
 		}
 	}
 
+	// 安全释放资源
 	private static void closeFromRegistry(Closeable closeable, CloseableRegistry registry) {
 		if (registry.unregisterCloseable(closeable)) {
 			IOUtils.closeQuietly(closeable);
@@ -316,6 +330,9 @@ public abstract class AbstractStreamOperator<OUT>
 	 * <p>The default implementation does nothing.
 	 *
 	 * @throws Exception An exception in this method causes the operator to fail.
+	 */
+	/**
+	 * 这个方法需要在处理第一个元素之前被调用
 	 */
 	@Override
 	public void open() throws Exception {}
@@ -332,6 +349,12 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * @throws Exception An exception in this method causes the operator to fail.
 	 */
+	/**
+	 * 这个方法在所有的元素被操作符处理之后被调用
+	 *
+	 * 这个方法需要 flush 缓冲区中的所有的元素，在 flushing 过程中抛出的异常需要被传播，因为需要让
+	 * 这个操作被认为失败了，毕竟最后缓冲区中的元素没有被合适的处理
+	 */
 	@Override
 	public void close() throws Exception {}
 
@@ -342,12 +365,17 @@ public abstract class AbstractStreamOperator<OUT>
 	 * <p>This method is expected to make a thorough effort to release all resources
 	 * that the operator has acquired.
 	 */
+	/**
+	 * 无论是操作成功还是操作失败，这个方法需要在操作符生命的最后被调用
+	 * 
+	 * 这个方法需要彻底释放操作符申请的所有资源
+	 */
 	@Override
 	public void dispose() throws Exception {
 
 		Exception exception = null;
 
-		StreamTask<?, ?> containingTask = getContainingTask();
+		StreamTask<?, ?> containingTask = getContainingTask();  // 获取 StreamTask
 		CloseableRegistry taskCloseableRegistry = containingTask != null ?
 			containingTask.getCancelables() :
 			null;
@@ -493,11 +521,17 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * @param context context that allows to register different states.
 	 */
+	/**
+	 * 有状态的流操作符能够通过重写这个钩子方法来恢复状态
+	 */
 	public void initializeState(StateInitializationContext context) throws Exception {
 
 	}
 
 	@Override
+	/**
+	 * 通知检查点作业完成
+	 */
 	public void notifyCheckpointComplete(long checkpointId) throws Exception {
 		if (keyedStateBackend != null) {
 			keyedStateBackend.notifyCheckpointComplete(checkpointId);
@@ -514,10 +548,16 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * @return The job's execution config.
 	 */
+	/**
+	 * 获取 StreamTask 的执行配置
+	 */
 	public ExecutionConfig getExecutionConfig() {
 		return container.getExecutionConfig();
 	}
 
+	/**
+	 * 获取操作符的 StreamConfig
+	 */
 	public StreamConfig getOperatorConfig() {
 		return config;
 	}
@@ -566,6 +606,9 @@ public abstract class AbstractStreamOperator<OUT>
 	/**
 	 * Returns the {@link ProcessingTimeService} responsible for getting  the current
 	 * processing time and registering timers.
+	 */
+	/**
+	 * 获取 ProcessingTimeService，用来得到当前的进程时间以及注册定时器
 	 */
 	protected ProcessingTimeService getProcessingTimeService() {
 		return container.getProcessingTimeService();
@@ -673,11 +716,17 @@ public abstract class AbstractStreamOperator<OUT>
 	// ------------------------------------------------------------------------
 
 	@Override
+	/**
+	 * 设置链式策略
+	 */
 	public final void setChainingStrategy(ChainingStrategy strategy) {
 		this.chainingStrategy = strategy;
 	}
 
 	@Override
+	/**
+	 * 获取链式策略
+	 */
 	public final ChainingStrategy getChainingStrategy() {
 		return chainingStrategy;
 	}
@@ -762,12 +811,21 @@ public abstract class AbstractStreamOperator<OUT>
 	 * key that is given when requesting them, if you call this method with the same key
 	 * multiple times you will get the same timer service instance in subsequent requests.
 	 *
+	 * 返回一个 InternalTimerService，能够用来请求当前进程时间和事件时间，也能够设置定时器
+	 * 一个操作符可以有多个时间服务，每个时间服务的命名空间不相同
+	 * 计时器服务通过请求时给定的字符串键来区分，如果多次使用相同的键调用此方法
+	 * 则在随后的请求中将获得相同的计时器服务实例
+	 *
 	 * <p>Timers are always scoped to a key, the currently active key of a keyed stream operation.
 	 * When a timer fires, this key will also be set as the currently active key.
+	 *
+	 * 定时器总是在一个 key 的范围内，只有 KeyedStream 能够设置定时器
 	 *
 	 * <p>Each timer has attached metadata, the namespace. Different timer services
 	 * can have a different namespace type. If you don't need namespace differentiation you
 	 * can use {@link VoidNamespaceSerializer} as the namespace serializer.
+	 *
+	 * 每个定时器都有一个命名空间，如果你不需要的话，可以使用 VoidNamespaceSerializer
 	 *
 	 * @param name The name of the requested timer service. If no service exists under the given
 	 *             name a new one will be created and returned.
@@ -775,6 +833,9 @@ public abstract class AbstractStreamOperator<OUT>
 	 * @param triggerable The {@link Triggerable} that should be invoked when timers fire
 	 *
 	 * @param <N> The type of the timer namespace.
+	 */
+	/**
+	 * 获取内部时间服务
 	 */
 	public <K, N> InternalTimerService<N> getInternalTimerService(
 			String name,
@@ -791,6 +852,11 @@ public abstract class AbstractStreamOperator<OUT>
 		return keyedTimeServiceHandler.getInternalTimerService(name, timerSerializer, triggerable);
 	}
 
+	/**
+	 * 处理 watermark
+	 * output 将 watermark 传递给下游的操作符
+	 * timeServiceManager.advanceWatermark 通知 eventTimeTimer
+	 */
 	public void processWatermark(Watermark mark) throws Exception {
 		if (timeServiceManager != null) {
 			timeServiceManager.advanceWatermark(mark);
@@ -798,6 +864,9 @@ public abstract class AbstractStreamOperator<OUT>
 		output.emitWatermark(mark);
 	}
 
+	/**
+	 * 检查时间服务的条件是否满足
+	 */
 	private void checkTimerServiceInitialization() {
 		if (getKeyedStateBackend() == null) {
 			throw new UnsupportedOperationException("Timers can only be used on keyed operators.");
@@ -806,6 +875,9 @@ public abstract class AbstractStreamOperator<OUT>
 		}
 	}
 
+	/**
+	 * 处理 input1 来的 watermark
+	 */
 	public void processWatermark1(Watermark mark) throws Exception {
 		input1Watermark = mark.getTimestamp();
 		long newMin = Math.min(input1Watermark, input2Watermark);
@@ -815,6 +887,9 @@ public abstract class AbstractStreamOperator<OUT>
 		}
 	}
 
+	/**
+	 * 处理 input2 来的 watermark
+	 */
 	public void processWatermark2(Watermark mark) throws Exception {
 		input2Watermark = mark.getTimestamp();
 		long newMin = Math.min(input1Watermark, input2Watermark);
@@ -825,6 +900,9 @@ public abstract class AbstractStreamOperator<OUT>
 	}
 
 	@Override
+	/**
+	 * 获取操作符的 id，由 hash 生成
+	 */
 	public OperatorID getOperatorID() {
 		return config.getOperatorID();
 	}

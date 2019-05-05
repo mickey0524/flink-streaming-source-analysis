@@ -74,20 +74,22 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *              head operator.
  */
 /**
- * OperatorChain 包含了很多操作符，这些操作符都会在一个 StreamTask 中允许，就像一个链条一样
+ * OperatorChain 包含了很多操作符，这些操作符都会在一个 StreamTask 中执行，就像一个链条一样
  */
 @Internal
 public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements StreamStatusMaintainer {
 
 	private static final Logger LOG = LoggerFactory.getLogger(OperatorChain.class);
 
-	private final StreamOperator<?>[] allOperators;  // 所有的操作符
+	// 所有的操作符，最后每一个 StreamNode 都会包含一个 StreamOperator
+	// 因为不含 StreamOperator 的 transformation 都变成 StreamEdge 的属性了
+	private final StreamOperator<?>[] allOperators;
 
 	private final RecordWriterOutput<?>[] streamOutputs;  // output，也就是我们在 operators 能看到的 output
 
 	private final WatermarkGaugeExposingOutput<StreamRecord<OUT>> chainEntryPoint;  // headOperator 的 collector output
 
-	private final OP headOperator;  // 头部操作符
+	private final OP headOperator;  // 头部操作符 StreamOperator
 
 	/**
 	 * Current status of the input stream of the operator chain.
@@ -128,7 +130,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 		try {
 			for (int i = 0; i < outEdgesInOrder.size(); i++) {
 				StreamEdge outEdge = outEdgesInOrder.get(i);
-
+				// 对 chain 的每一个出边，创建一个 streamOutput
 				RecordWriterOutput<?> streamOutput = createStreamOutput(
 					recordWriters.get(i),
 					outEdge,
@@ -321,7 +323,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 	/**
 	 * 创建 OutputCollector
 	 * @param containingTask 执行的 task
-	 * @param operatorConfig JobVertex 的配置
+	 * @param operatorConfig StreamNode 的配置
 	 * @param chainedConfigs 链中所有节点的配置
 	 * @param userCodeClassloader 类加载器
 	 * @param streamOutputs JobVertex 所有的输出
@@ -367,6 +369,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 		// if there are multiple outputs, or the outputs are directed, we need to
 		// wrap them as one output
 		// 如果有多个输出，或者输出是定向的，我们需要将它们包装为一个输出
+		// split 操作的参数 OutputSelector
 		List<OutputSelector<T>> selectors = operatorConfig.getOutputSelectors(userCodeClassloader);
 
 		if (selectors == null || selectors.isEmpty()) {
@@ -417,6 +420,13 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 
 	/**
 	 * 创建链式操作符
+	 * @param containingTask 执行的 task
+	 * @param operatorConfig StreamNode 的配置
+	 * @param chainedConfigs 链中所有节点的配置
+	 * @param userCodeClassloader 类加载器
+	 * @param streamOutputs JobVertex 所有的输出
+	 * @param allOperators 链中所有的操作符，传递过来的时候是个空的 ArrayList
+	 * @param outputTag StreamNode 入边的 outputTag
 	 */
 	private <IN, OUT> WatermarkGaugeExposingOutput<StreamRecord<IN>> createChainedOperator(
 			StreamTask<?, ?> containingTask,
@@ -444,6 +454,10 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 		OneInputStreamOperator<IN, OUT> chainedOperator = operatorConfig.getStreamOperator(userCodeClassloader);
 
 		// 调用操作符的 setup 方法，启动链式操作符
+		// 这里传进去了 chainedOperatorOutput
+		// chainedOperator 会将 chainedOperatorOutput 作为 output
+		// 在 chainedOperator 的 processElement 方法内
+		// 会调用 output.collect()
 		chainedOperator.setup(containingTask, operatorConfig, chainedOperatorOutput);
 
 		// 将操作符加入 list，越前面的操作符在 list 中越靠后
@@ -477,6 +491,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 			StreamEdge edge,
 			StreamConfig upStreamConfig,
 			Environment taskEnvironment) {
+		// OutputTag，用于侧边输出，如果不是 sideOutput 的话，返回 null
 		OutputTag sideOutputTag = edge.getOutputTag(); // OutputTag, return null if not sideOutput
 
 		TypeSerializer outSerializer = null;
@@ -512,6 +527,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 	/**
 	 * 链式操作符当前的 Output，如果 containingTask 的 Object 可以被重用的话
 	 * 使用 ChainingOutput
+	 * 链式操作符的 Output 用来调用操作符的 processElement 方法
 	 */
 	static class ChainingOutput<T> implements WatermarkGaugeExposingOutput<StreamRecord<T>> {
 
@@ -701,6 +717,8 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 	/**
 	 * 没有输出选择器的简单流使用 BroadcastingOutputCollector，如果 containingTask 的 Object 可以被重用的话
 	 * 使用 BroadcastingOutputCollector
+	 * BroadcastingOutputCollector 用于调用操作符 output 的 collect 方法
+	 * 进而调用操作符的 processElement 方法
 	 */
 	static class BroadcastingOutputCollector<T> implements WatermarkGaugeExposingOutput<StreamRecord<T>> {
 

@@ -98,10 +98,10 @@ public class StreamingJobGraphGenerator {
 
 	// ------------------------------------------------------------------------
 
-	private final StreamGraph streamGraph;
+	private final StreamGraph streamGraph;  // StreamGraphGenerator 生成的 StreamGraph
 
 	private final Map<Integer, JobVertex> jobVertices;  // id -> JobVertex
-	private final JobGraph jobGraph;
+	private final JobGraph jobGraph;  // createJobGraph 执行完毕之后得到的 JobGraph
 	private final Collection<Integer> builtVertices;  // 已经构建的 JobVertex 的集合
 
 	private final List<StreamEdge> physicalEdgesInOrder;  // 物理边集合（排除了 chain 内部的边），按创建顺序排序
@@ -139,6 +139,9 @@ public class StreamingJobGraphGenerator {
 		jobGraph = new JobGraph(jobID, streamGraph.getJobName());
 	}
 
+	/**
+	 * 创建 JobGraph
+	 */
 	private JobGraph createJobGraph() {
 
 		// make sure that all vertices start immediately
@@ -148,7 +151,7 @@ public class StreamingJobGraphGenerator {
 		// Generate deterministic hashes for the nodes in order to identify them across
 		// submission if they didn't change.
 		// 生成 StreamGraph 节点确定的 hashes，这是用于在提交任务的时候判断 StreamGraph 是否更改了
-		// 保证如果提交的拓扑没有改变，则每次生成的hash都是一样的
+		// 保证如果提交的拓扑没有改变，则每次生成的 hash 都是一样的
 		Map<Integer, byte[]> hashes = defaultStreamGraphHasher.traverseStreamGraphAndGenerateHashes(streamGraph);
 
 		// Generate legacy version hashes for backwards compatibility
@@ -166,7 +169,7 @@ public class StreamingJobGraphGenerator {
 		setChaining(hashes, legacyHashes, chainedOperatorHashes);
 
 		// 将每个 JobVertex 的入边集合也序列化到该 JobVertex 的 StreamConfig 中
-		// (出边集合已经在setChaining的时候写入了)
+		// (出边集合已经在 setChaining 的时候写入了)
 		setPhysicalEdges();
 
 		// 根据 group name，为每个 JobVertex 指定所属的 SlotSharingGroup
@@ -229,6 +232,12 @@ public class StreamingJobGraphGenerator {
 
 	/**
 	 * 递归创建链
+	 * @param startNodeId chain 开始的 StreamNode id
+	 * @param currentNodeId 当前的 StreamNode id
+	 * @param hashes 存储 StreamNode hash code 的 map
+	 * @param legacyHashes 存储 backward hash code 的 list，可能由多个用户定义的 hash 函数
+	 * @param chainIndex 当前节点位于 chain 中的下标
+	 * @param chainedOperatorHashes 存储 chain 中操作符的 hash code 元组
 	 */
 	private List<StreamEdge> createChain(
 			Integer startNodeId,
@@ -428,9 +437,9 @@ public class StreamingJobGraphGenerator {
 			jobVertex = new JobVertex(
 					chainedNames.get(streamNodeId),  // job 节点的名字
 					jobVertexId,  // job 节点的 id
-					legacyJobVertexIds,  // job 节点 backword id
+					legacyJobVertexIds,  // job 节点 backword ids
 					chainedOperatorVertexIds,  // chain 中所有操作符的 id
-					userDefinedChainedOperatorVertexIds);  // chain 中所有操作符的 backword id
+					userDefinedChainedOperatorVertexIds);  // chain 中所有操作符的 backword ids
 		}
 
 		// 设置节点的最小资源和最大资源
@@ -485,6 +494,7 @@ public class StreamingJobGraphGenerator {
 		config.setTypeSerializerOut(vertex.getTypeSerializerOut());
 
 		// iterate edges, find sideOutput edges create and save serializers for each outputTag type
+		// 遍历所有的边，找到 sideOutput 的边，为每一个 outputTag type 创建保存序列器
 		for (StreamEdge edge : chainableOutputs) {
 			if (edge.getOutputTag() != null) {
 				config.setTypeSerializerSideOut(

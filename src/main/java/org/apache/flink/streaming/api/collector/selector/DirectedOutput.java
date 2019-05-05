@@ -47,7 +47,7 @@ import java.util.Set;
  */
 public class DirectedOutput<OUT> implements OperatorChain.WatermarkGaugeExposingOutput<StreamRecord<OUT>> {
 
-	protected final OutputSelector<OUT>[] outputSelectors;  // 输出选择器
+	protected final OutputSelector<OUT>[] outputSelectors;  // 输出选择器，split 方法的参数
 
 	protected final Output<StreamRecord<OUT>>[] selectAllOutputs;
 
@@ -70,14 +70,16 @@ public class DirectedOutput<OUT> implements OperatorChain.WatermarkGaugeExposing
 			allOutputs[i] = outputs.get(i).f0;
 		}
 
+		// StreamEdge 上没有 selectedName，将 output 写入 selectAllOutputs
 		HashSet<Output<StreamRecord<OUT>>> selectAllOutputs = new HashSet<Output<StreamRecord<OUT>>>();
+		// StreamEdge 有 selectedName，根据 selectedName 进行区分
 		HashMap<String, ArrayList<Output<StreamRecord<OUT>>>> outputMap = new HashMap<String, ArrayList<Output<StreamRecord<OUT>>>>();
 
 		for (Tuple2<? extends Output<StreamRecord<OUT>>, StreamEdge> outputPair : outputs) {
 			final Output<StreamRecord<OUT>> output = outputPair.f0;  // collector output
 			final StreamEdge edge = outputPair.f1;  // 输出边
 
-			List<String> selectedNames = edge.getSelectedNames();
+			List<String> selectedNames = edge.getSelectedNames();  // select 方法的参数
 
 			if (selectedNames.isEmpty()) {
 				selectAllOutputs.add(output);
@@ -117,16 +119,20 @@ public class DirectedOutput<OUT> implements OperatorChain.WatermarkGaugeExposing
 	@Override
 	public void emitLatencyMarker(LatencyMarker latencyMarker) {
 		// randomly select an output
+		// 随机选择一个输出
 		allOutputs[random.nextInt(allOutputs.length)].emitLatencyMarker(latencyMarker);
 	}
 
 	protected Set<Output<StreamRecord<OUT>>> selectOutputs(StreamRecord<OUT> record)  {
+		// 全输出的 output 没有限制，直接 addAll
 		Set<Output<StreamRecord<OUT>>> selectedOutputs = new HashSet<>(selectAllOutputs.length);
 		Collections.addAll(selectedOutputs, selectAllOutputs);
 
 		for (OutputSelector<OUT> outputSelector : outputSelectors) {
+			// 根据 split 中的 outputSelector 求出 record 的 outputNames
 			Iterable<String> outputNames = outputSelector.select(record.getValue());
 
+			// 然后根据 outputNames 与 select 中的进行比对，匹配上了才输出
 			for (String outputName : outputNames) {
 				Output<StreamRecord<OUT>>[] outputList = outputMap.get(outputName);
 				if (outputList != null) {
@@ -148,6 +154,9 @@ public class DirectedOutput<OUT> implements OperatorChain.WatermarkGaugeExposing
 	}
 
 	@Override
+	/**
+	 * split，select 和 side output 是互斥的
+	 */
 	public <X> void collect(OutputTag<X> outputTag, StreamRecord<X> record) {
 		throw new UnsupportedOperationException("Cannot use split/select with side outputs.");
 	}

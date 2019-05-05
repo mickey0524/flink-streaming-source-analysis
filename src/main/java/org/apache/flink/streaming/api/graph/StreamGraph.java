@@ -75,6 +75,8 @@ import java.util.Set;
  */
 /**
  * 代表流拓扑的类，它包含了构建执行所用的 jobgraph 需要的所有信息
+ * 最后 StreamGraph 中的节点都是包含 StreamOperator 的 transformation
+ * select，sideOutput，partition 都会成为 StreamEdge 的属性
  */
 @Internal
 public class StreamGraph extends StreamingPlan {

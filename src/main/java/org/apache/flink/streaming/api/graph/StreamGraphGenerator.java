@@ -88,9 +88,10 @@ public class StreamGraphGenerator {
 	private final StreamExecutionEnvironment env;
 
 	// This is used to assign a unique ID to iteration source/sink
+	// 用于为迭代的 source／sink 安排一个唯一的 ID
 	protected static Integer iterationIdCounter = 0;
 	public static int getNewIterationNodeId() {
-		iterationIdCounter--;
+		iterationIdCounter--;  // 这里是 --，StreamTransformation 里是 ++
 		return iterationIdCounter;
 	}
 
@@ -160,6 +161,7 @@ public class StreamGraphGenerator {
 
 		LOG.debug("Transforming " + transform);
 
+		// 如果 transformation 的最大并行度没有设置且执行环境的最大并行度设置了，设置其为执行环境的最大并行度
 		if (transform.getMaxParallelism() <= 0) {
 
 			// if the max parallelism hasn't been set, then first use the job wide max parallelism
@@ -202,6 +204,7 @@ public class StreamGraphGenerator {
 
 		// need this check because the iterate transformation adds itself before
 		// transforming the feedback edges
+		// 需要这次 check，因为迭代转换会在转换反馈边之前添加自身
 		if (!alreadyTransformed.containsKey(transform)) {
 			alreadyTransformed.put(transform, transformedIds);
 		}
@@ -350,11 +353,16 @@ public class StreamGraphGenerator {
 	 *
 	 * @see org.apache.flink.streaming.api.graph.StreamGraphGenerator
 	 */
+	/**
+	 * 转换一个 SideOutputTransformation
+	 * 针对这个，我们在 StreamGraph 中创建一个虚拟节点，持有侧边输出
+	 */
 	private <T> Collection<Integer> transformSideOutput(SideOutputTransformation<T> sideOutput) {
-		StreamTransformation<?> input = sideOutput.getInput();
+		StreamTransformation<?> input = sideOutput.getInput();  // 获取算子输入流
 		Collection<Integer> resultIds = transform(input);
 
 		// the recursive transform might have already transformed this
+		// 递归的 transform 执行可能已经转换了这个，直接返回即可
 		if (alreadyTransformed.containsKey(sideOutput)) {
 			return alreadyTransformed.get(sideOutput);
 		}

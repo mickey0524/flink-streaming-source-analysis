@@ -45,12 +45,13 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  */
 /**
  * SingleOutputStreamOperator 代表了一个应用了用户预定义输出类型的 transformation 算子
- * 的 DataStream 
+ * 的 DataStream，例如 filter 操作就会得到一个 SingleOutputStreamOperator
  */
 @Public
 public class SingleOutputStreamOperator<T> extends DataStream<T> {
 
 	/** Indicate this is a non-parallel operator and cannot set a non-1 degree of parallelism. **/
+	// 表示这是一个非并行运算符，不能设置非1度的并行度
 	protected boolean nonParallel = false;
 
 	/**
@@ -58,9 +59,13 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * we can catch the case when a side output with a matching id is requested for a different
 	 * type because this would lead to problems at runtime.
 	 */
+	/**
+	 * 我们跟踪已请求的侧输出及其类型。通过这种方式，当为不同类型请求具有匹配ID的侧输出时，我们可以捕获这种情况
+	 * 因为这将导致运行时出现问题
+	 */
 	private Map<OutputTag<?>, TypeInformation> requestedSideOutputs = new HashMap<>();
 
-	private boolean wasSplitApplied = false;
+	private boolean wasSplitApplied = false;  // 是否在 SingleOutputStreamOperator 上使用 split 操作
 
 	protected SingleOutputStreamOperator(StreamExecutionEnvironment environment, StreamTransformation<T> transformation) {
 		super(environment, transformation);
@@ -72,6 +77,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *
 	 * @return Name of the stream.
 	 */
+	/**
+	 * 流的名字
+	 */
 	public String getName() {
 		return transformation.getName();
 	}
@@ -81,6 +89,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * used by the visualization and logging during runtime.
 	 *
 	 * @return The named operator.
+	 */
+	/**
+	 * 设置当前流的名字
 	 */
 	public SingleOutputStreamOperator<T> name(String name){
 		transformation.setName(name);
@@ -98,6 +109,10 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *
 	 * @param uid The unique user-specified ID of this transformation.
 	 * @return The operator with the specified ID.
+	 */
+	/**
+	 * 为 transformation 算子提供一个用户定义的 unique 的 uid
+	 * uid 会用来在 JobGraph 中设置节点的 hash code
 	 */
 	@PublicEvolving
 	public SingleOutputStreamOperator<T> uid(String uid) {
@@ -128,6 +143,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *                  which is shown in the logs and web ui.
 	 * @return The operator with the user provided hash.
 	 */
+	/**
+	 * backword hash code，为了兼容
+	 */
 	@PublicEvolving
 	public SingleOutputStreamOperator<T> setUidHash(String uidHash) {
 		transformation.setUidHash(uidHash);
@@ -140,6 +158,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * @param parallelism
 	 *            The parallelism for this operator.
 	 * @return The operator with set parallelism.
+	 */
+	/**
+	 * 设置算子的并行度
 	 */
 	public SingleOutputStreamOperator<T> setParallelism(int parallelism) {
 		Preconditions.checkArgument(canBeParallel() || parallelism == 1,
@@ -158,6 +179,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *
 	 * @param maxParallelism Maximum parallelism
 	 * @return The operator with set maximum parallelism
+	 */
+	/**
+	 * 设置算子的最大并行度
 	 */
 	@PublicEvolving
 	public SingleOutputStreamOperator<T> setMaxParallelism(int maxParallelism) {
@@ -184,6 +208,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * @param minResources The minimum resources for this operator.
 	 * @param preferredResources The preferred resources for this operator.
 	 * @return The operator with set minimum and preferred resources.
+	 */
+	/**
+	 * 设置算子的最小，最大资源
 	 */
 	private SingleOutputStreamOperator<T> setResources(ResourceSpec minResources, ResourceSpec preferredResources) {
 		Preconditions.checkNotNull(minResources, "The min resources must be not null.");
@@ -221,6 +248,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *
 	 * @return The operator with only one parallelism.
 	 */
+	/**
+	 * 将算子强制设置为非并行的
+	 */
 	@PublicEvolving
 	public SingleOutputStreamOperator<T> forceNonParallel() {
 		transformation.setParallelism(1);
@@ -245,6 +275,15 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *            The maximum time between two output flushes.
 	 * @return The operator with buffer timeout set.
 	 */
+	/**
+	 * 设置产生数据的操作的缓存时间，这个时间定义了数据在被丢进网络前会在本地 buffer 中呆多久
+	 *
+	 * 低的缓存时间可以带来低延迟，但是会影响吞吐量
+	 *
+	 * -1 使用执行环境的 bufferTimeout
+	 * 0 不缓存，所有的 record/event 被立即丢到网络中
+	 * n 缓存 n ms
+	 */
 	public SingleOutputStreamOperator<T> setBufferTimeout(long timeoutMillis) {
 		checkArgument(timeoutMillis >= -1, "timeout must be >= -1");
 		transformation.setBufferTimeout(timeoutMillis);
@@ -259,6 +298,12 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * @param strategy
 	 *            The selected {@link ChainingStrategy}
 	 * @return The operator with the modified chaining strategy
+	 */
+	/**
+	 * 设置链式策略
+	 * HEAD 允许后续算子 chain 执行
+	 * ALWAYS 尝试链式连接前面算子和允许后续算子 chain 执行
+	 * NEVER 本 transformation 和前后算子不 chain 执行
 	 */
 	@PublicEvolving
 	private SingleOutputStreamOperator<T> setChainingStrategy(ChainingStrategy strategy) {
@@ -276,6 +321,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *
 	 * @return The operator with chaining disabled
 	 */
+	/**
+	 * 禁止链式
+	 */
 	@PublicEvolving
 	public SingleOutputStreamOperator<T> disableChaining() {
 		return setChainingStrategy(ChainingStrategy.NEVER);
@@ -287,6 +335,9 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * previous tasks even if possible.
 	 *
 	 * @return The operator with chaining set.
+	 */
+	/**
+	 * 开始一个新的链
 	 */
 	@PublicEvolving
 	public SingleOutputStreamOperator<T> startNewChain() {
@@ -410,7 +461,11 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 *
 	 * @see org.apache.flink.streaming.api.functions.ProcessFunction.Context#output(OutputTag, Object)
 	 */
+	/**
+	 * 获取数据流，数据流包含从操作向具有给定 sideOutputTag 的侧输出发出的元素
+	 */
 	public <X> DataStream<X> getSideOutput(OutputTag<X> sideOutputTag) {
+		// getSideOutput 和 split 不能在一个流上被调用
 		if (wasSplitApplied) {
 			throw new UnsupportedOperationException("getSideOutput() and split() may not be called on the same DataStream. " +
 				"As a work-around, please add a no-op map function before the split() call.");
@@ -419,6 +474,7 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 		sideOutputTag = clean(requireNonNull(sideOutputTag));
 
 		// make a defensive copy
+		// 做一个防御性编程的拷贝
 		sideOutputTag = new OutputTag<X>(sideOutputTag.getId(), sideOutputTag.getTypeInfo());
 
 		TypeInformation<?> type = requestedSideOutputs.get(sideOutputTag);

@@ -40,6 +40,13 @@ import static java.util.Objects.requireNonNull;
  */
 /**
  * 上游的偏侧输出
+ *
+ * [https://blog.51cto.com/1196740/2357420](侧边输出用法)
+ *
+ * 只有 ProcessFunction 中的 ctx.output 能向偏侧写入数据
+ * 然后 SingleOutputStreamOperator.java 中使用 getSideOutput 获取偏侧输出
+ * 定义 outputTag 的时候需要创建一个匿名内部类
+ * OutputTag<String> outputTag = new OutputTag<String>("side-output") {};
  */
 public class SideOutputTransformation<T> extends StreamTransformation<T> {
 	private final StreamTransformation<?> input;

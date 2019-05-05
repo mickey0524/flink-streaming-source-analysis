@@ -70,7 +70,7 @@ public class StreamNode implements Serializable {
 	private TypeSerializer<?> stateKeySerializer;
 
 	private transient StreamOperator<?> operator;
-	private List<OutputSelector<?>> outputSelectors;
+	private List<OutputSelector<?>> outputSelectors;  // split 操作的参数
 	private TypeSerializer<?> typeSerializerIn1;
 	private TypeSerializer<?> typeSerializerIn2;
 	private TypeSerializer<?> typeSerializerOut;

@@ -93,7 +93,7 @@ public class StreamGraph extends StreamingPlan {
 	private Set<Integer> sources;  // 图中所有的数据源头节点
 	private Set<Integer> sinks;  // 图中所有的下沉节点
 	private Map<Integer, Tuple2<Integer, List<String>>> virtualSelectNodes;  // 图中所有的 select 虚拟节点
-	private Map<Integer, Tuple2<Integer, OutputTag>> virtualSideOutputNodes;
+	private Map<Integer, Tuple2<Integer, OutputTag>> virtualSideOutputNodes;  // 图中所有的 side output 虚拟节点
 	private Map<Integer, Tuple2<Integer, StreamPartitioner<?>>> virtualPartitionNodes;  // 图中所有的 partition 虚拟节点
 
 	protected Map<Integer, String> vertexIDtoBrokerID;
@@ -339,6 +339,9 @@ public class StreamGraph extends StreamingPlan {
 	 * @param virtualId ID of the virtual node.
 	 * @param outputTag The selected side-output {@code OutputTag}.
 	 */
+	/**
+	 * 添加用于将下游顶点仅连接到具有选定 side-output 的输出的新虚拟节点
+	 */
 	public void addVirtualSideOutputNode(Integer originalId, Integer virtualId, OutputTag outputTag) {
 
 		if (virtualSideOutputNodes.containsKey(virtualId)) {
@@ -349,6 +352,9 @@ public class StreamGraph extends StreamingPlan {
 		// combination with a different TypeInformation. This would indicate that someone is trying
 		// to read a side output from an operation with a different type for the same side output
 		// id.
+
+		// 验证我们之前没有添加过和 originalId/outputTag 相同，TypeInformation 不同的虚拟节点
+		// 这表示有人试图从具有不同类型的操作中读取同一个侧输出 ID 的侧输出
 
 		for (Tuple2<Integer, OutputTag> tag : virtualSideOutputNodes.values()) {
 			if (!tag.f0.equals(originalId)) {
@@ -395,7 +401,11 @@ public class StreamGraph extends StreamingPlan {
 	/**
 	 * Determines the slot sharing group of an operation across virtual nodes.
 	 */
+	/**
+	 * 确定跨虚拟节点的操作的槽共享组
+	 */
 	public String getSlotSharingGroup(Integer id) {
+		// 虚拟节点都由 originalId 来决定
 		if (virtualSideOutputNodes.containsKey(id)) {
 			Integer mappedId = virtualSideOutputNodes.get(id).f0;
 			return getSlotSharingGroup(mappedId);
@@ -429,6 +439,8 @@ public class StreamGraph extends StreamingPlan {
 
 	/**
 	 * 为 StreamGraph 中的两个节点连上边（内部使用的方法），会被递归调用
+	 * SideOutput、Select、Partition 不会在 StreamGraph 中存在真正的节点
+	 * 它们的选择器会作为属性写入 StreamEdge 中
 	 */
 	private void addEdgeInternal(Integer upStreamVertexID,
 			Integer downStreamVertexID,
@@ -436,7 +448,8 @@ public class StreamGraph extends StreamingPlan {
 			StreamPartitioner<?> partitioner,
 			List<String> outputNames,
 			OutputTag outputTag) {
-
+		
+		// 上游节点是 SideOutputNode 的时候
 		if (virtualSideOutputNodes.containsKey(upStreamVertexID)) {
 			int virtualId = upStreamVertexID;
 			upStreamVertexID = virtualSideOutputNodes.get(virtualId).f0;
@@ -445,6 +458,7 @@ public class StreamGraph extends StreamingPlan {
 			}
 			addEdgeInternal(upStreamVertexID, downStreamVertexID, typeNumber, partitioner, null, outputTag);
 		} else if (virtualSelectNodes.containsKey(upStreamVertexID)) {
+			// 上游节点是 SelectNode 的时候
 			int virtualId = upStreamVertexID;
 			upStreamVertexID = virtualSelectNodes.get(virtualId).f0;
 			if (outputNames.isEmpty()) {
@@ -453,6 +467,7 @@ public class StreamGraph extends StreamingPlan {
 			}
 			addEdgeInternal(upStreamVertexID, downStreamVertexID, typeNumber, partitioner, outputNames, outputTag);
 		} else if (virtualPartitionNodes.containsKey(upStreamVertexID)) {
+			// 上游节点是 Partitioner 节点的时候
 			int virtualId = upStreamVertexID;
 			upStreamVertexID = virtualPartitionNodes.get(virtualId).f0;
 			if (partitioner == null) {
@@ -492,6 +507,9 @@ public class StreamGraph extends StreamingPlan {
 
 	/**
 	 * 为 StreamNode 添加 outputSelector
+	 * 虚拟节点的话，加在 originalId 节点上
+	 * 这里不用考虑 SideOutputNode，因为
+	 * StreamGraphGenerator 中有对 Split 的检测，Split 和 SideOutput 不能被同时使用
 	 */
 	public <T> void addOutputSelector(Integer vertexID, OutputSelector<T> outputSelector) {
 		if (virtualPartitionNodes.containsKey(vertexID)) {
@@ -507,25 +525,29 @@ public class StreamGraph extends StreamingPlan {
 		}
 
 	}
-
+	
+	// 为 StreamNode 设置并行度
 	public void setParallelism(Integer vertexID, int parallelism) {
 		if (getStreamNode(vertexID) != null) {
 			getStreamNode(vertexID).setParallelism(parallelism);
 		}
 	}
 
+	// 为 StreamNode 设置最大并行度
 	public void setMaxParallelism(int vertexID, int maxParallelism) {
 		if (getStreamNode(vertexID) != null) {
 			getStreamNode(vertexID).setMaxParallelism(maxParallelism);
 		}
 	}
 
+	// 为 StreamNode 设置最大最小资源
 	public void setResources(int vertexID, ResourceSpec minResources, ResourceSpec preferredResources) {
 		if (getStreamNode(vertexID) != null) {
 			getStreamNode(vertexID).setResources(minResources, preferredResources);
 		}
 	}
 
+	// 为 Keyed Stream 设置 keySelector
 	public void setOneInputStateKey(Integer vertexID, KeySelector<?, ?> keySelector, TypeSerializer<?> keySerializer) {
 		StreamNode node = getStreamNode(vertexID);
 		node.setStatePartitioner1(keySelector);
@@ -539,6 +561,7 @@ public class StreamGraph extends StreamingPlan {
 		node.setStateKeySerializer(keySerializer);
 	}
 
+	// 为 StreamNode 设置 bufferTimeout
 	public void setBufferTimeout(Integer vertexID, long bufferTimeout) {
 		if (getStreamNode(vertexID) != null) {
 			getStreamNode(vertexID).setBufferTimeout(bufferTimeout);
@@ -575,6 +598,7 @@ public class StreamGraph extends StreamingPlan {
 		getStreamNode(vertexID).setInputFormat(inputFormat);
 	}
 
+	// 为 StreamNode 设置 uid
 	void setTransformationUID(Integer nodeId, String transformationId) {
 		StreamNode node = streamNodes.get(nodeId);
 		if (node != null) {
@@ -582,6 +606,7 @@ public class StreamGraph extends StreamingPlan {
 		}
 	}
 
+	// 为 StreamNode 设置 user hash code
 	void setTransformationUserHash(Integer nodeId, String nodeHash) {
 		StreamNode node = streamNodes.get(nodeId);
 		if (node != null) {
@@ -597,10 +622,12 @@ public class StreamGraph extends StreamingPlan {
 		return streamNodes.get(vertexID);
 	}
 
+	// 获取节点 ID 集合
 	protected Collection<? extends Integer> getVertexIDs() {
 		return streamNodes.keySet();
 	}
 
+	// 获取 sourceId 和 targetId 之间的边集合
 	public List<StreamEdge> getStreamEdges(int sourceId, int targetId) {
 
 		List<StreamEdge> result = new ArrayList<>();
@@ -617,14 +644,17 @@ public class StreamGraph extends StreamingPlan {
 		return result;
 	}
 
+	// 获取所有的源 ID
 	public Collection<Integer> getSourceIDs() {
 		return sources;
 	}
 
+	// 获取所有的 sink ID
 	public Collection<Integer> getSinkIDs() {
 		return sinks;
 	}
 
+	// 获取所有的 StreamNode
 	public Collection<StreamNode> getStreamNodes() {
 		return streamNodes.values();
 	}
@@ -690,23 +720,28 @@ public class StreamGraph extends StreamingPlan {
 		return new Tuple2<>(source, sink);
 	}
 
+	// 返回所有的 iterationSourceSinkPairs
 	public Set<Tuple2<StreamNode, StreamNode>> getIterationSourceSinkPairs() {
 		return iterationSourceSinkPairs;
 	}
-
+	
+	// 获取 edge 的源头 StreamNode
 	public StreamNode getSourceVertex(StreamEdge edge) {
 		return streamNodes.get(edge.getSourceId());
 	}
 
+	// 获取 edge 的目标 StreamNode
 	public StreamNode getTargetVertex(StreamEdge edge) {
 		return streamNodes.get(edge.getTargetId());
 	}
 
+	// 删除 StreamGraph 中的一条边
 	private void removeEdge(StreamEdge edge) {
 		getSourceVertex(edge).getOutEdges().remove(edge);
 		getTargetVertex(edge).getInEdges().remove(edge);
 	}
 
+	// 移除 StreamNode 中的一个节点，需要同时删除节点有关的所有边
 	private void removeVertex(StreamNode toRemove) {
 		Set<StreamEdge> edgesToRemove = new HashSet<>();
 

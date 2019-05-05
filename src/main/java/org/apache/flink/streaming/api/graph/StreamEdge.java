@@ -56,10 +56,18 @@ public class StreamEdge implements Serializable {
 	 * A list of output names that the target vertex listens to (if there is
 	 * output selection).
 	 */
+	/**
+	 * SplitStream.select(selectedNames) 的参数
+	 * 将 select 操作映射到边上
+	 */
 	private final List<String> selectedNames;
 
 	/**
 	 * The side-output tag (if any) of this {@link StreamEdge}.
+	 */
+	/**
+	 * getSideOutput(outputTag)
+	 * 将侧边输出映射到边上
 	 */
 	private final OutputTag outputTag;
 
@@ -68,6 +76,7 @@ public class StreamEdge implements Serializable {
 	 */
 	/**
 	 * 边的 Partitioner
+	 * 如果上游没有显示设置 Partitioner，会根据并行度来选择使用 ForwardPartitioner 或者 RebalancePartitioner
 	 */
 	private StreamPartitioner<?> outputPartitioner;
 

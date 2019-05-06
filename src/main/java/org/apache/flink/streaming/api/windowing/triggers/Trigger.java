@@ -34,19 +34,32 @@ import java.io.Serializable;
  * A {@code Trigger} determines when a pane of a window should be evaluated to emit the
  * results for that part of the window.
  *
+ * 触发器决定何时计算窗口的窗格以发出该窗口部分的结果
+ *
  * <p>A pane is the bucket of elements that have the same key (assigned by the
  * {@link org.apache.flink.api.java.functions.KeySelector}) and same {@link Window}. An element can
  * be in multiple panes if it was assigned to multiple windows by the
  * {@link org.apache.flink.streaming.api.windowing.assigners.WindowAssigner}. These panes all
  * have their own instance of the {@code Trigger}.
  *
+ * 一个窗格是一个元素桶，桶内的元素都有相同的 key(KeySelector 分配的) 以及相同的窗口
+ * 一个元素可以被分配多个窗口，因此一个元素可能存在于多个窗格
+ * 这些窗格都有他们自己的 Trigger 实例
+ *
  * <p>Triggers must not maintain state internally since they can be re-created or reused for
  * different keys. All necessary state should be persisted using the state abstraction
  * available on the {@link TriggerContext}.
  *
+ * 触发器不能在内部维护状态，因为它们可能被不同的 key 重新创建或者重用
+ * 所有必要的状态都应该使用 TriggerContext 上可用的状态抽象来持久化
+ *
  * <p>When used with a {@link org.apache.flink.streaming.api.windowing.assigners.MergingWindowAssigner}
  * the {@code Trigger} must return {@code true} from {@link #canMerge()} and
  * {@link #onMerge(Window, OnMergeContext)} most be properly implemented.
+ *
+ * 当和 MergingWindowAssigner 一起使用的时候
+ * canMerge 需要返回 true
+ * onMerge 方法需要被实现
  *
  * @param <T> The type of elements on which this {@code Trigger} works.
  * @param <W> The type of {@link Window Windows} on which this {@code Trigger} can operate.

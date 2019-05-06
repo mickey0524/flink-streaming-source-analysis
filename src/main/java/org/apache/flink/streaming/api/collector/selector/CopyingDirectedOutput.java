@@ -31,6 +31,10 @@ import java.util.Set;
  * Special version of {@link DirectedOutput} that performs a shallow copy of the
  * {@link StreamRecord} to ensure that multi-chaining works correctly.
  */
+/**
+ * DirectedOutput 的特别版本，会对 StreamRecord 执行浅拷贝来
+ * 确保多 chain 的任务正常工作
+ */
 public class CopyingDirectedOutput<OUT> extends DirectedOutput<OUT> {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
@@ -55,10 +59,14 @@ public class CopyingDirectedOutput<OUT> extends DirectedOutput<OUT> {
 			if (it.hasNext()) {
 				// we don't have the last output
 				// perform a shallow copy
+				// 当前不是最后一个 output
+				// 执行浅拷贝
 				StreamRecord<OUT> shallowCopy = record.copy(record.getValue());
 				out.collect(shallowCopy);
 			} else {
 				// this is the last output
+				// 当前是最后一个 output
+				// 直接 collect
 				out.collect(record);
 				break;
 			}

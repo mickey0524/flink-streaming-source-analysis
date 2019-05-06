@@ -27,12 +27,18 @@ import java.io.Serializable;
  *
  * @param <T> The type of elements that this {@code SessionWindowTimeGapExtractor} can extract session time gaps from.
  */
+/**
+ * SessionWindowTimeGapExtractor 为动态会话窗口分配器提取会话时间间隔
+ */
 @PublicEvolving
 public interface SessionWindowTimeGapExtractor<T> extends Serializable {
 	/**
 	 * Extracts the session time gap.
 	 * @param element The input element.
 	 * @return The session time gap in milliseconds.
+	 */
+	/**
+	 * 提取 session 的 time gap
 	 */
 	long extract(T element);
 }

@@ -37,6 +37,9 @@ import java.util.Collections;
  * {@link org.apache.flink.streaming.api.windowing.evictors.Evictor} to do flexible, policy based
  * windows.
  */
+/**
+ * 一个窗口分配器，将所有元素分配给同一个 GlobalWindow
+ */
 @PublicEvolving
 public class GlobalWindows extends WindowAssigner<Object, GlobalWindow> {
 	private static final long serialVersionUID = 1L;
@@ -44,6 +47,9 @@ public class GlobalWindows extends WindowAssigner<Object, GlobalWindow> {
 	private GlobalWindows() {}
 
 	@Override
+	/**
+	 * 所有的元素应用一个窗口，GlobalWindow.get() 得到的是一个单例
+	 */
 	public Collection<GlobalWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		return Collections.singletonList(GlobalWindow.get());
 	}

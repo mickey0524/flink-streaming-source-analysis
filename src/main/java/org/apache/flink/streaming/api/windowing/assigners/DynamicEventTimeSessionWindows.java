@@ -43,6 +43,10 @@ import java.util.Collections;
  *
  * @param <T> The type of the input elements
  */
+/**
+ * 一种窗口分配器，根据元素的时间戳给元素分配 session window
+ * 窗口不能重叠
+ */
 @PublicEvolving
 public class DynamicEventTimeSessionWindows<T> extends MergingWindowAssigner<T, TimeWindow> {
 	private static final long serialVersionUID = 1L;
@@ -55,6 +59,7 @@ public class DynamicEventTimeSessionWindows<T> extends MergingWindowAssigner<T, 
 
 	@Override
 	public Collection<TimeWindow> assignWindows(T element, long timestamp, WindowAssignerContext context) {
+		// sessionTimeout 是根据元素动态调整了
 		long sessionTimeout = sessionWindowTimeGapExtractor.extract(element);
 		if (sessionTimeout <= 0) {
 			throw new IllegalArgumentException("Dynamic session time gap must satisfy 0 < gap");

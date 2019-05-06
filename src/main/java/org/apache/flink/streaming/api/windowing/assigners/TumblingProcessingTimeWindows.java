@@ -41,14 +41,19 @@ import java.util.Collections;
  *   keyed.window(TumblingProcessingTimeWindows.of(Time.of(1, MINUTES), Time.of(10, SECONDS));
  * } </pre>
  */
+/**
+ * 一种窗口分配器，根据运行操作的机器的当前系统时间，将窗口元素放入窗口中
+ * 窗口不能重叠
+ */
 public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
 
-	private final long size;
+	private final long size;  // 大小
 
-	private final long offset;
+	private final long offset;  // offset
 
 	private TumblingProcessingTimeWindows(long size, long offset) {
+		// 当 offset 大于 size 的时候，抛出异常
 		if (Math.abs(offset) >= size) {
 			throw new IllegalArgumentException("TumblingProcessingTimeWindows parameters must satisfy abs(offset) < size");
 		}
@@ -60,6 +65,7 @@ public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWi
 	@Override
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		final long now = context.getCurrentProcessingTime();
+		// 获取元素应该位于窗口的开端
 		long start = TimeWindow.getWindowStartWithOffset(now, offset, size);
 		return Collections.singletonList(new TimeWindow(start, start + size));
 	}
@@ -85,6 +91,9 @@ public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWi
 	 * @param size The size of the generated windows.
 	 * @return The time policy.
 	 */
+	/**
+	 * 创建一个 TumblingProcessingTimeWindows，依据元素的 ts 来分配元素到哪个窗口
+	 */
 	public static TumblingProcessingTimeWindows of(Time size) {
 		return new TumblingProcessingTimeWindows(size.toMilliseconds(), 0);
 	}
@@ -105,6 +114,12 @@ public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWi
 	 * @param size The size of the generated windows.
 	 * @param offset The offset which window start would be shifted by.
 	 * @return The time policy.
+	 */
+	/**
+	 * 创建一个 TumblingProcessingTimeWindows，依据元素的 ts 和分配器的 offset 来分配元素到哪个窗口
+	 * 
+	 * 例如，如果你想按小时来窗口化一个流，但是窗口在每小时的第 15 分钟开启，你可以使用 of(Time.hours(1),Time.minutes(15))
+	 * 这样你会得到在 0:15:00,1:15:00,2:15:00... 开始的时间窗口
 	 */
 	public static TumblingProcessingTimeWindows of(Time size, Time offset) {
 		return new TumblingProcessingTimeWindows(size.toMilliseconds(), offset.toMilliseconds());

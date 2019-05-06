@@ -42,6 +42,10 @@ import java.util.Collections;
  *   keyed.window(TumblingEventTimeWindows.of(Time.minutes(1)));
  * } </pre>
  */
+/**
+ * 一种窗口分配程序，它根据元素的时间戳将元素窗口化
+ * 窗口不能重叠
+ */
 @PublicEvolving
 public class TumblingEventTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;

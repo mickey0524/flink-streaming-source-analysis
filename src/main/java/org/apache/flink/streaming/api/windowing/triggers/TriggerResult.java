@@ -27,10 +27,20 @@ package org.apache.flink.streaming.api.windowing.triggers;
  * contain any data the window function will not be invoked, i.e. no data will be produced for the
  * window.
  */
+/**
+ * trigger 方法的返回类型。这决定了窗口发生了什么
+ * 举个例子，窗口函数是否被调用，或者窗口是否应该被丢弃
+ *
+ * 如果 Trigger 返回 FIRE 或 FIRE_AND_PURGE，但是窗口没有包含任何数据
+ * 窗口函数不会被调用
+ */
 public enum TriggerResult {
 
 	/**
 	 * No action is taken on the window.
+	 */ 
+	/**
+	 * 窗口中没有发送任何操作
 	 */
 	CONTINUE(false, false),
 
@@ -54,8 +64,8 @@ public enum TriggerResult {
 
 	// ------------------------------------------------------------------------
 
-	private final boolean fire;
-	private final boolean purge;
+	private final boolean fire;  // 是否触发
+	private final boolean purge;  // 是否清洗
 
 	TriggerResult(boolean fire, boolean purge) {
 		this.purge = purge;

@@ -42,11 +42,19 @@ import java.util.Collections;
  *   keyed.window(EventTimeSessionWindows.withGap(Time.minutes(1)));
  * } </pre>
  */
+/**
+ * 一种窗口分配器，根据元素的 ts 给元素分配 session window
+ * 窗口不能重叠
+ * session window 一段时间没有接受到新数据就会生成新的窗口
+ */
 public class EventTimeSessionWindows extends MergingWindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
 
 	protected long sessionTimeout;
 
+	/**
+	 * 构造函数
+	 */
 	protected EventTimeSessionWindows(long sessionTimeout) {
 		if (sessionTimeout <= 0) {
 			throw new IllegalArgumentException("EventTimeSessionWindows parameters must satisfy 0 < size");

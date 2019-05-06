@@ -41,12 +41,18 @@ import java.util.Set;
  * A {@link Window} that represents a time interval from {@code start} (inclusive) to
  * {@code end} (exclusive).
  */
+/**
+ * 一个时间窗口，代表一段时间，从 start 到 end，[start, end)，左闭右开
+ */
 @PublicEvolving
 public class TimeWindow extends Window {
 
 	private final long start;
 	private final long end;
 
+	/**
+	 * 构造函数，start 代表左端点，end 代表右端点
+	 */
 	public TimeWindow(long start, long end) {
 		this.start = start;
 		this.end = end;
@@ -58,6 +64,9 @@ public class TimeWindow extends Window {
 	 *
 	 * @return The starting timestamp of this window.
 	 */
+	/**
+	 * 获取窗口的左边界
+	 */
 	public long getStart() {
 		return start;
 	}
@@ -67,6 +76,9 @@ public class TimeWindow extends Window {
 	 * is the first timestamp that does not belong to this window any more.
 	 *
 	 * @return The exclusive end timestamp of this window.
+	 */
+	/**
+	 * 获取窗口的右边界
 	 */
 	public long getEnd() {
 		return end;
@@ -82,6 +94,9 @@ public class TimeWindow extends Window {
 	 * @see #getEnd()
 	 */
 	@Override
+	/**
+	 * 获取属于该窗口的最大时间戳，因为区间是左闭右开，所以是 end - 1
+	 */
 	public long maxTimestamp() {
 		return end - 1;
 	}
@@ -116,12 +131,18 @@ public class TimeWindow extends Window {
 	/**
 	 * Returns {@code true} if this window intersects the given window.
 	 */
+	/**
+	 * 返回窗口是否与 other 窗口相交
+	 */
 	public boolean intersects(TimeWindow other) {
 		return this.start <= other.end && this.end >= other.start;
 	}
 
 	/**
 	 * Returns the minimal window covers both this window and the given window.
+	 */
+	/**
+	 * 返回最小的窗口能够覆盖本窗口和给定的窗口
 	 */
 	public TimeWindow cover(TimeWindow other) {
 		return new TimeWindow(Math.min(start, other.start), Math.max(end, other.end));
@@ -213,10 +234,14 @@ public class TimeWindow extends Window {
 	 * Merge overlapping {@link TimeWindow}s. For use by merging
 	 * {@link org.apache.flink.streaming.api.windowing.assigners.WindowAssigner WindowAssigners}.
 	 */
+	/**
+	 * 合并重叠的时间窗口
+	 * 会在合并窗口分配器的时候被用到
+	 */
 	public static void mergeWindows(Collection<TimeWindow> windows, MergingWindowAssigner.MergeCallback<TimeWindow> c) {
 
 		// sort the windows by the start time and then merge overlapping windows
-
+		// 将窗口按照开始时间排序，然后合并重叠的窗口
 		List<TimeWindow> sortedWindows = new ArrayList<>(windows);
 
 		Collections.sort(sortedWindows, new Comparator<TimeWindow>() {
@@ -230,15 +255,18 @@ public class TimeWindow extends Window {
 		Tuple2<TimeWindow, Set<TimeWindow>> currentMerge = null;
 
 		for (TimeWindow candidate: sortedWindows) {
+			// currentMerge 为空的时候，初始化，直接赋值
 			if (currentMerge == null) {
 				currentMerge = new Tuple2<>();
 				currentMerge.f0 = candidate;
 				currentMerge.f1 = new HashSet<>();
 				currentMerge.f1.add(candidate);
 			} else if (currentMerge.f0.intersects(candidate)) {
+				// 当前窗口和 currentMerge.f0 的窗口相交
 				currentMerge.f0 = currentMerge.f0.cover(candidate);
 				currentMerge.f1.add(candidate);
 			} else {
+				// 当不相交的时候，需要新建立 currentMerge
 				merged.add(currentMerge);
 				currentMerge = new Tuple2<>();
 				currentMerge.f0 = candidate;
@@ -265,6 +293,9 @@ public class TimeWindow extends Window {
 	 * @param offset The offset which window start would be shifted by.
 	 * @param windowSize The size of the generated windows.
 	 * @return window start
+	 */
+	/**
+	 * 获取窗口的开端
 	 */
 	public static long getWindowStartWithOffset(long timestamp, long offset, long windowSize) {
 		return timestamp - (timestamp - offset + windowSize) % windowSize;

@@ -32,9 +32,13 @@ import java.io.IOException;
  * The default window into which all data is placed (via
  * {@link org.apache.flink.streaming.api.windowing.assigners.GlobalWindows}).
  */
+/**
+ * 通过 GlobalWindows 将所有数据放入的默认窗口
+ */
 @PublicEvolving
 public class GlobalWindow extends Window {
 
+	// 单例
 	private static final GlobalWindow INSTANCE = new GlobalWindow();
 
 	private GlobalWindow() { }

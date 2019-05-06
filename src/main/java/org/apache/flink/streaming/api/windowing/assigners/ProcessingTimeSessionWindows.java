@@ -42,6 +42,11 @@ import java.util.Collections;
  *   keyed.window(ProcessingTimeSessionWindows.withGap(Time.minutes(1)));
  * } </pre>
  */
+/**
+ * 一种窗口分配器，根据当前的进程时间给元素分配 session window
+ * 窗口不能重叠
+ * session window 一段时间没有接受到新数据就会生成新的窗口
+ */
 public class ProcessingTimeSessionWindows extends MergingWindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
 
@@ -56,6 +61,9 @@ public class ProcessingTimeSessionWindows extends MergingWindowAssigner<Object, 
 	}
 
 	@Override
+	/**
+	 * 为元素分配窗口
+	 */
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		long currentProcessingTime = context.getCurrentProcessingTime();
 		return Collections.singletonList(new TimeWindow(currentProcessingTime, currentProcessingTime + sessionTimeout));
@@ -77,6 +85,9 @@ public class ProcessingTimeSessionWindows extends MergingWindowAssigner<Object, 
 	 *
 	 * @param size The session timeout, i.e. the time gap between sessions
 	 * @return The policy.
+	 */
+	/**
+	 * 创建一个 ProcessingTimeSessionWindows
 	 */
 	public static ProcessingTimeSessionWindows withGap(Time size) {
 		return new ProcessingTimeSessionWindows(size.toMilliseconds());

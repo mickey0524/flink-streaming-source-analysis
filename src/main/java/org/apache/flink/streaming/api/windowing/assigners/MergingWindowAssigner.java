@@ -29,6 +29,9 @@ import java.util.Collection;
  * @param <T> The type of elements that this WindowAssigner can assign windows to.
  * @param <W> The type of {@code Window} that this assigner assigns.
  */
+/**
+ * 一种能够合并窗口的窗口分配器
+ */
 @PublicEvolving
 public abstract class MergingWindowAssigner<T, W extends Window> extends WindowAssigner<T, W> {
 	private static final long serialVersionUID = 1L;
@@ -39,11 +42,17 @@ public abstract class MergingWindowAssigner<T, W extends Window> extends WindowA
 	 * @param windows The window candidates.
 	 * @param callback A callback that can be invoked to signal which windows should be merged.
 	 */
+	/**
+	 * 决定了哪些窗口应该被合并
+	 */
 	public abstract void mergeWindows(Collection<W> windows, MergeCallback<W> callback);
 
 	/**
 	 * Callback to be used in {@link #mergeWindows(Collection, MergeCallback)} for specifying which
 	 * windows should be merged.
+	 */
+	/**
+	 * mergeWindows 中使用的回调函数
 	 */
 	public interface MergeCallback<W> {
 

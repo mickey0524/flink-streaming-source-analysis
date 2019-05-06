@@ -42,6 +42,10 @@ import java.util.List;
  *   keyed.window(SlidingProcessingTimeWindows.of(Time.of(1, MINUTES), Time.of(10, SECONDS));
  * } </pre>
  */
+/**
+ * 一种窗口分配器，根据当前运行机器的系统时间将元素分配到滑动窗口中
+ * 窗口可能重叠
+ */
 public class SlidingProcessingTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
 
@@ -63,10 +67,15 @@ public class SlidingProcessingTimeWindows extends WindowAssigner<Object, TimeWin
 	}
 
 	@Override
+	/**
+	 * 分配元素属于的窗口
+	 */
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		timestamp = context.getCurrentProcessingTime();
+		// 每一个元素都应该属于 size / slide 个滑动窗口
 		List<TimeWindow> windows = new ArrayList<>((int) (size / slide));
 		long lastStart = TimeWindow.getWindowStartWithOffset(timestamp, offset, slide);
+		// 这里感觉能优化一下，start 有可能左溢出
 		for (long start = lastStart;
 			start > timestamp - size;
 			start -= slide) {

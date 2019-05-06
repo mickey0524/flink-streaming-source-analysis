@@ -40,6 +40,12 @@ import java.util.Collection;
  * @param <T> The type of elements that this WindowAssigner can assign windows to.
  * @param <W> The type of {@code Window} that this assigner assigns.
  */
+/**
+ * 一个窗口分配器将一个或多个窗口分配给一个元素
+ *
+ * 在一个窗口操作中，元素按其键（如果可用）和分配给它的窗口分组。具有相同键和窗口的元素集称为窗格
+ * 当一个触发器决定一个特定的窗格应该被触发，窗口函数会作用在窗格上来输出元素
+ */
 @PublicEvolving
 public abstract class WindowAssigner<T, W extends Window> implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -51,10 +57,20 @@ public abstract class WindowAssigner<T, W extends Window> implements Serializabl
 	 * @param timestamp The timestamp of the element.
 	 * @param context The {@link WindowAssignerContext} in which the assigner operates.
 	 */
+	/**
+	 * 返回应该分配给元素的窗口集合
+	 *
+	 * @param element 被分配窗口的元素
+	 * @param timestamp 元素的 ts
+	 * @param context 分配器在其中操作的WindowAssignerContext
+	 */
 	public abstract Collection<W> assignWindows(T element, long timestamp, WindowAssignerContext context);
 
 	/**
 	 * Returns the default trigger associated with this {@code WindowAssigner}.
+	 */
+	/**
+	 * 返回与该 WindowAssigner 有关的默认触发器
 	 */
 	public abstract Trigger<T, W> getDefaultTrigger(StreamExecutionEnvironment env);
 
@@ -62,11 +78,17 @@ public abstract class WindowAssigner<T, W extends Window> implements Serializabl
 	 * Returns a {@link TypeSerializer} for serializing windows that are assigned by
 	 * this {@code WindowAssigner}.
 	 */
+	/**
+	 * 返回一个类型序列器，用来序列化窗口
+	 */
 	public abstract TypeSerializer<W> getWindowSerializer(ExecutionConfig executionConfig);
 
 	/**
 	 * Returns {@code true} if elements are assigned to windows based on event time,
 	 * {@code false} otherwise.
+	 */
+	/**
+	 * 返回元素是否是按照 event time 来分配窗口的
 	 */
 	public abstract boolean isEventTime();
 
@@ -79,10 +101,16 @@ public abstract class WindowAssigner<T, W extends Window> implements Serializabl
 	 * which, in turn, gets it from the containing
 	 * {@link org.apache.flink.streaming.runtime.tasks.StreamTask}.
 	 */
+	/**
+	 * WindowAssigner 的 context，可以用于请求当前的进程时间
+	 */
 	public abstract static class WindowAssignerContext {
 
 		/**
 		 * Returns the current processing time.
+		 */
+		/**
+		 * 返回当前的进程时间
 		 */
 		public abstract long getCurrentProcessingTime();
 

@@ -43,6 +43,10 @@ import java.util.List;
  *   keyed.window(SlidingEventTimeWindows.of(Time.minutes(1), Time.seconds(10)));
  * } </pre>
  */
+/**
+ * 一种窗口分配器，根据元素的时间戳将元素分配到滑动窗口中
+ * 窗口可能重叠
+ */
 @PublicEvolving
 public class SlidingEventTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
@@ -65,6 +69,9 @@ public class SlidingEventTimeWindows extends WindowAssigner<Object, TimeWindow> 
 	}
 
 	@Override
+	/**
+	 * 依据元素的时间戳给元素分配窗口
+	 */
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		if (timestamp > Long.MIN_VALUE) {
 			List<TimeWindow> windows = new ArrayList<>((int) (size / slide));

@@ -27,6 +27,12 @@ import org.apache.flink.annotation.PublicEvolving;
  * <p>Subclasses should implement {@code equals()} and {@code hashCode()} so that logically
  * same windows are treated the same.
  */
+/**
+ * 一个窗口是将元素分组为有限的桶。窗口有一个最大时间戳，这意味着
+ * 在某个时间点，所有属于该窗口的元素都将到达
+ *
+ * 子类应该实现 equals 和 hashCode，这样逻辑相等的窗口才能被相同的对待
+ */
 @PublicEvolving
 public abstract class Window {
 
@@ -34,6 +40,9 @@ public abstract class Window {
 	 * Gets the largest timestamp that still belongs to this window.
 	 *
 	 * @return The largest timestamp that still belongs to this window.
+	 */
+	/**
+	 * 获取仍属于此窗口的最大时间戳
 	 */
 	public abstract long maxTimestamp();
 }

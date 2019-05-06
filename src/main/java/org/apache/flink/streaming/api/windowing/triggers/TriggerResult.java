@@ -48,17 +48,28 @@ public enum TriggerResult {
 	 * {@code FIRE_AND_PURGE} evaluates the window function and emits the window
 	 * result.
 	 */
+	/**
+	 * 计算窗口函数并 emit 窗口输出
+	 */
 	FIRE_AND_PURGE(true, true),
 
 	/**
 	 * On {@code FIRE}, the window is evaluated and results are emitted.
 	 * The window is not purged, though, all elements are retained.
 	 */
+	/**
+	 * 计算窗口并 emit 结果
+	 * 窗口没有被清除，所有元素被保留
+	 */
 	FIRE(true, false),
 
 	/**
 	 * All elements in the window are cleared and the window is discarded,
 	 * without evaluating the window function or emitting any elements.
+	 */
+	/**
+	 * 窗口中的元素都被清除，窗口被丢弃
+	 * 既不计算窗口函数也不输出任何元素
 	 */
 	PURGE(false, true);
 

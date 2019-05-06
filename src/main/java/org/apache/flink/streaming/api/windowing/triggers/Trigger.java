@@ -78,6 +78,10 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * @param window The window to which the element is being added.
 	 * @param ctx A context object that can be used to register timer callbacks.
 	 */
+	/**
+	 * 为窗格中的每个元素调用 onElement 方法，方法的返回值决定了
+	 * 是否窗格被执行来输出结果
+	 */
 	public abstract TriggerResult onElement(T element, long timestamp, W window, TriggerContext ctx) throws Exception;
 
 	/**
@@ -86,6 +90,9 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * @param time The timestamp at which the timer fired.
 	 * @param window The window for which the timer fired.
 	 * @param ctx A context object that can be used to register timer callbacks.
+	 */
+	/**
+	 * 使用 ctx 创建一个进程时间定时器
 	 */
 	public abstract TriggerResult onProcessingTime(long time, W window, TriggerContext ctx) throws Exception;
 
@@ -96,6 +103,9 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * @param window The window for which the timer fired.
 	 * @param ctx A context object that can be used to register timer callbacks.
 	 */
+	/**
+	 * 使用 ctx 来创建事件时间定时器
+	 */
 	public abstract TriggerResult onEventTime(long time, W window, TriggerContext ctx) throws Exception;
 
 	/**
@@ -105,6 +115,11 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 *
 	 * <p>If this returns {@code true} you must properly implement
 	 * {@link #onMerge(Window, OnMergeContext)}
+	 */
+	/**
+	 * 当 trigger 支持 trigger 状态合并的时候返回 true
+	 * 返回 true 代表可以与 MergingWindowAssigner 一起使用
+	 * 同时也需要实现 onMerge 方法
 	 */
 	public boolean canMerge() {
 		return false;
@@ -117,6 +132,9 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * @param window The new window that results from the merge.
 	 * @param ctx A context object that can be used to register timer callbacks and access state.
 	 */
+	/**
+	 * 多个窗口被合并成一个窗口的时候调用
+	 */
 	public void onMerge(W window, OnMergeContext ctx) throws Exception {
 		throw new UnsupportedOperationException("This trigger does not support merging.");
 	}
@@ -127,6 +145,12 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * and {@link TriggerContext#registerProcessingTimeTimer(long)} should be deleted here as
 	 * well as state acquired using {@link TriggerContext#getPartitionedState(StateDescriptor)}.
 	 */
+	/**
+	 * 清除触发器可能仍为给定窗口保留的任何状态
+	 * 当窗口被清除的时候调用这个方法
+	 * 用 registerEventTimeTimer 或 registerProcessingTimeTimer 设置的定时器需要在这里被删除
+	 * 用 getPartitionedState 获取的状态也需要被删除
+	 */
 	public abstract void clear(W window, TriggerContext ctx) throws Exception;
 
 	// ------------------------------------------------------------------------
@@ -135,10 +159,17 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * A context object that is given to {@link Trigger} methods to allow them to register timer
 	 * callbacks and deal with state.
 	 */
+	/**
+	 * 一个 trigger 上下文
+	 * trigger 可以使用 ctx 来注册定时器以及处理 state
+	 */
 	public interface TriggerContext {
 
 		/**
 		 * Returns the current processing time.
+		 */
+		/**
+		 * 返回当前的进程时间
 		 */
 		long getCurrentProcessingTime();
 
@@ -156,6 +187,9 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 		/**
 		 * Returns the current watermark time.
 		 */
+		/**
+		 * 返回当前的 watermark 时间
+		 */
 		long getCurrentWatermark();
 
 		/**
@@ -163,6 +197,10 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 		 * time {@link Trigger#onProcessingTime(long, Window, TriggerContext)} is called with the time specified here.
 		 *
 		 * @param time The time at which to invoke {@link Trigger#onProcessingTime(long, Window, TriggerContext)}
+		 */
+		/**
+		 * 注册一个系统时间回调。如果当前的系统时间大于注册的时候
+		 * onProcessingTime 被调用
 		 */
 		void registerProcessingTimeTimer(long time);
 
@@ -173,15 +211,25 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 		 * @param time The watermark at which to invoke {@link Trigger#onEventTime(long, Window, TriggerContext)}
 		 * @see org.apache.flink.streaming.api.watermark.Watermark
 		 */
+		/**
+		 * 注册一个事件时间回调。如果当前的事件时间大于注册的时候
+		 * onEventTime 被调用
+		 */
 		void registerEventTimeTimer(long time);
 
 		/**
 		 * Delete the processing time trigger for the given time.
 		 */
+		/**
+		 * 删除给定时间的进程时间触发器
+		 */
 		void deleteProcessingTimeTimer(long time);
 
 		/**
 		 * Delete the event-time trigger for the given time.
+		 */
+		/**
+		 * 删除给定时间的事件事件触发器
 		 */
 		void deleteEventTimeTimer(long time);
 
@@ -196,6 +244,9 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 		 * @return The partitioned state object.
 		 * @throws UnsupportedOperationException Thrown, if no partitioned state is available for the
 		 *                                       function (function is not part os a KeyedStream).
+		 */
+		/**
+		 * 检索可用于与容错状态交互的状态对象，容错状态的作用域是当前触发器调用的窗口和键
 		 */
 		<S extends State> S getPartitionedState(StateDescriptor<S, ?> stateDescriptor);
 
@@ -244,6 +295,10 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	/**
 	 * Extension of {@link TriggerContext} that is given to
 	 * {@link Trigger#onMerge(Window, OnMergeContext)}.
+	 */
+	/**
+	 * TriggerContext 的扩展
+	 * 在 onMerge 的时候使用
 	 */
 	public interface OnMergeContext extends TriggerContext {
 		<S extends MergingState<?, ?>> void mergePartitionedState(StateDescriptor<S, ?> stateDescriptor);

@@ -34,6 +34,12 @@ import org.apache.flink.streaming.api.windowing.windows.Window;
  *
  * @param <W> The type of {@link Window Windows} on which this trigger can operate.
  */
+/**
+ * 基于 DeltaFunction 和阈值触发的触发器
+ *
+ * 此触发器计算上次触发的数据点和当前到达的数据点之间的增量
+ * 如果增量高于指定阈值，则触发
+ */
 @PublicEvolving
 public class DeltaTrigger<T, W extends Window> extends Trigger<T, W> {
 	private static final long serialVersionUID = 1L;
@@ -51,11 +57,13 @@ public class DeltaTrigger<T, W extends Window> extends Trigger<T, W> {
 
 	@Override
 	public TriggerResult onElement(T element, long timestamp, W window, TriggerContext ctx) throws Exception {
-		ValueState<T> lastElementState = ctx.getPartitionedState(stateDesc);
+		ValueState<T> lastElementState = ctx.getPartitionedState(stateDesc);  // 获取上次的数据状态
+		// 如果没有上次的元素状态，更新元素状态
 		if (lastElementState.value() == null) {
 			lastElementState.update(element);
 			return TriggerResult.CONTINUE;
 		}
+		// 如果上次触发的数据点和当前到达的数据点之间的增量大于域值，触发
 		if (deltaFunction.getDelta(lastElementState.value(), element) > this.threshold) {
 			lastElementState.update(element);
 			return TriggerResult.FIRE;

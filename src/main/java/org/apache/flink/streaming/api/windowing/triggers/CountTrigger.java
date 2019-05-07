@@ -30,6 +30,9 @@ import org.apache.flink.streaming.api.windowing.windows.Window;
  *
  * @param <W> The type of {@link Window Windows} on which this trigger can operate.
  */
+/**
+ * 一种触发器，当窗格中元素数量到达给定的数值的时候触发
+ */
 @PublicEvolving
 public class CountTrigger<W extends Window> extends Trigger<Object, W> {
 	private static final long serialVersionUID = 1L;
@@ -45,8 +48,10 @@ public class CountTrigger<W extends Window> extends Trigger<Object, W> {
 
 	@Override
 	public TriggerResult onElement(Object element, long timestamp, W window, TriggerContext ctx) throws Exception {
+		// 获取当前的计数状态
 		ReducingState<Long> count = ctx.getPartitionedState(stateDesc);
 		count.add(1L);
+		// 当前的计数大于 maxCount 时候，触发
 		if (count.get() >= maxCount) {
 			count.clear();
 			return TriggerResult.FIRE;

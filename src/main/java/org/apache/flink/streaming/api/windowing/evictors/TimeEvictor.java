@@ -33,6 +33,11 @@ import java.util.Iterator;
  *
  * @param <W> The type of {@link Window Windows} on which this {@code Evictor} can operate.
  */
+/**
+ * 一个驱逐者在一定的时间内保持元素
+ * 时间早于 current_time - keep_time 的元素被驱逐
+ * current_time 与 TimestampedValue 有关
+ */
 @PublicEvolving
 public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 	private static final long serialVersionUID = 1L;
@@ -72,6 +77,7 @@ public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 		long currentTime = getMaxTimestamp(elements);
 		long evictCutoff = currentTime - windowSize;
 
+		// 将时间早于 current_time - keep_time 的元素驱逐
 		for (Iterator<TimestampedValue<Object>> iterator = elements.iterator(); iterator.hasNext(); ) {
 			TimestampedValue<Object> record = iterator.next();
 			if (record.getTimestamp() <= evictCutoff) {
@@ -83,6 +89,9 @@ public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 	/**
 	 * Returns true if the first element in the Iterable of {@link TimestampedValue} has a timestamp.
      */
+	/**
+	 * 如果 TimestampedValue 迭代器的第一个元素有一个 ts 返回 true
+	 */
 	private boolean hasTimestamp(Iterable<TimestampedValue<Object>> elements) {
 		Iterator<TimestampedValue<Object>> it = elements.iterator();
 		if (it.hasNext()) {
@@ -95,6 +104,9 @@ public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 	 * @param elements The elements currently in the pane.
 	 * @return The maximum value of timestamp among the elements.
      */
+	/**
+	 * 返回 elements 中最大的时间戳
+	 */
 	private long getMaxTimestamp(Iterable<TimestampedValue<Object>> elements) {
 		long currentTime = Long.MIN_VALUE;
 		for (Iterator<TimestampedValue<Object>> iterator = elements.iterator(); iterator.hasNext();){

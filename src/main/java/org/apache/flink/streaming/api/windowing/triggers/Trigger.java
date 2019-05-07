@@ -92,7 +92,7 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * @param ctx A context object that can be used to register timer callbacks.
 	 */
 	/**
-	 * 使用 ctx 创建一个进程时间定时器
+	 * 使用 ctx 创建一个进程时间定时器，定时器触发的时候调用
 	 */
 	public abstract TriggerResult onProcessingTime(long time, W window, TriggerContext ctx) throws Exception;
 
@@ -104,7 +104,7 @@ public abstract class Trigger<T, W extends Window> implements Serializable {
 	 * @param ctx A context object that can be used to register timer callbacks.
 	 */
 	/**
-	 * 使用 ctx 来创建事件时间定时器
+	 * 使用 ctx 来创建事件时间定时器，定时器触发的时候调用
 	 */
 	public abstract TriggerResult onEventTime(long time, W window, TriggerContext ctx) throws Exception;
 

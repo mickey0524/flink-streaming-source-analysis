@@ -40,6 +40,12 @@ import java.io.Serializable;
  * @param <T> The type of elements that this {@code Evictor} can evict.
  * @param <W> The type of {@link Window Windows} on which this {@code Evictor} can operate.
  */
+/**
+ * 一个 Evictor 可以在窗口函数执行前后清空窗格内的元素，也可以在触发器触发窗口执行后做相同的事情
+ *
+ * 一个窗格是一个具有相同 key 和分配了相同 window 的元素组成的桶，一个元素可以位于多个窗格内
+ * 因为一个元素可以被分配多个窗口，窗格都有它们自己的 Evictor
+ */
 @PublicEvolving
 public interface Evictor<T, W extends Window> extends Serializable {
 
@@ -51,6 +57,9 @@ public interface Evictor<T, W extends Window> extends Serializable {
 	 * @param window The {@link Window}
 	 * @param evictorContext The context for the Evictor
      */
+	/**
+	 * 可选的驱逐元素，在窗口函数执行前调用
+	 */
 	void evictBefore(Iterable<TimestampedValue<T>> elements, int size, W window, EvictorContext evictorContext);
 
 	/**
@@ -61,16 +70,25 @@ public interface Evictor<T, W extends Window> extends Serializable {
 	 * @param window The {@link Window}
 	 * @param evictorContext The context for the Evictor
 	 */
+	/**
+	 * 可选的驱逐元素，在窗口函数执行后调用
+	 */
 	void evictAfter(Iterable<TimestampedValue<T>> elements, int size, W window, EvictorContext evictorContext);
 
 
 	/**
 	 * A context object that is given to {@link Evictor} methods.
 	 */
+	/**
+	 * Evictor 方法的上下文对象
+	 */
 	interface EvictorContext {
 
 		/**
 		 * Returns the current processing time.
+		 */
+		/**
+		 * 返回当前的进程时间
 		 */
 		long getCurrentProcessingTime();
 
@@ -87,6 +105,9 @@ public interface Evictor<T, W extends Window> extends Serializable {
 
 		/**
 		 * Returns the current watermark time.
+		 */
+		/**
+		 * 返回当前的 watermark
 		 */
 		long getCurrentWatermark();
 	}

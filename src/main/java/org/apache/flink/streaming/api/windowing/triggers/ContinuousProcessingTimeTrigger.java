@@ -33,6 +33,9 @@ import org.apache.flink.streaming.api.windowing.windows.Window;
  *
  * @param <W> The type of {@link Window Windows} on which this trigger can operate.
  */
+/**
+ * 一种触发器，根据给定的时间间隔连续触发，时间间隔是由机器时间度量的
+ */
 @PublicEvolving
 public class ContinuousProcessingTimeTrigger<W extends Window> extends Trigger<Object, W> {
 	private static final long serialVersionUID = 1L;
@@ -53,9 +56,10 @@ public class ContinuousProcessingTimeTrigger<W extends Window> extends Trigger<O
 
 		timestamp = ctx.getCurrentProcessingTime();
 
+		// 第一次注册，之后都会在 onProcessingTime 的时候再次注册
 		if (fireTimestamp.get() == null) {
 			long start = timestamp - (timestamp % interval);
-			long nextFireTimestamp = start + interval;
+			long nextFireTimestamp = start + interval;  // 计算下一次触发的时间
 
 			ctx.registerProcessingTimeTimer(nextFireTimestamp);
 
@@ -77,7 +81,7 @@ public class ContinuousProcessingTimeTrigger<W extends Window> extends Trigger<O
 		if (fireTimestamp.get().equals(time)) {
 			fireTimestamp.clear();
 			fireTimestamp.add(time + interval);
-			ctx.registerProcessingTimeTimer(time + interval);
+			ctx.registerProcessingTimeTimer(time + interval);  // 再次注册
 			return TriggerResult.FIRE;
 		}
 		return TriggerResult.CONTINUE;
@@ -87,8 +91,8 @@ public class ContinuousProcessingTimeTrigger<W extends Window> extends Trigger<O
 	public void clear(W window, TriggerContext ctx) throws Exception {
 		ReducingState<Long> fireTimestamp = ctx.getPartitionedState(stateDesc);
 		long timestamp = fireTimestamp.get();
-		ctx.deleteProcessingTimeTimer(timestamp);
-		fireTimestamp.clear();
+		ctx.deleteProcessingTimeTimer(timestamp);  // 删除最后注册的定时器
+		fireTimestamp.clear();  // 清空状态
 	}
 
 	@Override

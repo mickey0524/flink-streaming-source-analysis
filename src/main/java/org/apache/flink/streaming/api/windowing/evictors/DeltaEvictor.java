@@ -35,6 +35,12 @@ import java.util.Iterator;
  *
  * @param <W> The type of {@link Window Windows} on which this {@code Evictor} can operate.
  */
+/**
+ * 一种依据 DeltaFunction 和 threshold 保持数据的驱逐器
+ *
+ * 驱逐者从 buffer 的第一个元素开始，驱逐 buffer 中 delta 高于 threshold 的所有元素
+ * 每个元素的 delta 值通过与最后一个元素调用 DeltaFunction 得到
+ */
 @PublicEvolving
 public class DeltaEvictor<T, W extends Window> implements Evictor<T, W> {
 	private static final long serialVersionUID = 1L;
@@ -70,6 +76,7 @@ public class DeltaEvictor<T, W extends Window> implements Evictor<T, W> {
 	}
 
 	private void evict(Iterable<TimestampedValue<T>> elements, int size, EvictorContext ctx) {
+		// 以 elements 中最后一个元素作为标杆
 		TimestampedValue<T> lastElement = Iterables.getLast(elements);
 		for (Iterator<TimestampedValue<T>> iterator = elements.iterator(); iterator.hasNext();){
 			TimestampedValue<T> element = iterator.next();

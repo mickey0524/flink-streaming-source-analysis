@@ -27,6 +27,9 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
  *
  * @see org.apache.flink.streaming.api.watermark.Watermark
  */
+/**
+ * 一种触发器，当 watermark 超过窗格所属窗口的末端时候触发
+ */
 @PublicEvolving
 public class EventTimeTrigger extends Trigger<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
@@ -37,6 +40,7 @@ public class EventTimeTrigger extends Trigger<Object, TimeWindow> {
 	public TriggerResult onElement(Object element, long timestamp, TimeWindow window, TriggerContext ctx) throws Exception {
 		if (window.maxTimestamp() <= ctx.getCurrentWatermark()) {
 			// if the watermark is already past the window fire immediately
+			// 如果 watermark 已经超过窗口末端了，立即触发定时器
 			return TriggerResult.FIRE;
 		} else {
 			ctx.registerEventTimeTimer(window.maxTimestamp());
@@ -72,6 +76,9 @@ public class EventTimeTrigger extends Trigger<Object, TimeWindow> {
 		// only register a timer if the watermark is not yet past the end of the merged window
 		// this is in line with the logic in onElement(). If the watermark is past the end of
 		// the window onElement() will fire and setting a timer here would fire the window twice.
+		// 只有当 watermark 还没有超过合并窗口的末端时才注册定时器
+		// 这里与 onElement() 中的逻辑是一样的
+		// 如果 watermark 超过了窗口的末端，onElement() 将触发，在此设置计时器将触发窗口两次
 		long windowMaxTimestamp = window.maxTimestamp();
 		if (windowMaxTimestamp > ctx.getCurrentWatermark()) {
 			ctx.registerEventTimeTimer(windowMaxTimestamp);
@@ -88,6 +95,11 @@ public class EventTimeTrigger extends Trigger<Object, TimeWindow> {
 	 *
 	 * <p>Once the trigger fires all elements are discarded. Elements that arrive late immediately
 	 * trigger window evaluation with just this one element.
+	 */
+	/**
+	 * 创建一种触发器，当 watermark 超过窗格所属窗口的末端时候触发
+     *
+	 * 一旦触发器触发，所有元素都将被丢弃。延迟到达的元素立即触发窗口执行，窗口中仅有一个元素
 	 */
 	public static EventTimeTrigger create() {
 		return new EventTimeTrigger();

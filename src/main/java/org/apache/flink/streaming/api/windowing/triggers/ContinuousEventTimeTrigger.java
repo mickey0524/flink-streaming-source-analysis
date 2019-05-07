@@ -35,6 +35,10 @@ import org.apache.flink.streaming.api.windowing.windows.Window;
  *
  * @param <W> The type of {@link Window Windows} on which this trigger can operate.
  */
+/**
+ * 一种触发器依据给定的时间间隔连续触发
+ * 触发依赖于 watermark
+ */
 @PublicEvolving
 public class ContinuousEventTimeTrigger<W extends Window> extends Trigger<Object, W> {
 	private static final long serialVersionUID = 1L;
@@ -54,6 +58,7 @@ public class ContinuousEventTimeTrigger<W extends Window> extends Trigger<Object
 
 		if (window.maxTimestamp() <= ctx.getCurrentWatermark()) {
 			// if the watermark is already past the window fire immediately
+			// 如果 watermark 已经大于窗口末端，立即触发
 			return TriggerResult.FIRE;
 		} else {
 			ctx.registerEventTimeTimer(window.maxTimestamp());

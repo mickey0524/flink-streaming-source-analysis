@@ -25,6 +25,9 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
  * A {@link Trigger} that fires once the current system time passes the end of the window
  * to which a pane belongs.
  */
+/**
+ * 一种触发器，当当前的系统时间经过窗格所属窗口的末端的时候触发
+ */
 @PublicEvolving
 public class ProcessingTimeTrigger extends Trigger<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
@@ -63,6 +66,9 @@ public class ProcessingTimeTrigger extends Trigger<Object, TimeWindow> {
 		// only register a timer if the time is not yet past the end of the merged window
 		// this is in line with the logic in onElement(). If the time is past the end of
 		// the window onElement() will fire and setting a timer here would fire the window twice.
+		// 只有当时间还没有超过合并窗口的末端时才注册定时器
+		// 这里与 onElement() 中的逻辑是一样的
+		// 如果时间超过了窗口的末端，onElement() 将触发，在此设置计时器将触发窗口两次
 		long windowMaxTimestamp = window.maxTimestamp();
 		if (windowMaxTimestamp > ctx.getCurrentProcessingTime()) {
 			ctx.registerProcessingTimeTimer(windowMaxTimestamp);

@@ -29,6 +29,9 @@ import java.util.Iterator;
  *
  * @param <W> The type of {@link Window Windows} on which this {@code Evictor} can operate.
  */
+/**
+ * 一种保留一定数量元素的驱逐者
+ */
 @PublicEvolving
 public class CountEvictor<W extends Window> implements Evictor<Object, W> {
 	private static final long serialVersionUID = 1L;
@@ -69,6 +72,7 @@ public class CountEvictor<W extends Window> implements Evictor<Object, W> {
 				iterator.next();
 				evictedCount++;
 				if (evictedCount > size - maxCount) {
+					// 当驱逐数量够了的时候，break
 					break;
 				} else {
 					iterator.remove();

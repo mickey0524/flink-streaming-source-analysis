@@ -31,6 +31,11 @@ import org.apache.flink.streaming.api.windowing.windows.Window;
  * @param <T> The type of elements on which this trigger can operate.
  * @param <W> The type of {@link Window Windows} on which this trigger can operate.
  */
+/**
+ * 一种可以将任何触发器转换为清除触发器的触发器
+ *
+ * 当嵌套的触发器触发的时候，返回 FIRE_AND_PURGE
+ */
 @PublicEvolving
 public class PurgingTrigger<T, W extends Window> extends Trigger<T, W> {
 	private static final long serialVersionUID = 1L;

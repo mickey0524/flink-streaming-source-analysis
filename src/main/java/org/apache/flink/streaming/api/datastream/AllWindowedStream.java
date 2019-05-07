@@ -93,28 +93,30 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 public class AllWindowedStream<T, W extends Window> {
 
 	/** The keyed data stream that is windowed by this stream. */
-	private final KeyedStream<T, Byte> input;
+	private final KeyedStream<T, Byte> input;  // 输入流
 
 	/** The window assigner. */
-	private final WindowAssigner<? super T, W> windowAssigner;
+	private final WindowAssigner<? super T, W> windowAssigner;  // 窗口分配器
 
 	/** The trigger that is used for window evaluation/emission. */
-	private Trigger<? super T, ? super W> trigger;
+	private Trigger<? super T, ? super W> trigger;  // 触发器
 
 	/** The evictor that is used for evicting elements before window evaluation. */
-	private Evictor<? super T, ? super W> evictor;
+	private Evictor<? super T, ? super W> evictor;  // 驱逐者
 
 	/** The user-specified allowed lateness. */
-	private long allowedLateness = 0L;
+	private long allowedLateness = 0L;  // 用于定义的允许的延迟
 
 	/**
 	 * Side output {@code OutputTag} for late data. If no tag is set late data will simply be dropped.
 	 */
+	// 针对延迟数据的侧边输出，如果没有设置 lateDataOutputTag，延迟数据会被丢弃
 	private OutputTag<T> lateDataOutputTag;
 
 	@PublicEvolving
 	public AllWindowedStream(DataStream<T> input,
 			WindowAssigner<? super T, W> windowAssigner) {
+		// 传进来的是一个 DataStream，伪造一个 KeyedStream，所有的元素都是一个分组
 		this.input = input.keyBy(new NullByteKeySelector<T>());
 		this.windowAssigner = windowAssigner;
 		this.trigger = windowAssigner.getDefaultTrigger(input.getExecutionEnvironment());
@@ -122,6 +124,9 @@ public class AllWindowedStream<T, W extends Window> {
 
 	/**
 	 * Sets the {@code Trigger} that should be used to trigger window emission.
+	 */
+	/**
+	 * 设置 Trigger，用于触发窗口执行
 	 */
 	@PublicEvolving
 	public AllWindowedStream<T, W> trigger(Trigger<? super T, ? super W> trigger) {
@@ -139,6 +144,10 @@ public class AllWindowedStream<T, W extends Window> {
 	 * By default, the allowed lateness is {@code 0L}.
 	 *
 	 * <p>Setting an allowed lateness is only valid for event-time windows.
+	 */
+	/**
+	 * 设置允许元素延迟的时间，元素在 watermark 之后 lateness 到来的元素会被丢弃
+	 * 设置允许延迟仅仅对事件时间窗口有效
 	 */
 	@PublicEvolving
 	public AllWindowedStream<T, W> allowedLateness(Time lateness) {
@@ -159,6 +168,9 @@ public class AllWindowedStream<T, W extends Window> {
 	 * {@link SingleOutputStreamOperator} resulting from the windowed operation
 	 * with the same {@link OutputTag}.
 	 */
+	/**
+	 * 将延迟到达的元素送至 outputTag 定义的侧边输出
+	 */
 	@PublicEvolving
 	public AllWindowedStream<T, W> sideOutputLateData(OutputTag<T> outputTag) {
 		Preconditions.checkNotNull(outputTag, "Side output tag must not be null.");
@@ -171,6 +183,10 @@ public class AllWindowedStream<T, W extends Window> {
 	 *
 	 * <p>Note: When using an evictor window performance will degrade significantly, since
 	 * incremental aggregation of window results cannot be used.
+	 */
+	/**
+	 * 设置驱逐者
+	 * 当使用 evictor 时，由于无法使用窗口结果的增量聚合，因此窗口性能将显著降低
 	 */
 	@PublicEvolving
 	public AllWindowedStream<T, W> evictor(Evictor<? super T, ? super W> evictor) {
@@ -202,6 +218,15 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param function The reduce function.
 	 * @return The data stream that is the result of applying the reduce function to the window.
 	 */
+	/**
+	 * 在窗口上应用 reduce 函数，每一个键的每一个窗口执行都需要调用这个窗口函数
+	 * reduce 函数的输出被解释为常规的无窗口流
+	 *
+	 * 此窗口将尝试在窗口策略允许的范围内增量聚合数据。例如，翻转时间窗口能够聚合数据
+	 * 意味着每个 key 只有一个元素被存储。滑动时间窗口将在滑动间隔的粒度上聚合，因此
+	 * 每个 key 会有一部分元素被存储（一个滑动时间间隔）
+	 * 自定义的窗口可能不能增量聚合
+	 */
 	@SuppressWarnings("unchecked")
 	public SingleOutputStreamOperator<T> reduce(ReduceFunction<T> function) {
 		if (function instanceof RichFunction) {
@@ -229,6 +254,12 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param function The window function.
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每个窗口应用给定窗口函数，每一个键的每一个窗口执行都需要调用这个窗口函数
+	 * 窗口函数的输出被解释为常规的无窗口流
+	 *
+	 * 到来的数据会被 reducer 增量聚合
+	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> reduce(
 			ReduceFunction<T> reduceFunction,
@@ -252,6 +283,12 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param resultType Type information for the result type of the window function
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每个窗口应用给定窗口函数，每一个键的每一个窗口执行都需要调用这个窗口函数
+	 * 窗口函数的输出被解释为常规的无窗口流
+	 *
+	 * 到来的数据会被 reducer 增量聚合
+ 	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> reduce(
 			ReduceFunction<T> reduceFunction,

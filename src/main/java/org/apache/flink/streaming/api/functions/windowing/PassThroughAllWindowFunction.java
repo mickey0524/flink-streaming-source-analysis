@@ -25,6 +25,9 @@ import org.apache.flink.util.Collector;
 /**
  * A {@link AllWindowFunction} that just emits each input element.
  */
+/**
+ * 一个 AllWindowFunction 仅仅 emit 每一个输入元素
+ */
 @Internal
 public class PassThroughAllWindowFunction<W extends Window, T> implements AllWindowFunction<T, T, W> {
 

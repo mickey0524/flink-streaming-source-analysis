@@ -851,6 +851,9 @@ public class DataStream<T> {
 	 *
 	 * @param size The size of the window.
 	 */
+	/**
+	 * 窗口化 DataStream 为翻转时间窗口
+	 */
 	public AllWindowedStream<T, TimeWindow> timeWindowAll(Time size) {
 		if (environment.getStreamTimeCharacteristic() == TimeCharacteristic.ProcessingTime) {
 			return windowAll(TumblingProcessingTimeWindows.of(size));
@@ -871,6 +874,9 @@ public class DataStream<T> {
 	 * the same operator instance.
 	 *
 	 * @param size The size of the window.
+	 */
+	/**
+	 * 窗口化 DataStream 为滑动时间窗口
 	 */
 	public AllWindowedStream<T, TimeWindow> timeWindowAll(Time size, Time slide) {
 		if (environment.getStreamTimeCharacteristic() == TimeCharacteristic.ProcessingTime) {
@@ -922,6 +928,14 @@ public class DataStream<T> {
 	 *
 	 * @param assigner The {@code WindowAssigner} that assigns elements to windows.
 	 * @return The trigger windows data stream.
+	 */
+	/**
+	 * 窗口化数据流为 AllWindowedStream
+	 * 元素通过 WindowAssigner 被放入窗口，元素的分组由窗口完成
+	 *
+	 * 一个 Trigger 能够用来定义窗口什么时候执行
+	 * WindowAssigner 有一个默认的触发器，如果 Trigger 没有被定义，使用默认的触发器
+	 * 这个操作是非并行的，因为所有的元素都需要经过同一个操作符实例
 	 */
 	@PublicEvolving
 	public <W extends Window> AllWindowedStream<T, W> windowAll(WindowAssigner<? super T, W> assigner) {

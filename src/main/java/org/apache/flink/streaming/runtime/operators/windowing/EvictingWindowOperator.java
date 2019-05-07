@@ -58,6 +58,13 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @param <OUT> The type of elements emitted by the {@code InternalWindowFunction}.
  * @param <W> The type of {@code Window} that the {@code WindowAssigner} assigns.
  */
+/**
+ * 一个允许 Evictor 被使用的 WindowOperator
+ *
+ * Evictor 被用于在 InternalWindowFunction 执行前后以及
+ * 窗口被触发器触发执行之后从窗格中移除元素
+ * 
+ */
 @Internal
 public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 		extends WindowOperator<K, IN, Iterable<IN>, OUT, W> {
@@ -73,7 +80,7 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 
 	// ------------------------------------------------------------------------
 	// the fields below are instantiated once the operator runs in the runtime
-
+	// 以下字段将在操作符运行时实例化
 	private transient EvictorContext evictorContext;
 
 	private transient InternalListState<K, W, StreamRecord<IN>> evictingWindowState;
@@ -100,12 +107,15 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
+		// 获得元素所属的全部窗口
 		final Collection<W> elementWindows = windowAssigner.assignWindows(
 				element.getValue(), element.getTimestamp(), windowAssignerContext);
 
-		//if element is handled by none of assigned elementWindows
+		// if element is handled by none of assigned elementWindows
+		// 表明元素是否未被窗口处理
 		boolean isSkippedElement = true;
 
+		// 获取当前的 key
 		final K key = this.<K>getKeyedStateBackend().getCurrentKey();
 
 		if (windowAssigner instanceof MergingWindowAssigner) {
@@ -116,6 +126,8 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 				// adding the new window might result in a merge, in that case the actualWindow
 				// is the merged window and we work with that. If we don't merge then
 				// actualWindow == window
+				// 添加新的窗口有可能导致一次合并，这种情况下真正的窗口是合并后的窗口，同时我们也工作在合并后的窗口上
+				// 如果新的窗口没有 merge，actualWindow 就等于 window
 				W actualWindow = mergingWindows.addWindow(window,
 						new MergingWindowSet.MergeFunction<W>() {
 							@Override
@@ -147,11 +159,13 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 								}
 
 								// merge the merged state windows into the newly resulting state window
+								// 将被合并的状态窗口合并到新生成的状态窗口
 								evictingWindowState.mergeNamespaces(stateWindowResult, mergedStateWindows);
 							}
 						});
 
 				// drop if the window is already late
+				// 如果合并得到的结果窗口已经延迟了，删除给定窗口
 				if (isWindowLate(actualWindow)) {
 					mergingWindows.retireWindow(actualWindow);
 					continue;
@@ -163,11 +177,15 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 					throw new IllegalStateException("Window " + window + " is not in in-flight window set.");
 				}
 
+				// 先设置 evictingWindowState 的命名空间为 stateWindow
 				evictingWindowState.setCurrentNamespace(stateWindow);
+				// 这里和 WindowOperator 不一样，WindowOperator add 的是 element 的 value
+				// 这里 add 的是 element
 				evictingWindowState.add(element);
 
 				triggerContext.key = key;
 				triggerContext.window = actualWindow;
+				// 这是比 WindowOperator 多的 evictorContext
 				evictorContext.key = key;
 				evictorContext.window = actualWindow;
 
@@ -194,6 +212,7 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 			for (W window : elementWindows) {
 
 				// check if the window is already inactive
+				// 检查当前窗口是否已经是不活跃的
 				if (isWindowLate(window)) {
 					continue;
 				}
@@ -229,8 +248,9 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 		// element not handled by any window
 		// late arriving tag has been set
 		// windowAssigner is event time and current timestamp + allowed lateness no less than element timestamp
+		// 如果元素没有被窗口处理，而且 element 已经延迟了，如果定义了 outputTag，用侧边输出来收集
 		if (isSkippedElement && isElementLate(element)) {
-			if (lateDataOutputTag != null){
+			if (lateDataOutputTag != null) {
 				sideOutput(element);
 			} else {
 				this.numLateRecordsDropped.inc();
@@ -239,6 +259,9 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 	}
 
 	@Override
+	/**
+	 * 事件时间定时器回调函数
+	 */
 	public void onEventTime(InternalTimer<K, W> timer) throws Exception {
 
 		triggerContext.key = timer.getKey();
@@ -266,6 +289,7 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 		TriggerResult triggerResult = triggerContext.onEventTime(timer.getTimestamp());
 
 		if (triggerResult.isFire()) {
+			// add 的时候是直接 add 整个 element，因此这里得到的是 Iterable<StreamRecord<IN>> 类型的
 			Iterable<StreamRecord<IN>> contents = evictingWindowState.get();
 			if (contents != null) {
 				emitWindowContents(triggerContext.window, contents, evictingWindowState);
@@ -287,6 +311,9 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 	}
 
 	@Override
+	/**
+	 * 进程时间定时器回调函数
+	 */
 	public void onProcessingTime(InternalTimer<K, W> timer) throws Exception {
 		triggerContext.key = timer.getKey();
 		triggerContext.window = timer.getNamespace();
@@ -333,10 +360,13 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 		}
 	}
 
+	// 发出窗口的内容
 	private void emitWindowContents(W window, Iterable<StreamRecord<IN>> contents, ListState<StreamRecord<IN>> windowState) throws Exception {
+		// 设置指定时间戳
 		timestampedCollector.setAbsoluteTimestamp(window.maxTimestamp());
 
 		// Work around type system restrictions...
+		// 将 contents 的内容由 StreamRecord 转为 TimestampedValue
 		FluentIterable<TimestampedValue<IN>> recordsWithTimestamp = FluentIterable
 			.from(contents)
 			.transform(new Function<StreamRecord<IN>, TimestampedValue<IN>>() {
@@ -347,6 +377,7 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 			});
 		evictorContext.evictBefore(recordsWithTimestamp, Iterables.size(recordsWithTimestamp));
 
+		// userFunction 只处理 record 的 value，这里再转换一次
 		FluentIterable<IN> projectedContents = recordsWithTimestamp
 			.transform(new Function<TimestampedValue<IN>, IN>() {
 				@Override
@@ -359,8 +390,9 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 		userFunction.process(triggerContext.key, triggerContext.window, processContext, projectedContents, timestampedCollector);
 		evictorContext.evictAfter(recordsWithTimestamp, Iterables.size(recordsWithTimestamp));
 
-		//work around to fix FLINK-4369, remove the evicted elements from the windowState.
-		//this is inefficient, but there is no other way to remove elements from ListState, which is an AppendingState.
+		// work around to fix FLINK-4369, remove the evicted elements from the windowState.
+		// this is inefficient, but there is no other way to remove elements from ListState, which is an AppendingState.
+		// clear 掉被驱逐的元素的 state，先 clear 再 add 不是有效的做法，但是也没有其他的方法
 		windowState.clear();
 		for (TimestampedValue<IN> record : recordsWithTimestamp) {
 			windowState.add(record.getStreamRecord());
@@ -386,7 +418,11 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 	 * by setting the {@code key} and {@code window} fields. No internal state must be kept in
 	 * the {@code EvictorContext}.
 	 */
-
+	/**
+	 * EvictorContext 是用来处理 Evictor 执行的工具
+	 * EvictorContext 能够通过设置 key 和 window 来被重复使用
+	 * EvictorContext 不应该保存任何内部状态
+	 */
 	class EvictorContext implements Evictor.EvictorContext {
 
 		protected K key;
@@ -428,7 +464,7 @@ public class EvictingWindowOperator<K, IN, OUT, W extends Window>
 	@Override
 	public void open() throws Exception {
 		super.open();
-
+		// 在 open 的时候创建 evictorContext 和 evictingWindowState
 		evictorContext = new EvictorContext(null, null);
 		evictingWindowState = (InternalListState<K, W, StreamRecord<IN>>)
 				getOrCreateKeyedState(windowSerializer, evictingWindowStateDescriptor);

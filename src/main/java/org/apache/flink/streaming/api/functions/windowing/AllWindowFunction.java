@@ -32,6 +32,9 @@ import java.io.Serializable;
  * @param <OUT> The type of the output value.
  * @param <W> The type of {@code Window} that this window function can be applied on.
  */
+/**
+ * 非 key 窗口上执行的函数的基本接口
+ */
 @Public
 public interface AllWindowFunction<IN, OUT, W extends Window> extends Function, Serializable {
 
@@ -43,6 +46,9 @@ public interface AllWindowFunction<IN, OUT, W extends Window> extends Function, 
 	 * @param out A collector for emitting elements.
 	 *
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
+	 */
+	/**
+	 * 执行窗口并且输出零个或者多个元素
 	 */
 	void apply(W window, Iterable<IN> values, Collector<OUT> out) throws Exception;
 }

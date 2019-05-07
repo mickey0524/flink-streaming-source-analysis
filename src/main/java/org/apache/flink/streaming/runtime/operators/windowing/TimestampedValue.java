@@ -26,6 +26,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  *
  * @param <T> The type encapsulated value
  */
+/**
+ * 存储 record 的 value 和 ts
+ */
 @PublicEvolving
 public class TimestampedValue<T> {
 
@@ -103,6 +106,9 @@ public class TimestampedValue<T> {
 	 *
 	 * @param streamRecord The StreamRecord object from which TimestampedValue is to be created.
      */
+	/**
+	 * 给出一个 StreamRecord 生成一个 TimestampedValue
+	 */
 	public static <T> TimestampedValue<T> from(StreamRecord<T> streamRecord) {
 		if (streamRecord.hasTimestamp()) {
 			return new TimestampedValue<>(streamRecord.getValue(), streamRecord.getTimestamp());

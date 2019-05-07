@@ -31,6 +31,9 @@ import org.apache.flink.util.OutputTag;
  * @param <OUT> The type of the output value.
  * @param <KEY> The type of the key.
  */
+/**
+ * keyed 窗口执行的函数的内部接口
+ */
 public interface InternalWindowFunction<IN, OUT, KEY, W extends Window> extends Function {
 	/**
 	 * Evaluates the window and outputs none or several elements.
@@ -41,6 +44,9 @@ public interface InternalWindowFunction<IN, OUT, KEY, W extends Window> extends 
 	 *
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
 	 */
+	/**
+	 * 执行窗口，输出一个或多个元素
+	 */
 	void process(KEY key, W window, InternalWindowContext context, IN input, Collector<OUT> out) throws Exception;
 
 	/**
@@ -48,6 +54,9 @@ public interface InternalWindowFunction<IN, OUT, KEY, W extends Window> extends 
 	 *
 	 * @param context The context to which the window is being evaluated
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
+	 */
+	/**
+	 * 当窗口被清洗的时候删除 context 内的所有状态
 	 */
 	void clear(W window, InternalWindowContext context) throws Exception;
 

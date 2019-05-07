@@ -80,16 +80,25 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * An operator that implements the logic for windowing based on a {@link WindowAssigner} and
  * {@link Trigger}.
  *
+ * 一个依据 WindowAssigner 和 Trigger 实现了窗口逻辑的操作符
+ *
  * <p>When an element arrives it gets assigned a key using a {@link KeySelector} and it gets
  * assigned to zero or more windows using a {@link WindowAssigner}. Based on this, the element
  * is put into panes. A pane is the bucket of elements that have the same key and same
  * {@code Window}. An element can be in multiple panes if it was assigned to multiple windows by the
  * {@code WindowAssigner}.
  *
+ * 当一个元素到来，使用 KeySelector 获得获得一个 key，并且，元素通过 WindowAssigner 分配一个或多个窗口
+ * 依靠这个，元素被放进窗格。一个窗格是一个拥有相同 key 和相同窗口的元素组成的桶，一个元素能够位于多个窗格中
+ * 因为一个元素能够被分配多个窗口
+ *
  * <p>Each pane gets its own instance of the provided {@code Trigger}. This trigger determines when
  * the contents of the pane should be processed to emit results. When a trigger fires,
  * the given {@link InternalWindowFunction} is invoked to produce the results that are emitted for
  * the pane to which the {@code Trigger} belongs.
+ *
+ * 每个窗格拥有自己的 Trigger 实例，触发器决定了什么时候窗格的内容被处理来输出结果
+ * 当 trigger 被触发，InternalWindowFunction 被调用来输出结果
  *
  * @param <K> The type of key returned by the {@code KeySelector}.
  * @param <IN> The type of the incoming elements.
@@ -107,19 +116,19 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	// Configuration values and user functions
 	// ------------------------------------------------------------------------
 
-	protected final WindowAssigner<? super IN, W> windowAssigner;
+	protected final WindowAssigner<? super IN, W> windowAssigner;  // 窗口分配器
 
-	private final KeySelector<IN, K> keySelector;
+	private final KeySelector<IN, K> keySelector;  // key 选择器
 
-	private final Trigger<? super IN, ? super W> trigger;
+	private final Trigger<? super IN, ? super W> trigger; // 触发器
 
-	private final StateDescriptor<? extends AppendingState<IN, ACC>, ?> windowStateDescriptor;
+	private final StateDescriptor<? extends AppendingState<IN, ACC>, ?> windowStateDescriptor;  // 窗口状态描述器
 
 	/** For serializing the key in checkpoints. */
-	protected final TypeSerializer<K> keySerializer;
+	protected final TypeSerializer<K> keySerializer;  // key 序列器
 
 	/** For serializing the window in checkpoints. */
-	protected final TypeSerializer<W> windowSerializer;
+	protected final TypeSerializer<W> windowSerializer;  // 窗口序列器
 
 	/**
 	 * The allowed lateness for elements. This is used for:
@@ -129,16 +138,16 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 *         {@code window.maxTimestamp + allowedLateness} landmark.
 	 * </ul>
 	 */
-	protected final long allowedLateness;
+	protected final long allowedLateness;  // 允许延迟
 
 	/**
 	 * {@link OutputTag} to use for late arriving events. Elements for which
 	 * {@code window.maxTimestamp + allowedLateness} is smaller than the current watermark will
 	 * be emitted to this.
 	 */
-	protected final OutputTag<IN> lateDataOutputTag;
+	protected final OutputTag<IN> lateDataOutputTag;  // 侧边输出 outputTag
 
-	private static final  String LATE_ELEMENTS_DROPPED_METRIC_NAME = "numLateRecordsDropped";
+	private static final String LATE_ELEMENTS_DROPPED_METRIC_NAME = "numLateRecordsDropped";
 
 	protected transient Counter numLateRecordsDropped;
 
@@ -147,27 +156,32 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	// ------------------------------------------------------------------------
 
 	/** The state in which the window contents is stored. Each window is a namespace */
+	// 存储窗口内容的状态。每个窗口都是一个命名空间
 	private transient InternalAppendingState<K, W, IN, ACC, ACC> windowState;
 
 	/**
 	 * The {@link #windowState}, typed to merging state for merging windows.
 	 * Null if the window state is not mergeable.
 	 */
+	// 合并窗口的状态
 	private transient InternalMergingState<K, W, IN, ACC, ACC> windowMergingState;
 
 	/** The state that holds the merging window metadata (the sets that describe what is merged). */
+	// 合并窗口元信息
 	private transient InternalListState<K, VoidNamespace, Tuple2<W, W>> mergingSetsState;
 
 	/**
 	 * This is given to the {@code InternalWindowFunction} for emitting elements with a given
 	 * timestamp.
 	 */
+	// 在 InternalWindowFunction 中用于输出给定 ts 的元素
 	protected transient TimestampedCollector<OUT> timestampedCollector;
 
 	protected transient Context triggerContext = new Context(null, null);
 
 	protected transient WindowContext processContext;
 
+	// 获取当前的进程时间
 	protected transient WindowAssigner.WindowAssignerContext windowAssignerContext;
 
 	// ------------------------------------------------------------------------
@@ -190,7 +204,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			long allowedLateness,
 			OutputTag<IN> lateDataOutputTag) {
 
-		super(windowFunction);
+		super(windowFunction);  // 设置 userFunction
 
 		checkArgument(!(windowAssigner instanceof BaseAlignedWindowAssigner),
 			"The " + windowAssigner.getClass().getSimpleName() + " cannot be used with a WindowOperator. " +
@@ -236,11 +250,13 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 		// create (or restore) the state that hold the actual window contents
 		// NOTE - the state may be null in the case of the overriding evicting window operator
+		// 创建或者恢复状态，状态 hold 了真正的窗口内容
 		if (windowStateDescriptor != null) {
 			windowState = (InternalAppendingState<K, W, IN, ACC, ACC>) getOrCreateKeyedState(windowSerializer, windowStateDescriptor);
 		}
 
 		// create the typed and helper states for merging windows
+		// 创建用于合并窗口的类型化状态和帮助状态
 		if (windowAssigner instanceof MergingWindowAssigner) {
 
 			// store a typed reference for the state of merging windows - sanity check
@@ -292,14 +308,17 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
+		// 得到元素属于的窗口集合
 		final Collection<W> elementWindows = windowAssigner.assignWindows(
 			element.getValue(), element.getTimestamp(), windowAssignerContext);
 
-		//if element is handled by none of assigned elementWindows
+		//if element is handled by none of assigned 
+		// 如果元素没有被任何一个窗口处理
 		boolean isSkippedElement = true;
 
 		final K key = this.<K>getKeyedStateBackend().getCurrentKey();
 
+		// 当窗口分配器是合并窗口分配器的时候
 		if (windowAssigner instanceof MergingWindowAssigner) {
 			MergingWindowSet<W> mergingWindows = getMergingWindowSet();
 
@@ -308,12 +327,15 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 				// adding the new window might result in a merge, in that case the actualWindow
 				// is the merged window and we work with that. If we don't merge then
 				// actualWindow == window
+				// 添加新的窗口有可能导致一次合并，这种情况下真正的窗口是合并后的窗口，同时我们也工作在合并后的窗口上
+				// 如果新的窗口没有 merge，actualWindow 就等于 window
 				W actualWindow = mergingWindows.addWindow(window, new MergingWindowSet.MergeFunction<W>() {
 					@Override
 					public void merge(W mergeResult,
 							Collection<W> mergedWindows, W stateWindowResult,
 							Collection<W> mergedStateWindows) throws Exception {
-
+						
+						// 异常检查，判断合并后的窗口是否满足要求
 						if ((windowAssigner.isEventTime() && mergeResult.maxTimestamp() + allowedLateness <= internalTimerService.currentWatermark())) {
 							throw new UnsupportedOperationException("The end timestamp of an " +
 									"event-time window cannot become earlier than the current watermark " +
@@ -331,6 +353,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 						triggerContext.onMerge(mergedWindows);
 
+						// 被合并的窗口被销毁了
 						for (W m: mergedWindows) {
 							triggerContext.window = m;
 							triggerContext.clear();
@@ -338,11 +361,13 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 						}
 
 						// merge the merged state windows into the newly resulting state window
+						// 将被合并的状态窗口合并到新生成的状态窗口
 						windowMergingState.mergeNamespaces(stateWindowResult, mergedStateWindows);
 					}
 				});
 
 				// drop if the window is already late
+				// 如果合并得到的结果窗口已经延迟了，删除给定窗口
 				if (isWindowLate(actualWindow)) {
 					mergingWindows.retireWindow(actualWindow);
 					continue;
@@ -354,6 +379,8 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 					throw new IllegalStateException("Window " + window + " is not in in-flight window set.");
 				}
 
+				// 先设置 windowState 的命名空间为当前 stateWindow
+				// 然后添加当前 element
 				windowState.setCurrentNamespace(stateWindow);
 				windowState.add(element.getValue());
 
@@ -377,19 +404,26 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			}
 
 			// need to make sure to update the merging state in state
+			// 需要确保更新合并后的状态
 			mergingWindows.persist();
 		} else {
+			// 便利元素所属的所有窗口
 			for (W window: elementWindows) {
 
 				// drop if the window is already late
+				// 如果元素大于延迟最大范围，直接忽略
 				if (isWindowLate(window)) {
 					continue;
 				}
 				isSkippedElement = false;
 
+				// 每一个窗口都是一个命名空间
+				// 先设置 windowState 的命名空间为当前 window
+				// 然后添加当前 element
 				windowState.setCurrentNamespace(window);
 				windowState.add(element.getValue());
 
+				// 设置 triggerContext 当前的 key 和 window
 				triggerContext.key = key;
 				triggerContext.window = window;
 
@@ -400,13 +434,14 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 					if (contents == null) {
 						continue;
 					}
+					// 触发器被触发的时候，emit 窗口的内容
 					emitWindowContents(window, contents);
 				}
 
 				if (triggerResult.isPurge()) {
-					windowState.clear();
+					windowState.clear();  // 清理窗口元信息
 				}
-				registerCleanupTimer(window);
+				registerCleanupTimer(window);  // 当窗口过期了清理窗口内容
 			}
 		}
 
@@ -414,6 +449,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		// element not handled by any window
 		// late arriving tag has been set
 		// windowAssigner is event time and current timestamp + allowed lateness no less than element timestamp
+		// 可以用侧边输出来处理延迟到达的元素
 		if (isSkippedElement && isElementLate(element)) {
 			if (lateDataOutputTag != null){
 				sideOutput(element);
@@ -424,6 +460,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	}
 
 	@Override
+	/**
+	 * 事件时间定时器触发调用
+	 */
 	public void onEventTime(InternalTimer<K, W> timer) throws Exception {
 		triggerContext.key = timer.getKey();
 		triggerContext.window = timer.getNamespace();
@@ -437,6 +476,8 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 				// Timer firing for non-existent window, this can only happen if a
 				// trigger did not clean up timers. We have already cleared the merging
 				// window and therefore the Trigger state, however, so nothing to do.
+				// 计时器触发不存在的窗口，这只能在触发器没有清除干净定时器的时候发生
+				// 我们已经清除了合并窗口，因此触发状态，但是，没有什么要做的
 				return;
 			} else {
 				windowState.setCurrentNamespace(stateWindow);
@@ -463,6 +504,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			clearAllState(triggerContext.window, windowState, mergingWindows);
 		}
 
+		// 我感觉这步是多余的，因为唯一可能发送变化的 clearAllState 方法也执行了 persist 方法
 		if (mergingWindows != null) {
 			// need to make sure to update the merging state in state
 			mergingWindows.persist();
@@ -470,6 +512,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	}
 
 	@Override
+	/**
+	 * 进程时间定时器触发调用
+	 */
 	public void onProcessingTime(InternalTimer<K, W> timer) throws Exception {
 		triggerContext.key = timer.getKey();
 		triggerContext.window = timer.getNamespace();
@@ -509,6 +554,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			clearAllState(triggerContext.window, windowState, mergingWindows);
 		}
 
+		// 我感觉这步是多余的
 		if (mergingWindows != null) {
 			// need to make sure to update the merging state in state
 			mergingWindows.persist();
@@ -521,6 +567,14 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 *
 	 * <p>The caller must ensure that the
 	 * correct key is set in the state backend and the triggerContext object.
+	 */
+	/**
+	 * 删除给定窗口的所有状态同时调用
+	 * trigger 的 clear 
+	 *
+	 * 必须确保正确的 key 被设置在 windowState 和 triggerContext 中
+	 * windowState 设置了 namespace
+	 * triggerContext 设置了 key 和 window
 	 */
 	private void clearAllState(
 			W window,
@@ -539,6 +593,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	/**
 	 * Emits the contents of the given window using the {@link InternalWindowFunction}.
 	 */
+	/**
+	 * 使用 InternalWindowFunction 发出给定窗口的内容
+	 */
 	@SuppressWarnings("unchecked")
 	private void emitWindowContents(W window, ACC contents) throws Exception {
 		timestampedCollector.setAbsoluteTimestamp(window.maxTimestamp());
@@ -551,6 +608,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 *
 	 * @param element skipped late arriving element to side output
 	 */
+	/**
+	 * 将延迟到达的元素写入侧边输出
+	 */
 	protected void sideOutput(StreamRecord<IN> element){
 		output.collect(lateDataOutputTag, element);
 	}
@@ -562,6 +622,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 * <p>The caller must also ensure to properly persist changes to state using
 	 * {@link MergingWindowSet#persist()}.
 	 */
+	/**
+	 * 为当前活跃的 key 取回 MergingWindowSet
+	 */
 	protected MergingWindowSet<W> getMergingWindowSet() throws Exception {
 		@SuppressWarnings("unchecked")
 		MergingWindowAssigner<? super IN, W> mergingAssigner = (MergingWindowAssigner<? super IN, W>) windowAssigner;
@@ -571,6 +634,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	/**
 	 * Returns {@code true} if the watermark is after the end timestamp plus the allowed lateness
 	 * of the given window.
+	 */
+	/**
+	 * 如果当前的 watermark 大于窗口的末端 + 允许的延迟，返回 true
 	 */
 	protected boolean isWindowLate(W window) {
 		return (windowAssigner.isEventTime() && (cleanupTime(window) <= internalTimerService.currentWatermark()));
@@ -582,6 +648,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 * @param element The element to check
 	 * @return The element for which should be considered when sideoutputs
 	 */
+	/**
+	 * 判断当前 record 是否已经 late，通过当前的 watermark 和允许延迟来判断
+	 */
 	protected boolean isElementLate(StreamRecord<IN> element){
 		return (windowAssigner.isEventTime()) &&
 			(element.getTimestamp() + allowedLateness <= internalTimerService.currentWatermark());
@@ -591,6 +660,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 * Registers a timer to cleanup the content of the window.
 	 * @param window
 	 * 					the window whose state to discard
+	 */
+	/**
+	 * 注册一个定时器来清理窗口的内容
 	 */
 	protected void registerCleanupTimer(W window) {
 		long cleanupTime = cleanupTime(window);
@@ -608,8 +680,10 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 	/**
 	 * Deletes the cleanup timer set for the contents of the provided window.
-	 * @param window
-	 * 					the window whose state to discard
+	 * @param window the window whose state to discard
+	 */
+	/**
+	 * 删除指定的定时器
 	 */
 	protected void deleteCleanupTimer(W window) {
 		long cleanupTime = cleanupTime(window);
@@ -633,9 +707,15 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 *
 	 * @param window the window whose cleanup time we are computing.
 	 */
+	/**
+	 * 返回一个窗口的清理时间，等于 window.maxTimestamp + allowedLateness
+	 * 如果这个值大于 LONG.MAX_VALUE，函数会返回 LONG.MAX_VALUE
+	 */
 	private long cleanupTime(W window) {
+		// 只有事件时间有延迟
 		if (windowAssigner.isEventTime()) {
 			long cleanupTime = window.maxTimestamp() + allowedLateness;
+			// 当 window.maxTimestamp() + allowedLateness < window.maxTimestamp() 说明溢出了
 			return cleanupTime >= window.maxTimestamp() ? cleanupTime : Long.MAX_VALUE;
 		} else {
 			return window.maxTimestamp();
@@ -645,6 +725,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	/**
 	 * Returns {@code true} if the given time is the cleanup time for the given window.
 	 */
+	/**
+	 * 如果给定的时间是给定窗口的最大时间，返回 true
+	 */
 	protected final boolean isCleanupTime(W window, long time) {
 		return time == cleanupTime(window);
 	}
@@ -653,10 +736,15 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 * Base class for per-window {@link KeyedStateStore KeyedStateStores}. Used to allow per-window
 	 * state access for {@link org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction}.
 	 */
+	/**
+	 * 窗口 key 状态存储的基类。用来允许 ProcessWindowFunction 访问窗口状态
+	 */
 	public abstract class AbstractPerWindowStateStore extends DefaultKeyedStateStore {
 
 		// we have this in the base class even though it's not used in MergingKeyStore so that
 		// we can always set it and ignore what actual implementation we have
+		// 计数 MergingKeyStore 没有用到这个变量，我们还是把它放在基类中
+		// 这样我们总是能够设置它并且忽略真正实现的时候我们干了什么
 		protected W window;
 
 		public AbstractPerWindowStateStore(KeyedStateBackend<?> keyedStateBackend, ExecutionConfig executionConfig) {
@@ -728,8 +816,12 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 * by setting the {@code key} and {@code window} fields. No internal state must be kept in the
 	 * {@code WindowContext}.
 	 */
+	/**
+	 * WindowContext 是用于处理 ProcessWindowFunction 调用的工具
+	 * 可以通过设置 key 和 window 来重用，上下文中不能保留任何状态
+	 */
 	public class WindowContext implements InternalWindowFunction.InternalWindowContext {
-		protected W window;
+		protected W window;  // 保存当前操作的 window，这样作为参数传递的时候就知道 window 是哪个了
 
 		protected AbstractPerWindowStateStore windowState;
 
@@ -784,9 +876,13 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 * by setting the {@code key} and {@code window} fields. No internal state must be kept in
 	 * the {@code Context}
 	 */
+	/**
+	 * Context 是用于处理触发器调用的工具
+	 * 可以通过设置 key 和 window 来重用，上下文中不能保留任何状态
+	 */
 	public class Context implements Trigger.OnMergeContext {
-		protected K key;
-		protected W window;
+		protected K key;  // 保存当前操作的 key
+		protected W window;  // 保存当前操作的 window
 
 		protected Collection<W> mergedWindows;
 
@@ -800,6 +896,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			return WindowOperator.this.getMetricGroup();
 		}
 
+		// 返回当前的 watermark
 		public long getCurrentWatermark() {
 			return internalTimerService.currentWatermark();
 		}
@@ -867,26 +964,31 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		}
 
 		@Override
+		// 获取当前的进程时间
 		public long getCurrentProcessingTime() {
 			return internalTimerService.currentProcessingTime();
 		}
 
 		@Override
+		// 注册进程时间定时器
 		public void registerProcessingTimeTimer(long time) {
 			internalTimerService.registerProcessingTimeTimer(window, time);
 		}
 
 		@Override
+		// 注册事件时间定时器
 		public void registerEventTimeTimer(long time) {
 			internalTimerService.registerEventTimeTimer(window, time);
 		}
 
 		@Override
+		// 删除进程时间定时器
 		public void deleteProcessingTimeTimer(long time) {
 			internalTimerService.deleteProcessingTimeTimer(window, time);
 		}
 
 		@Override
+		// 删除事件时间定时器
 		public void deleteEventTimeTimer(long time) {
 			internalTimerService.deleteEventTimeTimer(window, time);
 		}
@@ -924,6 +1026,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	/**
 	 * Internal class for keeping track of in-flight timers.
 	 */
+	// 用于跟踪 in-flight 定时器的内部类
 	protected static class Timer<K, W extends Window> implements Comparable<Timer<K, W>> {
 		protected long timestamp;
 		protected K key;

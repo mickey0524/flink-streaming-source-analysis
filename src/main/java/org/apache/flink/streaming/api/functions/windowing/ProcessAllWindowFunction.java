@@ -33,6 +33,9 @@ import org.apache.flink.util.OutputTag;
  * @param <OUT> The type of the output value.
  * @param <W> The type of {@code Window} that this window function can be applied on.
  */
+/**
+ * 使用上下文获取额外信息，在非键化窗口上计算的函数的基本抽象类
+ */
 @PublicEvolving
 public abstract class ProcessAllWindowFunction<IN, OUT, W extends Window> extends AbstractRichFunction {
 
@@ -47,6 +50,9 @@ public abstract class ProcessAllWindowFunction<IN, OUT, W extends Window> extend
 	 *
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
 	 */
+	/**
+	 * 计算窗口，然后输出零个或多个元素
+	 */
 	public abstract void process(Context context, Iterable<IN> elements, Collector<OUT> out) throws Exception;
 
 	/**
@@ -55,14 +61,23 @@ public abstract class ProcessAllWindowFunction<IN, OUT, W extends Window> extend
 	 * @param context The context to which the window is being evaluated
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
 	 */
+	/**
+	 * 当窗口被清洗的时候，删除 Context 中的所有状态
+	 */
 	public void clear(Context context) throws Exception {}
 
 	/**
 	 * The context holding window metadata.
 	 */
+	/**
+	 * 掌握窗口元数据的上下文
+	 */
 	public abstract class Context {
 		/**
 		 * @return The window that is being evaluated.
+		 */
+		/**
+		 * 返回窗口是否正在被计算
 		 */
 		public abstract W window();
 
@@ -72,10 +87,16 @@ public abstract class ProcessAllWindowFunction<IN, OUT, W extends Window> extend
 		 * <p><b>NOTE:</b>If you use per-window state you have to ensure that you clean it up
 		 * by implementing {@link ProcessWindowFunction#clear(ProcessWindowFunction.Context)}.
 		 */
+		/**
+		 * 每个 key，每个窗口的状态获取器
+		 */
 		public abstract KeyedStateStore windowState();
 
 		/**
 		 * State accessor for per-key global state.
+		 */
+		/**
+		 * 每个 key 的全局状态获取器
 		 */
 		public abstract KeyedStateStore globalState();
 
@@ -84,6 +105,9 @@ public abstract class ProcessAllWindowFunction<IN, OUT, W extends Window> extend
 		 *
 		 * @param outputTag the {@code OutputTag} that identifies the side output to emit to.
 		 * @param value The record to emit.
+		 */
+		/**
+		 * 侧边输出
 		 */
 		public abstract <X> void output(OutputTag<X> outputTag, X value);
 	}

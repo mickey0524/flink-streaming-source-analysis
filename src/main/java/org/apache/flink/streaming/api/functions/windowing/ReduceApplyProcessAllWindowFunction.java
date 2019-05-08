@@ -33,6 +33,10 @@ import java.util.Collections;
  * configuration that only allows {@link AllWindowFunction} and cannot directly execute a
  * {@link ReduceFunction}.
  */
+/**
+ * 内部的 ProcessAllWindowFunction，用来实现窗口上的折叠
+ * 不允许直接执行 ReduceFunction 函数
+ */
 @Internal
 public class ReduceApplyProcessAllWindowFunction<W extends Window, T, R> extends ProcessAllWindowFunction<T, R, W> {
 
@@ -76,6 +80,7 @@ public class ReduceApplyProcessAllWindowFunction<W extends Window, T, R> extends
 	@Override
 	public void open(Configuration configuration) throws Exception {
 		FunctionUtils.openFunction(this.windowFunction, configuration);
+		// 初始化上下文
 		ctx = new InternalProcessApplyAllWindowContext<>(windowFunction);
 	}
 

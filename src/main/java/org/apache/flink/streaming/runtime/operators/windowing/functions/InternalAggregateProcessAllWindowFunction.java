@@ -39,6 +39,9 @@ import java.util.Collections;
  * @param <V> The type of the AggregateFunction's result, and the input to the WindowFunction
  * @param <R> The result type of the WindowFunction
  */
+/**
+ * 内部窗口，包裹了一个 ProcessAllWindowFunction
+ */
 public final class InternalAggregateProcessAllWindowFunction<T, ACC, V, R, W extends Window>
 		extends WrappingFunction<ProcessAllWindowFunction<V, R, W>>
 		implements InternalWindowFunction<Iterable<T>, R, Byte, W> {

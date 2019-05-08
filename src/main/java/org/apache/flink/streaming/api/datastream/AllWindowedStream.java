@@ -313,6 +313,11 @@ public class AllWindowedStream<T, W extends Window> {
 
 		if (evictor != null) {
 			@SuppressWarnings({"unchecked", "rawtypes"})
+			// 当有驱逐者的时候，EvictingWindowOperator 中
+			// evictingWindowState 需要保存所有的元素，在 emitContent
+			// 中执行 evictBefore 和 evictAfter
+			// 因此这里选择了 ListStateDescriptor
+			// 同时，我们需要自己来 reduce，所以包裹了 ReduceApplyAllWindowFunction
 			TypeSerializer<StreamRecord<T>> streamRecordSerializer =
 				(TypeSerializer<StreamRecord<T>>) new StreamElementSerializer(input.getType().createSerializer(getExecutionEnvironment().getConfig()));
 
@@ -334,6 +339,12 @@ public class AllWindowedStream<T, W extends Window> {
 					lateDataOutputTag);
 
 		} else {
+			// 状态描述符，因为没有驱逐者，所以不需要保留原始值
+			// 直接在状态描述符这里创建一个 ReducingStateDescriptor
+			// 到时候 WindowOperator 里 windowState.add(element.getValue()) 的时候
+			// windowState 直接就进行了 reduce 操作
+			// 因此这里的 InternalWindowFunction 是 InternalSingleValueAllWindowFunction
+			// 因为经过 reduce 已经是一个数值了
 			ReducingStateDescriptor<T> stateDesc = new ReducingStateDescriptor<>("window-contents",
 				reduceFunction,
 				input.getType().createSerializer(getExecutionEnvironment().getConfig()));
@@ -366,6 +377,14 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param function The process window function.
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每个窗口应用给定窗口函数，每一个键的每一个窗口执行都需要调用这个窗口函数
+	 * 窗口函数的输出被解释为常规的无窗口流
+	 *
+	 * 到来的数据会被 reducer 增量聚合
+	 *
+	 * 这里的参数类型是 ProcessAllWindowFunction
+ 	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> reduce(
 			ReduceFunction<T> reduceFunction,
@@ -388,6 +407,12 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param resultType Type information for the result type of the window function
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每个窗口应用给定窗口函数，每一个键的每一个窗口执行都需要调用这个窗口函数
+	 * 窗口函数的输出被解释为常规的无窗口流
+	 *
+	 * 到来的数据会被 reducer 增量聚合
+	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> reduce(ReduceFunction<T> reduceFunction, ProcessAllWindowFunction<T, R, W> function, TypeInformation<R> resultType) {
 		if (reduceFunction instanceof RichFunction) {
@@ -406,6 +431,7 @@ public class AllWindowedStream<T, W extends Window> {
 
 		OneInputStreamOperator<T, R> operator;
 
+		// 这里 InternalWindowFunction 和 StateDescriptor 的取舍和上面 reduce 函数中写的一样
 		if (evictor != null) {
 			@SuppressWarnings({"unchecked", "rawtypes"})
 			TypeSerializer<StreamRecord<T>> streamRecordSerializer =
@@ -466,6 +492,11 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param <R> The type of the elements in the resulting stream, equal to the
 	 *            AggregateFunction's result type
 	 */
+	/**
+	 * 为每个窗口应用给定的 AggregateFunction
+	 * AggregateFunction 将一个窗口内的所有元素聚合成一个单结果元素
+	 * 窗口函数的输出被解释为常规的无窗口流
+	 */
 	@PublicEvolving
 	public <ACC, R> SingleOutputStreamOperator<R> aggregate(AggregateFunction<T, ACC, R> function) {
 		checkNotNull(function, "function");
@@ -494,6 +525,11 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param <ACC> The type of the AggregateFunction's accumulator
 	 * @param <R> The type of the elements in the resulting stream, equal to the
 	 *            AggregateFunction's result type
+	 */
+	/**
+	 * 为每个窗口应用给定的 AggregateFunction
+	 * AggregateFunction 将一个窗口内的所有元素聚合成一个单结果元素
+	 * 窗口函数的输出被解释为常规的无窗口流
 	 */
 	@PublicEvolving
 	public <ACC, R> SingleOutputStreamOperator<R> aggregate(
@@ -530,6 +566,9 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param <V> The type of AggregateFunction's result, and the WindowFunction's input
 	 * @param <R> The type of the elements in the resulting stream, equal to the
 	 *            WindowFunction's result type
+	 */
+	/**
+	 * 先聚合再 AllWindowFunction 处理
 	 */
 	@PublicEvolving
 	public <ACC, V, R> SingleOutputStreamOperator<R> aggregate(
@@ -626,6 +665,8 @@ public class AllWindowedStream<T, W extends Window> {
 
 		OneInputStreamOperator<T, R> operator;
 
+		// StateDescriptor 的选择和 InternalWindowFunction 的选择和
+		// 上面 reduce 的原因相同
 		if (evictor != null) {
 			@SuppressWarnings({"unchecked", "rawtypes"})
 			TypeSerializer<StreamRecord<T>> streamRecordSerializer =
@@ -1089,6 +1130,13 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param function The window function.
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每一个窗口应用给定的窗口函数。每一个窗口的计算都要调用窗口函数。
+	 * 窗口函数输出一个正常的非窗口的流
+	 *
+	 * 需要注意的是，直到窗口被计算之前，所有窗口中过的数据都需要被缓存，因为函数不提供
+	 * 增量聚合
+	 */
 	public <R> SingleOutputStreamOperator<R> apply(AllWindowFunction<T, R, W> function) {
 		String callLocation = Utils.getCallLocationName();
 		function = input.getExecutionEnvironment().clean(function);
@@ -1107,6 +1155,10 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param function The window function.
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每一个窗口应用给定的窗口函数。每一个窗口的计算都需要调用窗口函数。
+	 * 窗口函数输出一个正常的非窗口的流
+	 */
 	public <R> SingleOutputStreamOperator<R> apply(AllWindowFunction<T, R, W> function, TypeInformation<R> resultType) {
 		String callLocation = Utils.getCallLocationName();
 		function = input.getExecutionEnvironment().clean(function);
@@ -1123,6 +1175,10 @@ public class AllWindowedStream<T, W extends Window> {
 	 *
 	 * @param function The process window function.
 	 * @return The data stream that is the result of applying the window function to the window.
+	 */
+	/**
+	 * 为每一个窗口应用给定的窗口函数。每一个窗口的计算都需要调用窗口函数。
+	 * 窗口函数输出一个正常的非窗口的流
 	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> process(ProcessAllWindowFunction<T, R, W> function) {
@@ -1143,6 +1199,10 @@ public class AllWindowedStream<T, W extends Window> {
 	 * @param function The process window function.
 	 * @return The data stream that is the result of applying the window function to the window.
 	 */
+	/**
+	 * 为每一个窗口应用给定的窗口函数。每一个窗口的计算都需要调用窗口函数。
+	 * 窗口函数输出一个正常的非窗口的流
+	 */
 	@PublicEvolving
 	public <R> SingleOutputStreamOperator<R> process(ProcessAllWindowFunction<T, R, W> function, TypeInformation<R> resultType) {
 		String callLocation = Utils.getCallLocationName();
@@ -1159,6 +1219,7 @@ public class AllWindowedStream<T, W extends Window> {
 
 		WindowOperator<Byte, T, Iterable<T>, R, W> operator;
 
+		// 因为没有增量聚合操作，所以 StateDescriptor 都是 ListStateDescriptor
 		if (evictor != null) {
 			@SuppressWarnings({"unchecked", "rawtypes"})
 			TypeSerializer<StreamRecord<T>> streamRecordSerializer =
@@ -1411,6 +1472,9 @@ public class AllWindowedStream<T, W extends Window> {
 	 *
 	 * @param positionToSum The position in the tuple/array to sum
 	 * @return The transformed DataStream.
+	 */
+	/**
+	 * 在数据流的给定位置为每个窗口应用聚合
 	 */
 	public SingleOutputStreamOperator<T> sum(int positionToSum) {
 		return aggregate(new SumAggregator<>(positionToSum, input.getType(), input.getExecutionConfig()));

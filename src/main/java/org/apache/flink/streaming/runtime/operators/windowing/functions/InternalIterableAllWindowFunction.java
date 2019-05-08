@@ -29,6 +29,10 @@ import org.apache.flink.util.Collector;
  * Internal window function for wrapping an {@link AllWindowFunction} that takes an {@code Iterable}
  * when the window state also is an {@code Iterable}.
  */
+/**
+ * 内部窗口函数，包裹了一个 AllWindowFunction
+ * 当 windowState 也是一个 Iterable 的时候执行 Iterable
+ */
 public final class InternalIterableAllWindowFunction<IN, OUT, W extends Window>
 		extends WrappingFunction<AllWindowFunction<IN, OUT, W>>
 		implements InternalWindowFunction<Iterable<IN>, OUT, Byte, W> {

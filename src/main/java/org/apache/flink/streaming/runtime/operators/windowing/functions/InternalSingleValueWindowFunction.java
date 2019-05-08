@@ -31,6 +31,9 @@ import java.util.Collections;
  * Internal window function for wrapping a {@link WindowFunction} that takes an {@code Iterable}
  * when the window state is a single value.
  */
+/**
+ * 内部窗口函数，包裹一个 WindowFunction
+ */
 public final class InternalSingleValueWindowFunction<IN, OUT, KEY, W extends Window>
 		extends WrappingFunction<WindowFunction<IN, OUT, KEY, W>>
 		implements InternalWindowFunction<IN, OUT, KEY, W> {

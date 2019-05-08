@@ -32,6 +32,10 @@ import java.util.Collections;
  * Internal window function for wrapping a {@link ProcessAllWindowFunction} that takes an {@code Iterable}
  * when the window state is a single value.
  */
+/**
+ * 内部窗口函数，包裹了一个 ProcessAllWindowFunction
+ * 当 windowState 是一个单一数值的时候执行 Iterable
+ */
 public final class InternalSingleValueProcessAllWindowFunction<IN, OUT, W extends Window>
 		extends WrappingFunction<ProcessAllWindowFunction<IN, OUT, W>>
 		implements InternalWindowFunction<IN, OUT, Byte, W> {
@@ -52,6 +56,8 @@ public final class InternalSingleValueProcessAllWindowFunction<IN, OUT, W extend
 	}
 
 	@Override
+	// 这种 AllWindow 的函数，key 都是 Byte 的，因为 NullByteKeySelector 会给
+	// 所有的元素伪造一个数值为 0 的 key，类型为 Byte
 	public void process(Byte key, final W window, final InternalWindowContext context, IN input, Collector<OUT> out) throws Exception {
 		this.ctx.window = window;
 		this.ctx.internalContext = context;

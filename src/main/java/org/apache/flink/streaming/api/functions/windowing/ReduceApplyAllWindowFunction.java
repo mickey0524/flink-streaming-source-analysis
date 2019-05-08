@@ -30,6 +30,10 @@ import java.util.Collections;
  * Internal {@link AllWindowFunction} that is used for implementing a fold on a window configuration
  * that only allows {@link AllWindowFunction} and cannot directly execute a {@link ReduceFunction}.
  */
+/**
+ * 内部的 AllWindowFunction，用来实现窗口配置上的折叠
+ * 不能直接执行一个 ReduceFunction
+ */
 @Internal
 public class ReduceApplyAllWindowFunction<W extends Window, T, R>
 	extends WrappingFunction<AllWindowFunction<T, R, W>>
@@ -47,7 +51,9 @@ public class ReduceApplyAllWindowFunction<W extends Window, T, R>
 
 	@Override
 	public void apply(W window, Iterable<T> input, Collector<R> out) throws Exception {
-
+		/**
+		 * 先对 input 调用 reduceFunction 聚合一次
+		 */
 		T curr = null;
 		for (T val: input) {
 			if (curr == null) {

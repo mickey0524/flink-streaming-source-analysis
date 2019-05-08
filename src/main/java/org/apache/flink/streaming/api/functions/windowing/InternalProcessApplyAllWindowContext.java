@@ -30,6 +30,9 @@ import org.apache.flink.util.OutputTag;
  * @param <OUT> The type of the output value.
  * @param <W> The type of the window.
  */
+/**
+ * 内部可重用的上下文包装
+ */
 @Internal
 public class InternalProcessApplyAllWindowContext<IN, OUT, W extends Window>
 	extends ProcessAllWindowFunction<IN, OUT, W>.Context {

@@ -37,6 +37,11 @@ import java.util.Collections;
  * @param <V> The type of the AggregateFunction's result, and the input to the WindowFunction
  * @param <R> The result type of the WindowFunction
  */
+/**
+ * 一个 AllWindowFunction，组成了 AllWindowFunction 和 AggregateFunction
+ * 调用后，首先将 AggregateFunction 应用于输出，然后将 AllWindowFunction
+ * 应用于单个 result 元素
+ */
 @Internal
 public class AggregateApplyAllWindowFunction<W extends Window, T, ACC, V, R>
 	extends WrappingFunction<AllWindowFunction<V, R, W>>

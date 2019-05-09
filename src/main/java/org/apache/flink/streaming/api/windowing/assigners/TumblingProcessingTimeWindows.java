@@ -63,6 +63,7 @@ public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWi
 	}
 
 	@Override
+	// 根据当前进程的时间分配窗口，与 element 本身无关，只取决的于当前的进程时间
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		final long now = context.getCurrentProcessingTime();
 		// 获取元素应该位于窗口的开端

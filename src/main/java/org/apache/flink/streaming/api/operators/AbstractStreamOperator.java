@@ -866,6 +866,8 @@ public abstract class AbstractStreamOperator<OUT>
 
 	/**
 	 * 检查时间服务的条件是否满足
+	 * 定时器只能被用于 keyed 操作符
+	 * 必须初始化 timeServiceManager
 	 */
 	private void checkTimerServiceInitialization() {
 		if (getKeyedStateBackend() == null) {

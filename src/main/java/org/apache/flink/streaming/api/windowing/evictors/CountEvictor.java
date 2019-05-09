@@ -36,7 +36,7 @@ import java.util.Iterator;
 public class CountEvictor<W extends Window> implements Evictor<Object, W> {
 	private static final long serialVersionUID = 1L;
 
-	private final long maxCount;
+	private final long maxCount;  // 最多保留多少数量的 record
 	private final boolean doEvictAfter;
 
 	private CountEvictor(long count, boolean doEvictAfter) {
@@ -63,6 +63,7 @@ public class CountEvictor<W extends Window> implements Evictor<Object, W> {
 		}
 	}
 
+	// 相当于一个滑动窗口，当大小超出 maxCount 的时候，从迭代器的开端 remove record
 	private void evict(Iterable<TimestampedValue<Object>> elements, int size, EvictorContext ctx) {
 		if (size <= maxCount) {
 			return;

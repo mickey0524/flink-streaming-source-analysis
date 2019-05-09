@@ -242,7 +242,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 				if (nextTimer != null) {
 					nextTimer.cancel(false);
 				}
-				// 重新注册定时器
+				// 重新注册定时器，注册在 processingTimeService 上
 				nextTimer = processingTimeService.registerTimer(time, this);
 			}
 		}
@@ -267,16 +267,18 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	}
 
 	@Override
-	// 当进程时间定时器触发的时候，执行的方法
+	// 当进程时间定时器触发的时候，执行的方法，ProcessingTimeCallback 的方法
 	public void onProcessingTime(long time) throws Exception {
 		// null out the timer in case the Triggerable calls registerProcessingTimeTimer()
 		// inside the callback.
 		// 先将 nextTimer 设置为 null
 		// 防止 triggerTarget.onProcessingTime 调用 registerProcessingTimeTimer
+		// 最后再在 processingTimeService 上注册新的定时器
 		nextTimer = null;
 
 		InternalTimer<K, N> timer;
 
+		// 将所有进程时间定时器的 ts <= time 的都触发
 		while ((timer = processingTimeTimersQueue.peek()) != null && timer.getTimestamp() <= time) {
 			processingTimeTimersQueue.poll();
 			keyContext.setCurrentKey(timer.getKey());
@@ -288,7 +290,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 		}
 	}
 
-	// 更新 watermark
+	// 更新 watermark，InternalTimeServiceManager 中 advanceWatermark 方法统一调用
 	public void advanceWatermark(long time) throws Exception {
 		currentWatermark = time;
 

@@ -42,7 +42,7 @@ public class PurgingTrigger<T, W extends Window> extends Trigger<T, W> {
 
 	private Trigger<T, W> nestedTrigger;
 
-	private  PurgingTrigger(Trigger<T, W> nestedTrigger) {
+	private PurgingTrigger(Trigger<T, W> nestedTrigger) {
 		this.nestedTrigger = nestedTrigger;
 	}
 

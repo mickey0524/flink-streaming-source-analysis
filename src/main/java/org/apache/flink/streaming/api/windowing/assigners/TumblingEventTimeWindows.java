@@ -67,6 +67,7 @@ public class TumblingEventTimeWindows extends WindowAssigner<Object, TimeWindow>
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		if (timestamp > Long.MIN_VALUE) {
 			// Long.MIN_VALUE is currently assigned when no timestamp is present
+			// 当没有 StreamRecord 没有 ts 的时候，getTimestamp 返回 Long.MIN_VALUE
 			long start = TimeWindow.getWindowStartWithOffset(timestamp, offset, size);
 			return Collections.singletonList(new TimeWindow(start, start + size));
 		} else {

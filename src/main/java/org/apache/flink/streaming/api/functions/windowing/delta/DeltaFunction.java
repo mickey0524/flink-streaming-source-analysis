@@ -30,6 +30,10 @@ import java.io.Serializable;
  * @param <DATA>
  *            The type of input data which can be compared using this function.
  */
+/** 
+ * DeltaFunction 计算两个数据点之间的 delta 数值
+ * DeltaFunction 可以被用于 delta 策略中允许基于到达的数据点灵活的自适应窗口化
+ */
 @PublicEvolving
 public interface DeltaFunction<DATA> extends Serializable {
 

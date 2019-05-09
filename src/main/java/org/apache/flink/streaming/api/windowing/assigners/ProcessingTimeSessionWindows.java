@@ -62,7 +62,7 @@ public class ProcessingTimeSessionWindows extends MergingWindowAssigner<Object, 
 
 	@Override
 	/**
-	 * 为元素分配窗口
+	 * 为元素分配窗口，窗口与元素本身无关，只与当前的进程时间和设置的 sessionTimeout 有关
 	 */
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		long currentProcessingTime = context.getCurrentProcessingTime();

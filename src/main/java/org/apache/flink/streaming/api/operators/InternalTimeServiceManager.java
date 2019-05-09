@@ -88,6 +88,7 @@ public class InternalTimeServiceManager<K> {
 	@SuppressWarnings("unchecked")
 	// 获取内部时间服务
 	// 目前内部时间服务仅仅支持 InternalTimerServiceImpl.java
+	// InternalTimerServiceImpl 只与 name 有关
 	public <N> InternalTimerService<N> getInternalTimerService(
 		String name,
 		TimerSerializer<K, N> timerSerializer,

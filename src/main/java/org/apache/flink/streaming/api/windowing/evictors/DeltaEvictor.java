@@ -76,7 +76,8 @@ public class DeltaEvictor<T, W extends Window> implements Evictor<T, W> {
 	}
 
 	private void evict(Iterable<TimestampedValue<T>> elements, int size, EvictorContext ctx) {
-		// 以 elements 中最后一个元素作为标杆
+		// 以 elements 中最后一个元素作为标杆，当 elements 中的元素与最后一个元素的 delta 数值
+		// 高于限制，remove 该元素
 		TimestampedValue<T> lastElement = Iterables.getLast(elements);
 		for (Iterator<TimestampedValue<T>> iterator = elements.iterator(); iterator.hasNext();){
 			TimestampedValue<T> element = iterator.next();

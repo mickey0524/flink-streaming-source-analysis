@@ -72,10 +72,10 @@ public class SlidingProcessingTimeWindows extends WindowAssigner<Object, TimeWin
 	 */
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		timestamp = context.getCurrentProcessingTime();
-		// 每一个元素都应该属于 size / slide 个滑动窗口
+		// 每一个元素都应该至少属于 size / slide 个滑动窗口
 		List<TimeWindow> windows = new ArrayList<>((int) (size / slide));
 		long lastStart = TimeWindow.getWindowStartWithOffset(timestamp, offset, slide);
-		// 这里感觉能优化一下，start 有可能左溢出
+		// 这里感觉能优化一下，start 有可能左溢出，比如 timestamp 为 3，size 为 60
 		for (long start = lastStart;
 			start > timestamp - size;
 			start -= slide) {

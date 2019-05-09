@@ -42,8 +42,8 @@ import java.util.Iterator;
 public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 	private static final long serialVersionUID = 1L;
 
-	private final long windowSize;
-	private final boolean doEvictAfter;
+	private final long windowSize;  // 窗口大小
+	private final boolean doEvictAfter;  // 在 emitContent 前还是后执行驱逐操作
 
 	public TimeEvictor(long windowSize) {
 		this.windowSize = windowSize;
@@ -69,7 +69,13 @@ public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 		}
 	}
 
+	/**
+	 * 可以看到这里传递过来的 elements 参数都是 TimestampedValue
+	 * 在 EvictingWindowOperator 中，会将 StreamRecord 转为 TimestampedValue，只保留必要的部分
+	 */
 	private void evict(Iterable<TimestampedValue<Object>> elements, int size, EvictorContext ctx) {
+		// 因为这个是 TimeEvictor，是需要根据 windowSize 和当前 elements 中最大的 ts 来决定
+		// 驱逐哪些元素的，所以需要判断
 		if (!hasTimestamp(elements)) {
 			return;
 		}

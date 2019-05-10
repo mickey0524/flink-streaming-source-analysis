@@ -853,6 +853,8 @@ public class DataStream<T> {
 	 */
 	/**
 	 * 窗口化 DataStream 为翻转时间窗口
+	 *
+	 * 需要注意的是，这个操作是非并行的，因为所有的元素都需要通过相同的操作符实例
 	 */
 	public AllWindowedStream<T, TimeWindow> timeWindowAll(Time size) {
 		if (environment.getStreamTimeCharacteristic() == TimeCharacteristic.ProcessingTime) {
@@ -894,6 +896,9 @@ public class DataStream<T> {
 	 *
 	 * @param size The size of the windows in number of elements.
 	 */
+	/**
+	 * 窗口化 DataStream 为翻转计数窗口
+	 */
 	public AllWindowedStream<T, GlobalWindow> countWindowAll(long size) {
 		return windowAll(GlobalWindows.create()).trigger(PurgingTrigger.of(CountTrigger.of(size)));
 	}
@@ -906,6 +911,9 @@ public class DataStream<T> {
 	 *
 	 * @param size The size of the windows in number of elements.
 	 * @param slide The slide interval in number of elements.
+	 */
+	/**
+	 * 窗口化 DataStream 为滑动计数窗口
 	 */
 	public AllWindowedStream<T, GlobalWindow> countWindowAll(long size, long slide) {
 		return windowAll(GlobalWindows.create())
@@ -950,10 +958,15 @@ public class DataStream<T> {
 	 * Extracts a timestamp from an element and assigns it as the internal timestamp of that element.
 	 * The internal timestamps are, for example, used to to event-time window operations.
 	 *
+	 * 从元素中提取时间戳并将其作为元素的内部时间戳
+	 *
 	 * <p>If you know that the timestamps are strictly increasing you can use an
 	 * {@link AscendingTimestampExtractor}. Otherwise,
 	 * you should provide a {@link TimestampExtractor} that also implements
 	 * {@link TimestampExtractor#getCurrentWatermark()} to keep track of watermarks.
+	 *
+	 * 如果你知道 ts 是严格递增的，你能使用一个 AscendingTimestampExtractor
+	 * 否则，你应该提供一个 TimestampExtractor 来跟踪 watermark
 	 *
 	 * @param extractor The TimestampExtractor that is called for each element of the DataStream.
 	 *
@@ -978,24 +991,37 @@ public class DataStream<T> {
 	 * Assigns timestamps to the elements in the data stream and periodically creates
 	 * watermarks to signal event time progress.
 	 *
+	 * 为数据流中的元素指定 ts 并且定期的创建 watermarks 来标识事件时间进度
+	 *
 	 * <p>This method creates watermarks periodically (for example every second), based
 	 * on the watermarks indicated by the given watermark generator. Even when no new elements
 	 * in the stream arrive, the given watermark generator will be periodically checked for
 	 * new watermarks. The interval in which watermarks are generated is defined in
 	 * {@link ExecutionConfig#setAutoWatermarkInterval(long)}.
 	 *
+	 * 这个方法依据给定的水印生成器周期性的创建 watermark（例如每秒一次）
+	 * 即使流中没有新的元素到达，给定的水印生成器也将定期检查新的水印
+	 * watermarks 生成的间隔在 ExecutionConfig#setAutoWatermarkInterval(long) 中被定义
+	 *
 	 * <p>Use this method for the common cases, where some characteristic over all elements
 	 * should generate the watermarks, or where watermarks are simply trailing behind the
 	 * wall clock time by a certain amount.
+	 *
+	 * 对于常见情况，请使用此方法，其中所有元素的某些特征应生成水印，或者水印仅仅在时间后面固定的数值
 	 *
 	 * <p>For the second case and when the watermarks are required to lag behind the maximum
 	 * timestamp seen so far in the elements of the stream by a fixed amount of time, and this
 	 * amount is known in advance, use the
 	 * {@link BoundedOutOfOrdernessTimestampExtractor}.
 	 *
+	 * 对于第二种情况，并且当要求水印滞后于目前为止在流的元素中看到的最大时间戳固定的时间量
+	 * 并且该量是预先知道的，使用 BoundedOutOfOrdernessTimestampExtractor
+	 *
 	 * <p>For cases where watermarks should be created in an irregular fashion, for example
 	 * based on certain markers that some element carry, use the
 	 * {@link AssignerWithPunctuatedWatermarks}.
+	 *
+	 * 对于以不规则方式创建水印的情况，例如基于某些元素携带的某些标记，请使用 AssignerWithPunctuatedWatermarks
 	 *
 	 * @param timestampAndWatermarkAssigner The implementation of the timestamp assigner and
 	 *                                      watermark generator.
@@ -1011,6 +1037,10 @@ public class DataStream<T> {
 		// match parallelism to input, otherwise dop=1 sources could lead to some strange
 		// behaviour: the watermark will creep along very slowly because the elements
 		// from the source go to each extraction operator round robin.
+		/**
+		 * 将并行性与输入相匹配，否则 dop = 1 源可能会导致一些奇怪的行为：
+		 * 水印将会非常缓慢地蠕变，因为源中的元素会转到每个提取运算符循环
+		 */
 		final int inputParallelism = getTransformation().getParallelism();
 		final AssignerWithPeriodicWatermarks<T> cleanedAssigner = clean(timestampAndWatermarkAssigner);
 
@@ -1025,11 +1055,17 @@ public class DataStream<T> {
 	 * Assigns timestamps to the elements in the data stream and creates watermarks to
 	 * signal event time progress based on the elements themselves.
 	 *
+	 * 为数据流中的元素分配时间戳，并根据元素本身创建水印以指示事件时间进度
+	 * 
 	 * <p>This method creates watermarks based purely on stream elements. For each element
 	 * that is handled via {@link AssignerWithPunctuatedWatermarks#extractTimestamp(Object, long)},
 	 * the {@link AssignerWithPunctuatedWatermarks#checkAndGetNextWatermark(Object, long)}
 	 * method is called, and a new watermark is emitted, if the returned watermark value is
 	 * non-negative and greater than the previous watermark.
+	 *
+	 * 此方法仅基于流元素创建水印，对于通过 extractTimestamp（Object，long）处理的每个元素，
+	 * 调用 checkAndGetNextWatermark（Object，long）方法
+	 * 如果返回的水印值为非负值并且大于之前的水印，则会发出新的水印
 	 *
 	 * <p>This method is useful when the data stream embeds watermark elements, or certain elements
 	 * carry a marker that can be used to determine the current event time watermark.
@@ -1037,8 +1073,14 @@ public class DataStream<T> {
 	 * should be aware that too aggressive watermark generation (i.e., generating hundreds of
 	 * watermarks every second) can cost some performance.
 	 *
+	 * 当数据流嵌入水印元素时，该方法很有用，或者某些元素带有可用于确定当前事件时间水印的标记
+	 * 此操作使程序员可以完全控制水印生成。用户应该意识到过于激进的水印生成（即，每秒产生数百个水印）
+	 * 可能会花费一些性能
+	 * 
 	 * <p>For cases where watermarks should be created in a regular fashion, for example
 	 * every x milliseconds, use the {@link AssignerWithPeriodicWatermarks}.
+	 *
+	 * 对于应该以常规方式创建水印的情况，例如每x毫秒，使用AssignerWithPeriodicWatermarks
 	 *
 	 * @param timestampAndWatermarkAssigner The implementation of the timestamp assigner and
 	 *                                      watermark generator.

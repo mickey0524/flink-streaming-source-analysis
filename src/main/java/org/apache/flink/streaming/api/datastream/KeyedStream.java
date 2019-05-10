@@ -612,6 +612,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *
 	 * @param size The size of the window.
 	 */
+	/** 
+	 * 窗口化 KeyedStream 为翻转时间窗口 
+	 */
 	public WindowedStream<T, KEY, TimeWindow> timeWindow(Time size) {
 		if (environment.getStreamTimeCharacteristic() == TimeCharacteristic.ProcessingTime) {
 			return window(TumblingProcessingTimeWindows.of(size));
@@ -630,6 +633,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *
 	 * @param size The size of the window.
 	 */
+	/**
+	 * 窗口化 KeyedStream 为滑动时间窗口
+	 */
 	public WindowedStream<T, KEY, TimeWindow> timeWindow(Time size, Time slide) {
 		if (environment.getStreamTimeCharacteristic() == TimeCharacteristic.ProcessingTime) {
 			return window(SlidingProcessingTimeWindows.of(size, slide));
@@ -643,6 +649,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *
 	 * @param size The size of the windows in number of elements.
 	 */
+	/**
+	 * 窗口化 KeyedStream 为翻转计数窗口
+	 */
 	public WindowedStream<T, KEY, GlobalWindow> countWindow(long size) {
 		return window(GlobalWindows.create()).trigger(PurgingTrigger.of(CountTrigger.of(size)));
 	}
@@ -652,6 +661,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *
 	 * @param size The size of the windows in number of elements.
 	 * @param slide The slide interval in number of elements.
+	 */
+	/**
+	 * 窗口化 KeyedStream 为滑动计数窗口
 	 */
 	public WindowedStream<T, KEY, GlobalWindow> countWindow(long size, long slide) {
 		return window(GlobalWindows.create())
@@ -670,6 +682,10 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *
 	 * @param assigner The {@code WindowAssigner} that assigns elements to windows.
 	 * @return The trigger windows data stream.
+	 */
+	/**
+	 * 窗口化 KeyedStream 为一个 WindowedStream，WindowedStream 在按 key 分组的流上执行窗口
+	 * Elements 被窗口分配器放入窗口，元素依据 key 和 window 进行分组
 	 */
 	@PublicEvolving
 	public <W extends Window> WindowedStream<T, KEY, W> window(WindowAssigner<? super T, W> assigner) {

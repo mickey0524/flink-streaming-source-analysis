@@ -32,6 +32,9 @@ import org.apache.flink.util.OutputTag;
  */
 /**
  * 内部可重用的上下文包装
+ * ex：internalSingleValueProcessAllWindowFunction 中传递出来的 InternalProcessAllWindowContext
+ * InternalProcessAllWindowContext 是 ProcessAllWindowFunction<IN, OUT, W>.Context 的子类
+ * 本类中有 ProcessAllWindowFunction<IN, OUT, W>.Context 的成员变量
  */
 @Internal
 public class InternalProcessApplyAllWindowContext<IN, OUT, W extends Window>

@@ -33,6 +33,9 @@ import java.io.Serializable;
  * @param <KEY> The type of the key.
  * @param <W> The type of {@code Window} that this window function can be applied on.
  */
+/**
+ * 运行在 keyed window 上的函数的基本接口
+ */
 @Public
 public interface WindowFunction<IN, OUT, KEY, W extends Window> extends Function, Serializable {
 

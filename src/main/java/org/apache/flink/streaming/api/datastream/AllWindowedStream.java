@@ -76,11 +76,17 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * {@link org.apache.flink.streaming.api.windowing.assigners.WindowAssigner}. Window emission
  * is triggered based on a {@link org.apache.flink.streaming.api.windowing.triggers.Trigger}.
  *
+ * 一个 AllWindowedStream 代表了一种靠 WindowAssigner 分配窗口的数据流
+ * Window emission 被 Trigger 触发 
+ *
  * <p>If an {@link org.apache.flink.streaming.api.windowing.evictors.Evictor} is specified it will be
  * used to evict elements from the window after
  * evaluation was triggered by the {@code Trigger} but before the actual evaluation of the window.
  * When using an evictor, window performance will degrade significantly, since
  * pre-aggregation of window results cannot be used.
+ *
+ * 如果一个 Evictor 被定义，在 EvictingWindowOperator 的 userFunction 执行前后
+ * 会调用 evictor.emitBefore 和 evictor.emitAfter 方法
  *
  * <p>Note that the {@code AllWindowedStream} is purely an API construct, during runtime
  * the {@code AllWindowedStream} will be collapsed together with the

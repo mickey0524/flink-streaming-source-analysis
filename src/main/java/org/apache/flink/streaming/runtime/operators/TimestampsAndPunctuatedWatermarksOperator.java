@@ -30,6 +30,9 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  *
  * @param <T> The type of the input elements
  */
+/**
+ * 流运算符，从流元素中提取时间戳，并根据标点元素生成水印
+ */
 public class TimestampsAndPunctuatedWatermarksOperator<T>
 		extends AbstractUdfStreamOperator<T, AssignerWithPunctuatedWatermarks<T>>
 		implements OneInputStreamOperator<T, T> {
@@ -63,10 +66,14 @@ public class TimestampsAndPunctuatedWatermarksOperator<T>
 	 * upstream (we rely only on the {@link AssignerWithPunctuatedWatermarks} to emit
 	 * watermarks from here).
 	 */
+	/**
+	 * 覆盖基础实现以完全忽略从上游传播的水印（我们仅依靠AssignerWithPeriodicWatermarks从此处发出水印）
+	 */
 	@Override
 	public void processWatermark(Watermark mark) throws Exception {
 		// if we receive a Long.MAX_VALUE watermark we forward it since it is used
 		// to signal the end of input and to not block watermark progress downstream
+		// 如果我们收到Long.MAX_VALUE水印，我们转发它，因为它用于表示输入的结束并且不阻止下游的水印进度
 		if (mark.getTimestamp() == Long.MAX_VALUE && currentWatermark != Long.MAX_VALUE) {
 			currentWatermark = Long.MAX_VALUE;
 			output.emitWatermark(mark);

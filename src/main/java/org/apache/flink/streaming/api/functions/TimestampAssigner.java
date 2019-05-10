@@ -30,6 +30,10 @@ import org.apache.flink.api.common.functions.Function;
  *
  * @param <T> The type of the elements to which this assigner assigns timestamps.
  */
+/**
+ * TimestampAssigner 将事件时间时间戳分配给元素
+ * 这些时间戳由在事件时间上操作的所有函数使用，例如事件时间窗口
+ */
 public interface TimestampAssigner<T> extends Function {
 
 	/**
@@ -44,6 +48,13 @@ public interface TimestampAssigner<T> extends Function {
 	 * @param previousElementTimestamp The previous internal timestamp of the element,
 	 *                                 or a negative value, if no timestamp has been assigned yet.
 	 * @return The new timestamp.
+	 */
+	/**
+	 * 给元素分配时间戳
+	 *
+	 * 该方法传递先前分配的元素时间戳
+	 * 之前的 ts 有可能通过之前的分配器分配，例如 ingestion time
+	 * 如果元素没有携带一个之前分配的 ts，这个值为 Long.MIN_VALUE
 	 */
 	long extractTimestamp(T element, long previousElementTimestamp);
 }

@@ -33,6 +33,8 @@ import org.apache.flink.util.OutputTag;
  */
 /**
  * 内部可重用的上下文包裹器
+ * WindowOperator 中 emitWindowContext 传递出来的是 InternalWindowFunction.InternalWindowContext
+ * ProcessAllWindowFunction 中需要的是 ProcessAllWindowFunction<IN, OUT, W>.Context
  */
 @Internal
 public class InternalProcessAllWindowContext<IN, OUT, W extends Window>

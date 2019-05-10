@@ -307,6 +307,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	}
 
 	@Override
+	// 被 ChainingOutput 的 output 方法调用
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		// 得到元素属于的窗口集合
 		final Collection<W> elementWindows = windowAssigner.assignWindows(
@@ -407,7 +408,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			// 需要确保更新合并后的状态
 			mergingWindows.persist();
 		} else {
-			// 便利元素所属的所有窗口
+			// 遍历元素所属的所有窗口
 			for (W window: elementWindows) {
 
 				// drop if the window is already late
@@ -595,6 +596,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 */
 	/**
 	 * 使用 InternalWindowFunction 发出给定窗口的内容
+	 * 窗口触发的时候，output 的 StreamRecord 的 ts 都是窗口的右边界
 	 */
 	@SuppressWarnings("unchecked")
 	private void emitWindowContents(W window, ACC contents) throws Exception {

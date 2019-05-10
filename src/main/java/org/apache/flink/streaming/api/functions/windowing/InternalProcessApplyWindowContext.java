@@ -31,6 +31,12 @@ import org.apache.flink.util.OutputTag;
  * @param <KEY> The type of the window key.
  * @param <W> The type of the window.
  */
+/**
+ * 内部可重用的上下文包装
+ * ex：internalSingleValueProcessWindowFunction 中传递出来的 InternalProcessWindowContext
+ * InternalProcessWindowContext 是 ProcessWindowFunction<IN, OUT, W>.Context 的子类
+ * 本类中有 ProcessWindowFunction<IN, OUT, W>.Context 的成员变量
+ */
 @Internal
 public class InternalProcessApplyWindowContext<IN, OUT, KEY, W extends Window>
 	extends ProcessWindowFunction<IN, OUT, KEY, W>.Context {

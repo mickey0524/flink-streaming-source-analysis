@@ -226,6 +226,8 @@ public class MergingWindowSet<W extends Window> {
 			// if our new window is in the merged windows make the merge result the
 			// result window
 			// 如果新窗口位于合并窗口中，则将合并结果设为结果窗口
+			// 这里也感觉可以优化，因为 TimeWindow 的 mergeWindows 方法实现
+			// 保证一个 window 仅仅存在于一个 mergedWindows 中
 			if (mergedWindows.remove(newWindow)) {
 				mergedNewWindow = true;
 				resultWindow = mergeResult;

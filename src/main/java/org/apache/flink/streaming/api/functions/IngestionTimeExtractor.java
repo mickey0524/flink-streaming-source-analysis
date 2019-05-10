@@ -27,6 +27,11 @@ import org.apache.flink.streaming.api.watermark.Watermark;
  *
  * @param <T> The elements that get timestamps assigned.
  */
+/**
+ * 时间戳分配器，根据机器的挂钟分配时间戳
+ *
+ * 如果在 stream source 之后使用此分配器，则它实现 "ingestion time" 语义
+ */
 public class IngestionTimeExtractor<T> implements AssignerWithPeriodicWatermarks<T> {
 	private static final long serialVersionUID = -4072216356049069301L;
 
@@ -35,6 +40,7 @@ public class IngestionTimeExtractor<T> implements AssignerWithPeriodicWatermarks
 	@Override
 	public long extractTimestamp(T element, long previousElementTimestamp) {
 		// make sure timestamps are monotonously increasing, even when the system clock re-syncs
+		// 即使系统时钟重新同步，也要确保时间戳单调增加
 		final long now = Math.max(System.currentTimeMillis(), maxTimestamp);
 		maxTimestamp = now;
 		return now;

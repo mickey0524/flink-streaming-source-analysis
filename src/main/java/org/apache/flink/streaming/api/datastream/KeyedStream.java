@@ -103,9 +103,13 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	/**
 	 * The key selector that can get the key by which the stream if partitioned from the elements.
 	 */
+	/**
+	 * key 选择器
+	 */
 	private final KeySelector<T, KEY> keySelector;
 
 	/** The type of the key by which the stream is partitioned. */
+	// 流分区的 key 的类型
 	private final TypeInformation<KEY> keyType;
 
 	/**
@@ -152,6 +156,11 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 *            Function to extract keys from the base stream
 	 * @param keyType
 	 *            Defines the type of the extracted keys
+	 */
+	/**
+	 * 使用给定的 KeySelector 和 TypeInformation 来创建一个 KeyedStream
+	 * KeyedStream 按 key 来区分操作符
+	 * 这里会新建一个 PartitionTransformation 来区分
 	 */
 	@Internal
 	KeyedStream(
@@ -236,6 +245,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * Gets the key selector that can get the key by which the stream if partitioned from the elements.
 	 * @return The key selector for the key.
 	 */
+	/**
+	 * 获取 KeySelector
+	 */
 	@Internal
 	public KeySelector<T, KEY> getKeySelector() {
 		return this.keySelector;
@@ -245,12 +257,17 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * Gets the type of the key by which the stream is partitioned.
 	 * @return The type of the key by which the stream is partitioned.
 	 */
+	/**
+	 * 获取 keyType
+	 */
 	@Internal
 	public TypeInformation<KEY> getKeyType() {
 		return keyType;
 	}
 
 	@Override
+	// 不允许在 KeyedStream 上使用新的 StreamPartitioner
+	// KeyedStream 需要使用 KeyGroupStreamPartitioner
 	protected DataStream<T> setConnectionType(StreamPartitioner<T> partitioner) {
 		throw new UnsupportedOperationException("Cannot override partitioning for KeyedStream.");
 	}
@@ -268,7 +285,7 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 
 		// inject the key selector and key type
 		OneInputTransformation<T, R> transform = (OneInputTransformation<T, R>) returnStream.getTransformation();
-		transform.setStateKeySelector(keySelector);
+		transform.setStateKeySelector(keySelector);  // 给新得到的 transformation 设置 keySelector 和 keyType
 		transform.setStateKeyType(keyType);
 
 		return returnStream;
@@ -414,6 +431,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * @param <T1> Type parameter of elements in the other stream
 	 * @return An instance of {@link IntervalJoin} with this keyed stream and the other keyed stream
 	 */
+	/**
+	 * 在一定的时间段内聚合两个 KeyedStream
+	 */
 	@PublicEvolving
 	public <T1> IntervalJoin<T, T1, KEY> intervalJoin(KeyedStream<T1, KEY> otherStream) {
 		return new IntervalJoin<>(this, otherStream);
@@ -424,11 +444,14 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * @param <T1> The type parameter of the elements in the first streams
 	 * @param <T2> The The type parameter of the elements in the second stream
 	 */
+	/**
+	 * 指代时间段上的聚合
+	 */
 	@PublicEvolving
 	public static class IntervalJoin<T1, T2, KEY> {
 
-		private final KeyedStream<T1, KEY> streamOne;
-		private final KeyedStream<T2, KEY> streamTwo;
+		private final KeyedStream<T1, KEY> streamOne;  // 第一个 KeyedStream
+		private final KeyedStream<T2, KEY> streamTwo;  // 第二个 KeyedStream
 
 		IntervalJoin(
 				KeyedStream<T1, KEY> streamOne,
@@ -448,12 +471,16 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 		 * @param lowerBound The lower bound. Needs to be smaller than or equal to the upperBound
 		 * @param upperBound The upper bound. Needs to be bigger than or equal to the lowerBound
 		 */
+		/**
+		 * 定义 join 操作工作的时间段
+		 */
 		@PublicEvolving
 		public IntervalJoined<T1, T2, KEY> between(Time lowerBound, Time upperBound) {
 
 			TimeCharacteristic timeCharacteristic =
 				streamOne.getExecutionEnvironment().getStreamTimeCharacteristic();
 
+			// 仅仅支持在 EventTime 下使用
 			if (timeCharacteristic != TimeCharacteristic.EventTime) {
 				throw new UnsupportedTimeCharacteristicException("Time-bounded stream joins are only supported in event time");
 			}
@@ -480,6 +507,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * @param <IN2> Input type of elements from the second stream
 	 * @param <KEY> The type of the key
 	 */
+	/**
+	 * IntervalJoined 是一个包含两个流的容器，同时也包含 keySelector 和时间边界
+	 */
 	@PublicEvolving
 	public static class IntervalJoined<IN1, IN2, KEY> {
 
@@ -492,8 +522,8 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 		private final KeySelector<IN1, KEY> keySelector1;
 		private final KeySelector<IN2, KEY> keySelector2;
 
-		private boolean lowerBoundInclusive;
-		private boolean upperBoundInclusive;
+		private boolean lowerBoundInclusive;  // 下界包容性
+		private boolean upperBoundInclusive;  // 上界包容性
 
 		public IntervalJoined(
 				KeyedStream<IN1, KEY> left,
@@ -519,6 +549,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 		/**
 		 * Set the upper bound to be exclusive.
 		 */
+		/**
+		 * 设置上界为不包含的
+		 */
 		@PublicEvolving
 		public IntervalJoined<IN1, IN2, KEY> upperBoundExclusive() {
 			this.upperBoundInclusive = false;
@@ -527,6 +560,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 
 		/**
 		 * Set the lower bound to be exclusive.
+		 */
+		/**
+		 * 设置下届为不包含的
 		 */
 		@PublicEvolving
 		public IntervalJoined<IN1, IN2, KEY> lowerBoundExclusive() {
@@ -541,6 +577,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 		 * @param processJoinFunction The user-defined process join function.
 		 * @param <OUT> The output type.
 		 * @return The transformed {@link DataStream}.
+		 */
+		/**
+		 * 使用 ProcessJoinFunction 来完成连接操作
 		 */
 		@PublicEvolving
 		public <OUT> SingleOutputStreamOperator<OUT> process(ProcessJoinFunction<IN1, IN2, OUT> processJoinFunction) {
@@ -592,8 +631,8 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 				);
 
 			return left
-				.connect(right)
-				.keyBy(keySelector1, keySelector2)
+				.connect(right)  // 返回一个 ConnectedStream
+				.keyBy(keySelector1, keySelector2)  // 将 ConnectedStream 的两个 input 设为 KeyedStream
 				.transform("Interval Join", outputType, operator);
 		}
 	}

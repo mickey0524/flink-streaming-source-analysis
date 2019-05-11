@@ -34,15 +34,21 @@ import static java.util.Objects.requireNonNull;
  *
  * @param <T> The type of the elements that this function can extract timestamps from
  */
+/**
+ * 一个时间戳分配器和水印生成器，用于时间戳单调递增的流。在这种情况下，流的本地水印很容易生成
+ * 因为它们严格遵循时间戳
+ */
 @PublicEvolving
 public abstract class AscendingTimestampExtractor<T> implements AssignerWithPeriodicWatermarks<T> {
 
 	private static final long serialVersionUID = 1L;
 
 	/** The current timestamp. */
+	// 当前的时间戳
 	private long currentTimestamp = Long.MIN_VALUE;
 
 	/** Handler that is called when timestamp monotony is violated. */
+	// 在违反时间戳单调的时候调用的 Handler
 	private MonotonyViolationHandler violationHandler = new LoggingHandler();
 
 
@@ -81,6 +87,7 @@ public abstract class AscendingTimestampExtractor<T> implements AssignerWithPeri
 
 	@Override
 	public final Watermark getCurrentWatermark() {
+		// 因为严格保证时间戳单调递增，所以请求的时候，直接返回 currentTimestamp - 1 的 watermark 即可
 		return new Watermark(currentTimestamp == Long.MIN_VALUE ? Long.MIN_VALUE : currentTimestamp - 1);
 	}
 

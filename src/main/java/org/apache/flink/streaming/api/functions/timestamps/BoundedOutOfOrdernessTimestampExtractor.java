@@ -29,6 +29,12 @@ import org.apache.flink.streaming.api.windowing.time.Time;
  * given window, in the case where we know that elements arrive no later than <code>t_late</code> units of time
  * after the watermark that signals that the system event-time has advanced past their (event-time) timestamp.
  * */
+/**
+ * 这是一个 AssignerWithPeriodicWatermarks，用于发出滞后于元素的水印
+ * 其中包含到目前为止固定时间t_late的最大时间戳（事件时间）
+ * 当计算窗口的最终结果的时候，BoundedOutOfOrdernessTimestampExtractor 能帮助减少由于延迟到来
+ * 而被 ignore 的 element 的数量
+ */
 public abstract class BoundedOutOfOrdernessTimestampExtractor<T> implements AssignerWithPeriodicWatermarks<T> {
 
 	private static final long serialVersionUID = 1L;
@@ -69,6 +75,7 @@ public abstract class BoundedOutOfOrdernessTimestampExtractor<T> implements Assi
 	@Override
 	public final Watermark getCurrentWatermark() {
 		// this guarantees that the watermark never goes backwards.
+		// 滞后元素 maxOutOfOrderness 这么多时间
 		long potentialWM = currentMaxTimestamp - maxOutOfOrderness;
 		if (potentialWM >= lastEmittedWatermark) {
 			lastEmittedWatermark = potentialWM;

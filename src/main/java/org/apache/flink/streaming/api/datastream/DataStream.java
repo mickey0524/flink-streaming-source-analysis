@@ -825,6 +825,9 @@ public class DataStream<T> {
 	 * Creates a join operation. See {@link CoGroupedStreams} for an example of how the keys
 	 * and window can be specified.
 	 */
+	/**
+	 * 创建一个 join 操作
+	 */
 	public <T2> CoGroupedStreams<T, T2> coGroup(DataStream<T2> otherStream) {
 		return new CoGroupedStreams<>(this, otherStream);
 	}
@@ -832,6 +835,9 @@ public class DataStream<T> {
 	/**
 	 * Creates a join operation. See {@link JoinedStreams} for an example of how the keys
 	 * and window can be specified.
+	 */
+	/**
+	 * 创建一个 join 操作
 	 */
 	public <T2> JoinedStreams<T, T2> join(DataStream<T2> otherStream) {
 		return new JoinedStreams<>(this, otherStream);
@@ -1080,7 +1086,7 @@ public class DataStream<T> {
 	 * <p>For cases where watermarks should be created in a regular fashion, for example
 	 * every x milliseconds, use the {@link AssignerWithPeriodicWatermarks}.
 	 *
-	 * 对于应该以常规方式创建水印的情况，例如每x毫秒，使用AssignerWithPeriodicWatermarks
+	 * 对于应该以常规方式创建水印的情况，例如每x毫秒，使用 AssignerWithPeriodicWatermarks
 	 *
 	 * @param timestampAndWatermarkAssigner The implementation of the timestamp assigner and
 	 *                                      watermark generator.

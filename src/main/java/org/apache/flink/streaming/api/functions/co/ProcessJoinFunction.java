@@ -34,6 +34,12 @@ import org.apache.flink.util.OutputTag;
  * @param <IN2> Type of the second input
  * @param <OUT> Type of the output
  */
+/**
+ * 一个处理两个连接元素并生成单个输出元素的函数
+ *
+ * 对于连接的两个流的每个连接元素对，将调用此函数
+ * 可以通过Context访问连接对的时间戳以及左侧元素和右侧元素的时间戳
+ */
 @PublicEvolving
 public abstract class ProcessJoinFunction<IN1, IN2, OUT> extends AbstractRichFunction {
 
@@ -52,6 +58,11 @@ public abstract class ProcessJoinFunction<IN1, IN2, OUT> extends AbstractRichFun
 	 * @throws Exception   This function may throw exceptions which cause the streaming program to
 	 * 					   fail and go in recovery mode.
 	 */
+	/**
+	 * 每个连接对都会调用这个方法
+	 * 这个方法通过给定的 Collector 输出零个或者多个元素
+	 * 通过可以通过 Context 来访问连接元素的时间戳
+	 */
 	public abstract void processElement(IN1 left, IN2 right, Context ctx, Collector<OUT> out) throws Exception;
 
 	/**
@@ -59,6 +70,11 @@ public abstract class ProcessJoinFunction<IN1, IN2, OUT> extends AbstractRichFun
 	 * {@link #processElement(Object, Object, Context, Collector)}. It gives access to the timestamps of the
 	 * left element in the joined pair, the right one, and that of the joined pair. In addition, this context
 	 * allows to emit elements on a side output.
+	 */
+	/**
+	 * 在 processElement 方法执行的时候，Context 可以被使用
+	 * Context 能够访问连接对左端元素的时间戳，右端元素的时间戳
+	 * 以及连接对的时间戳（join pair 中更大的 ts），此外，Context 允许偏侧输出
 	 */
 	public abstract class Context {
 

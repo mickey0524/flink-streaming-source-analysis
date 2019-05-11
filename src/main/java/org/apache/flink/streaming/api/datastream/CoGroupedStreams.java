@@ -57,8 +57,13 @@ import static java.util.Objects.requireNonNull;
  *{@code CoGroupedStreams} represents two {@link DataStream DataStreams} that have been co-grouped.
  * A streaming co-group operation is evaluated over elements in a window.
  *
+ * CoGroupedStreams 代表共同分组的两个 DataStreams
+ * 窗口内的每个元素都要执行一个流共同分组操作
+ *
  * <p>To finalize co-group operation you also need to specify a {@link KeySelector} for
  * both the first and second input and a {@link WindowAssigner}.
+ *
+ * 为了实现 co-group 操作，你需要为两个 input 都设置 KeySelector 和 WindowAssigner
  *
  * <p>Note: Right now, the groups are being built in memory so you need to ensure that they don't
  * get too big. Otherwise the JVM might crash.
@@ -75,14 +80,22 @@ import static java.util.Objects.requireNonNull;
  *     .apply(new MyCoGroupFunction());
  * } </pre>
  */
+/**
+ * coGroup 操作会将两个输入流合并成一个 TaggedUnion 类型的输入流
+ * 同时配上 UnionKeySelector，当发现是第一个流的元素的时候，调用第一个流的
+ * KeySelector，反之调用第二个流的 KeySelector，利用 map 操作
+ * 转换成 TaggedUnion 类型的一个流之后，调用窗口函数
+ * 会将窗口中 key 相同的元素都 emit 进来，然后 CoGroupFunction
+ * 会将其分成两个 ArrayList，并执行 coGroup 函数
+ */
 @Public
 public class CoGroupedStreams<T1, T2> {
 
 	/** The first input stream. */
-	private final DataStream<T1> input1;
+	private final DataStream<T1> input1;  // 第一个 input
 
 	/** The second input stream. */
-	private final DataStream<T2> input2;
+	private final DataStream<T2> input2;  // 第二个 input
 
 	/**
 	 * Creates new CoGrouped data streams, which are the first step towards building a streaming
@@ -90,6 +103,9 @@ public class CoGroupedStreams<T1, T2> {
 	 *
 	 * @param input1 The first data stream.
 	 * @param input2 The second data stream.
+	 */
+	/**
+	 * 创建新的 CoGroupedStreams
 	 */
 	public CoGroupedStreams(DataStream<T1> input1, DataStream<T2> input2) {
 		this.input1 = requireNonNull(input1);
@@ -100,6 +116,9 @@ public class CoGroupedStreams<T1, T2> {
 	 * Specifies a {@link KeySelector} for elements from the first input.
 	 *
 	 * @param keySelector The KeySelector to be used for extracting the first input's key for partitioning.
+	 */
+	/**
+	 * 为第一个 input 设置 KeySelector
 	 */
 	public <KEY> Where<KEY> where(KeySelector<T1, KEY> keySelector)  {
 		Preconditions.checkNotNull(keySelector);
@@ -126,6 +145,9 @@ public class CoGroupedStreams<T1, T2> {
 	 *
 	 * @param <KEY> The type of the key.
 	 */
+	/**
+	 * 定义一侧的 key
+	 */
 	@Public
 	public class Where<KEY> {
 
@@ -141,6 +163,9 @@ public class CoGroupedStreams<T1, T2> {
 		 * Specifies a {@link KeySelector} for elements from the second input.
 		 *
 		 * @param keySelector The KeySelector to be used for extracting the second input's key for partitioning.
+		 */
+		/**
+		 * 为第二个 input 定义 KeySelector
 		 */
 		public EqualTo equalTo(KeySelector<T2, KEY> keySelector)  {
 			Preconditions.checkNotNull(keySelector);
@@ -158,6 +183,7 @@ public class CoGroupedStreams<T1, T2> {
 			Preconditions.checkNotNull(keySelector);
 			Preconditions.checkNotNull(keyType);
 
+			// 执行 coGroup 操作的两个 key 类型必须是一样的
 			if (!keyType.equals(this.keyType)) {
 				throw new IllegalArgumentException("The keys for the two inputs are not equal: " +
 						"first key = " + this.keyType + " , second key = " + keyType);
@@ -171,6 +197,9 @@ public class CoGroupedStreams<T1, T2> {
 		/**
 		 * A co-group operation that has {@link KeySelector KeySelectors} defined for both inputs.
 		 */
+		/**
+		 * 为两个 input 都定义好了 KeySelector 的 co-group 操作
+		 */
 		@Public
 		public class EqualTo {
 
@@ -182,6 +211,9 @@ public class CoGroupedStreams<T1, T2> {
 
 			/**
 			 * Specifies the window on which the co-group operation works.
+			 */
+			/**
+			 * 定义 co-group 操作的窗口
 			 */
 			@PublicEvolving
 			public <W extends Window> WithWindow<T1, T2, KEY, W> window(WindowAssigner<? super TaggedUnion<T1, T2>, W> assigner) {
@@ -201,26 +233,30 @@ public class CoGroupedStreams<T1, T2> {
 	 * @param <KEY> Type of the key. This must be the same for both inputs
 	 * @param <W> Type of {@link Window} on which the co-group operation works.
 	 */
+	/**
+	 * 定义好了两个 input 的 keySelector 以及 WindowAssigner
+	 */
 	@Public
 	public static class WithWindow<T1, T2, KEY, W extends Window> {
-		private final DataStream<T1> input1;
-		private final DataStream<T2> input2;
+		private final DataStream<T1> input1;  // 第一个 input
+		private final DataStream<T2> input2;  // 第二个 input
 
-		private final KeySelector<T1, KEY> keySelector1;
-		private final KeySelector<T2, KEY> keySelector2;
+		private final KeySelector<T1, KEY> keySelector1;  // 第一个 input 的 KeySelector
+		private final KeySelector<T2, KEY> keySelector2;  // 第二个 input 的 KeySelector
 
-		private final TypeInformation<KEY> keyType;
+		private final TypeInformation<KEY> keyType;  // 做 coGroup 的 key 的类型
 
-		private final WindowAssigner<? super TaggedUnion<T1, T2>, W> windowAssigner;
+		private final WindowAssigner<? super TaggedUnion<T1, T2>, W> windowAssigner;  // WindowAssigner 给元素分配窗口
 
-		private final Trigger<? super TaggedUnion<T1, T2>, ? super W> trigger;
+		private final Trigger<? super TaggedUnion<T1, T2>, ? super W> trigger;  // 触发器
 
-		private final Evictor<? super TaggedUnion<T1, T2>, ? super W> evictor;
+		private final Evictor<? super TaggedUnion<T1, T2>, ? super W> evictor;  // 触发器
 
-		private final Time allowedLateness;
+		private final Time allowedLateness;  // 窗口允许的延迟
 
-		private WindowedStream<TaggedUnion<T1, T2>, KEY, W> windowedStream;
+		private WindowedStream<TaggedUnion<T1, T2>, KEY, W> windowedStream;  // 窗口流
 
+		// 构造函数
 		protected WithWindow(DataStream<T1> input1,
 				DataStream<T2> input2,
 				KeySelector<T1, KEY> keySelector1,
@@ -247,6 +283,7 @@ public class CoGroupedStreams<T1, T2> {
 		/**
 		 * Sets the {@code Trigger} that should be used to trigger window emission.
 		 */
+		// 设置触发器
 		@PublicEvolving
 		public WithWindow<T1, T2, KEY, W> trigger(Trigger<? super TaggedUnion<T1, T2>, ? super W> newTrigger) {
 			return new WithWindow<>(input1, input2, keySelector1, keySelector2, keyType,
@@ -261,6 +298,7 @@ public class CoGroupedStreams<T1, T2> {
 		 * pre-aggregation of window results cannot be used.
 		 */
 		@PublicEvolving
+		// 设置驱逐者
 		public WithWindow<T1, T2, KEY, W> evictor(Evictor<? super TaggedUnion<T1, T2>, ? super W> newEvictor) {
 			return new WithWindow<>(input1, input2, keySelector1, keySelector2, keyType,
 					windowAssigner, trigger, newEvictor, allowedLateness);
@@ -271,6 +309,7 @@ public class CoGroupedStreams<T1, T2> {
 		 * @see WindowedStream#allowedLateness(Time)
 		 */
 		@PublicEvolving
+		// 设置窗口允许的延迟
 		public WithWindow<T1, T2, KEY, W> allowedLateness(Time newLateness) {
 			return new WithWindow<>(input1, input2, keySelector1, keySelector2, keyType,
 					windowAssigner, trigger, evictor, newLateness);
@@ -322,7 +361,7 @@ public class CoGroupedStreams<T1, T2> {
 		 * {@link #with(CoGroupFunction, TypeInformation)} method to set an operator-specific parallelism.
 		 */
 		public <T> DataStream<T> apply(CoGroupFunction<T1, T2, T> function, TypeInformation<T> resultType) {
-			//clean the closure
+			// clean the closure
 			function = input1.getExecutionEnvironment().clean(function);
 
 			UnionTypeInfo<T1, T2> unionType = new UnionTypeInfo<>(input1.getType(), input2.getType());
@@ -392,6 +431,9 @@ public class CoGroupedStreams<T1, T2> {
 	/**
 	 * Internal class for implementing tagged union co-group.
 	 */
+	/**
+	 * 用于实现标记联合组的内部类
+	 */
 	@Internal
 	public static class TaggedUnion<T1, T2> {
 		private final T1 one;
@@ -427,6 +469,7 @@ public class CoGroupedStreams<T1, T2> {
 		}
 	}
 
+	// 联合两个 input 的 type 而成的 UnionTypeInfo
 	private static class UnionTypeInfo<T1, T2> extends TypeInformation<TaggedUnion<T1, T2>> {
 		private static final long serialVersionUID = 1L;
 
@@ -556,7 +599,8 @@ public class CoGroupedStreams<T1, T2> {
 				return TaggedUnion.one(oneSerializer.copy(from.getOne()));
 			} else {
 				return TaggedUnion.two(twoSerializer.copy(from.getTwo()));
-			}		}
+			}		
+		}
 
 		@Override
 		public int getLength() {
@@ -708,6 +752,7 @@ public class CoGroupedStreams<T1, T2> {
 	//  union window reduce
 	// ------------------------------------------------------------------------
 
+	// 从第一个 input 中获取 TaggedUnion
 	private static class Input1Tagger<T1, T2> implements MapFunction<T1, TaggedUnion<T1, T2>> {
 		private static final long serialVersionUID = 1L;
 
@@ -717,6 +762,7 @@ public class CoGroupedStreams<T1, T2> {
 		}
 	}
 
+	// 从第二个 input 中获取 TaggedUnion
 	private static class Input2Tagger<T1, T2> implements MapFunction<T2, TaggedUnion<T1, T2>> {
 		private static final long serialVersionUID = 1L;
 
@@ -726,6 +772,9 @@ public class CoGroupedStreams<T1, T2> {
 		}
 	}
 
+	/**
+	 * 联合两个 input 的 KeySelector
+	 */
 	private static class UnionKeySelector<T1, T2, KEY> implements KeySelector<TaggedUnion<T1, T2>, KEY> {
 		private static final long serialVersionUID = 1L;
 

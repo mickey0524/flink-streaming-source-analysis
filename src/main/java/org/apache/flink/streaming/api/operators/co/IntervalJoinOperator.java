@@ -59,11 +59,19 @@ import java.util.Objects;
 /**
  * An {@link TwoInputStreamOperator operator} to execute time-bounded stream inner joins.
  *
+ * 用于执行时间限制的流连接的运算符
+ *
  * <p>By using a configurable lower and upper bound this operator will emit exactly those pairs
  * (T1, T2) where t2.ts ∈ [T1.ts + lowerBound, T1.ts + upperBound]. Both the lower and the
  * upper bound can be configured to be either inclusive or exclusive.
  *
+ * 通过配置 lower 和 upper，这个操作符会 emit 这些 pair
+ * (T1, T2) where t2.ts ∈ [T1.ts + lowerBound, T1.ts + upperBound]
+ * 上界和下界是否闭合都是可以配置的
+ *
  * <p>As soon as elements are joined they are passed to a user-defined {@link ProcessJoinFunction}.
+ *
+ * 一旦元素被连接，它们就被传递给用户定义的 ProcessJoinFunction
  *
  * <p>The basic idea of this implementation is as follows: Whenever we receive an element at
  * {@link #processElement1(StreamRecord)} (a.k.a. the left side), we add it to the left buffer.
@@ -71,12 +79,21 @@ import java.util.Objects;
  * there are, they are joined and passed to the aforementioned function. The same happens the
  * other way around when receiving an element on the right side.
  *
+ * 该实现的基本思想如下所示：无论何时我们使用 processElement1(StreamRecord) 收到一个元素，我们将它放入左边的 buffer
+ * 然后我们检查右边的 buffer 看看是否有元素能够被 join。如果存在的话，join 它们，然后传递给 ProcessJoinFunction
+ * 当我们收到了右边的元素的时候，发生类似的事情
+ * 
  * <p>Whenever a pair of elements is emitted it will be assigned the max timestamp of either of
  * the elements.
+ *
+ * 每当 emit 一对元素时，将为其分配任一元素的最大时间戳
  *
  * <p>In order to avoid the element buffers to grow indefinitely a cleanup timer is registered
  * per element. This timer indicates when an element is not considered for joining anymore and can
  * be removed from the state.
+ *
+ * 为了避免元素缓冲区无限增长，每个元素都注册了一个清理计时器。
+ *  此计时器指示何时不再考虑加入元素，并且可以从该状态中删除该元素
  *
  * @param <K>	The type of the key based on which we join elements.
  * @param <T1>	The type of the elements in the left stream.
@@ -151,7 +168,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	public void open() throws Exception {
 		super.open();
 
-		collector = new TimestampedCollector<>(output);
+		collector = new TimestampedCollector<>(output);  // emit 元素的时间保证相同
 		context = new ContextImpl(userFunction);
 		internalTimerService =
 			getInternalTimerService(CLEANUP_TIMER_NAME, StringSerializer.INSTANCE, this);
@@ -183,6 +200,10 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	 * @param record An incoming record to be joined
 	 * @throws Exception Can throw an Exception during state access
 	 */
+	/** 
+	 * 处理左边流的元素，无论何时，当 StreamRecord 到达左边的流，元素会被加入 leftBuffer
+	 * 会去右边的流中找何时的 join 对，如果时间合适，会被传递给 ProcessJoinFunction
+	 */
 	@Override
 	public void processElement1(StreamRecord<T1> record) throws Exception {
 		processElement(record, leftBuffer, rightBuffer, lowerBound, upperBound, true);
@@ -196,6 +217,10 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	 *
 	 * @param record An incoming record to be joined
 	 * @throws Exception Can throw an exception during state access
+	 */
+	/**
+	 * 处理右边流的元素，无论何时，当 StreamRecord 到达右边的流，元素会被加入 leftBuffer
+	 * 会去左边的流中找何时的 join 对，如果时间合适，会被传递给 ProcessJoinFunction
 	 */
 	@Override
 	public void processElement2(StreamRecord<T2> record) throws Exception {
@@ -225,9 +250,13 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 
 		addToBuffer(ourBuffer, ourValue, ourTimestamp);
 
+		/**
+		 * 遍历另外一个 buffer，查询是否有合适的元素可以形成 join 对
+		 */
 		for (Map.Entry<Long, List<BufferEntry<OTHER>>> bucket: otherBuffer.entries()) {
 			final long timestamp  = bucket.getKey();
 
+			// 不满足条件直接丢弃
 			if (timestamp < ourTimestamp + relativeLowerBound ||
 					timestamp > ourTimestamp + relativeUpperBound) {
 				continue;
@@ -235,6 +264,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 
 			for (BufferEntry<OTHER> entry: bucket.getValue()) {
 				if (isLeft) {
+					// 到来的元素是左边流的
 					collect((T1) ourValue, (T2) entry.element, ourTimestamp, timestamp);
 				} else {
 					collect((T1) entry.element, (T2) ourValue, timestamp, ourTimestamp);
@@ -242,6 +272,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 			}
 		}
 
+		// 注册定时器，避免 buffer 无限制的增大，定时清除
 		long cleanupTime = (relativeUpperBound > 0L) ? ourTimestamp + relativeUpperBound : ourTimestamp;
 		if (isLeft) {
 			internalTimerService.registerEventTimeTimer(CLEANUP_NAMESPACE_LEFT, cleanupTime);
@@ -250,11 +281,13 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 		}
 	}
 
+	// 元素延迟到达，直接丢弃
 	private boolean isLate(long timestamp) {
 		long currentWatermark = internalTimerService.currentWatermark();
 		return currentWatermark != Long.MIN_VALUE && timestamp < currentWatermark;
 	}
 
+	// 将 join pair 交给 ProcessJoinFunction 执行
 	private void collect(T1 left, T2 right, long leftTimestamp, long rightTimestamp) throws Exception {
 		final long resultTimestamp = Math.max(leftTimestamp, rightTimestamp);
 
@@ -264,6 +297,9 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 		userFunction.processElement(left, right, context, collector);
 	}
 
+	/**
+	 * 将到来的元素加入 buffer 缓存
+	 */
 	private static <T> void addToBuffer(
 			final MapState<Long, List<IntervalJoinOperator.BufferEntry<T>>> buffer,
 			final T value,
@@ -277,6 +313,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	}
 
 	@Override
+	// 定时清除无用元素
 	public void onEventTime(InternalTimer<K, String> timer) throws Exception {
 
 		long timerTimestamp = timer.getTimestamp();
@@ -313,6 +350,9 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	 *
 	 * <p>It gives access to the timestamps of the left element in the joined pair, the right one, and that of
 	 * the joined pair. In addition, this context allows to emit elements on a side output.
+	 */
+	/**
+	 * ProcessJoinFunction 的执行上下文
 	 */
 	private final class ContextImpl extends ProcessJoinFunction<T1, T2, OUT>.Context {
 
@@ -358,6 +398,9 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	 * A container for elements put in the left/write buffer.
 	 * This will contain the element itself along with a flag indicating
 	 * if it has been joined or not.
+	 */
+	/**
+	 * 放置在左/写缓冲区中的元素的容器。这将包含元素本身以及指示它是否已加入的标志
 	 */
 	@Internal
 	@VisibleForTesting

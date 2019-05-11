@@ -41,8 +41,13 @@ import static java.util.Objects.requireNonNull;
  *{@code JoinedStreams} represents two {@link DataStream DataStreams} that have been joined.
  * A streaming join operation is evaluated over elements in a window.
  *
+ * JoinedStreams 代表进行 joined 操作的两个 DataStreams
+ * 一个流 join 操作会在窗口的每个元素上执行
+ *
  * <p>To finalize the join operation you also need to specify a {@link KeySelector} for
  * both the first and second input and a {@link WindowAssigner}.
+ *
+ * 为了实现 co-group 操作，你需要为两个 input 都设置 KeySelector 和 WindowAssigner
  *
  * <p>Note: Right now, the join is being evaluated in memory so you need to ensure that the number
  * of elements per key does not get too high. Otherwise the JVM might crash.
@@ -59,20 +64,32 @@ import static java.util.Objects.requireNonNull;
  *     .apply(new MyJoinFunction());
  * } </pre>
  */
+/**
+ * 想要了解 JoinedStreams，首先需要去了解 CoGroupedStreams
+ * 因为 JoinedStreams 的 apply 操作调用了 CoGroupedStreams 中的 WithWindow
+ * FlatJoinCoGroupFunction/JoinCoGroupFunction 实现了 CoGroupFunction 接口
+ * CoGroupedStreams 中提到，会将相同 key 的 TaggedUnion 元素分为两个 Iterator
+ * 调用 coGroup 方法，FlatJoinCoGroupFunction/JoinCoGroupFunction 中实现了
+ * coGroup 方法，对每个 pair 调用 FlatJoinFunction/JoinFunction 中的 join 方法
+ * 具体操作由用户自己决定
+ */
 @Public
 public class JoinedStreams<T1, T2> {
 
 	/** The first input stream. */
-	private final DataStream<T1> input1;
+	private final DataStream<T1> input1;  // 第一个 input
 
 	/** The second input stream. */
-	private final DataStream<T2> input2;
+	private final DataStream<T2> input2;  // 第二个 input
 
 	/**
 	 * Creates new JoinedStreams data streams, which are the first step towards building a streaming co-group.
 	 *
 	 * @param input1 The first data stream.
 	 * @param input2 The second data stream.
+	 */
+	/**
+	 * 创建新的 JoinedStreams
 	 */
 	public JoinedStreams(DataStream<T1> input1, DataStream<T2> input2) {
 		this.input1 = requireNonNull(input1);
@@ -83,6 +100,9 @@ public class JoinedStreams<T1, T2> {
 	 * Specifies a {@link KeySelector} for elements from the first input.
 	 *
 	 * @param keySelector The KeySelector to be used for extracting the key for partitioning.
+	 */
+	/**
+	 * 为第一个 input 设置 KeySelector
 	 */
 	public <KEY> Where<KEY> where(KeySelector<T1, KEY> keySelector)  {
 		requireNonNull(keySelector);
@@ -109,6 +129,9 @@ public class JoinedStreams<T1, T2> {
 	 *
 	 * @param <KEY> The type of the key.
 	 */
+	/**
+	 * 定义一侧的 key
+	 */
 	@Public
 	public class Where<KEY> {
 
@@ -124,6 +147,9 @@ public class JoinedStreams<T1, T2> {
 		 * Specifies a {@link KeySelector} for elements from the second input.
 		 *
 		 * @param keySelector The KeySelector to be used for extracting the second input's key for partitioning.
+		 */
+		/**
+		 * 为第二个 input 定义 KeySelector
 		 */
 		public EqualTo equalTo(KeySelector<T2, KEY> keySelector)  {
 			requireNonNull(keySelector);
@@ -153,6 +179,9 @@ public class JoinedStreams<T1, T2> {
 
 		/**
 		 * A join operation that has {@link KeySelector KeySelectors} defined for both inputs.
+		 */
+		/**
+		 * 为两个 input 都定义好了 KeySelector 的 join 操作
 		 */
 		@Public
 		public class EqualTo {
@@ -187,20 +216,20 @@ public class JoinedStreams<T1, T2> {
 	@Public
 	public static class WithWindow<T1, T2, KEY, W extends Window> {
 
-		private final DataStream<T1> input1;
-		private final DataStream<T2> input2;
+		private final DataStream<T1> input1;  // 第一个 input
+		private final DataStream<T2> input2;  // 第二个 input
 
-		private final KeySelector<T1, KEY> keySelector1;
-		private final KeySelector<T2, KEY> keySelector2;
-		private final TypeInformation<KEY> keyType;
+		private final KeySelector<T1, KEY> keySelector1;  // 第一个 input 的 keySelector
+		private final KeySelector<T2, KEY> keySelector2;  // 第二个 input 的 keySelector
+		private final TypeInformation<KEY> keyType;  // keySelector 输出的 key 类型
 
-		private final WindowAssigner<? super TaggedUnion<T1, T2>, W> windowAssigner;
+		private final WindowAssigner<? super TaggedUnion<T1, T2>, W> windowAssigner;  // 窗口分配器
 
-		private final Trigger<? super TaggedUnion<T1, T2>, ? super W> trigger;
+		private final Trigger<? super TaggedUnion<T1, T2>, ? super W> trigger;  // 触发器
 
-		private final Evictor<? super TaggedUnion<T1, T2>, ? super W> evictor;
+		private final Evictor<? super TaggedUnion<T1, T2>, ? super W> evictor;  // 驱逐者
 
-		private final Time allowedLateness;
+		private final Time allowedLateness;  // 窗口允许的延迟
 
 		private CoGroupedStreams.WithWindow<T1, T2, KEY, W> coGroupedWindowedStream;
 
@@ -444,6 +473,9 @@ public class JoinedStreams<T1, T2> {
 	/**
 	 * CoGroup function that does a nested-loop join to get the join result.
 	 */
+	/**
+	 * 实现 coGroup 方法，循环来得到 join 的结果
+	 */
 	private static class JoinCoGroupFunction<T1, T2, T>
 			extends WrappingFunction<JoinFunction<T1, T2, T>>
 			implements CoGroupFunction<T1, T2, T> {
@@ -465,6 +497,9 @@ public class JoinedStreams<T1, T2> {
 
 	/**
 	 * CoGroup function that does a nested-loop join to get the join result. (FlatJoin version)
+	 */
+	/**
+	 * 实现 coGroup 方法，循环来得到 join 的结果，可能输出多个，所以是 flat
 	 */
 	private static class FlatJoinCoGroupFunction<T1, T2, T>
 			extends WrappingFunction<FlatJoinFunction<T1, T2, T>>

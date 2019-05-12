@@ -110,10 +110,15 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 
 		checkArgument(timeout >= -1);
-		this.flushAlways = (timeout == 0);
+		this.flushAlways = (timeout == 0);  // bufferTimeout 为 0，代表不缓存，每一条记录直接 flush
+		// 当 timeout 为 -1 的时候，按照 env 那里设置的 bufferTimeout 来
+		// 默认情况下，100 ms
 		if (timeout == -1 || timeout == 0) {
 			outputFlusher = Optional.empty();
 		} else {
+			// 如果设置了 bufferTimeout，将启动一个线程
+			// Thread.sleep 等待对应的时间
+			// 然后 flushAll
 			String threadName = taskName == null ?
 				DEFAULT_OUTPUT_FLUSH_THREAD_NAME :
 				DEFAULT_OUTPUT_FLUSH_THREAD_NAME + " for " + taskName;
@@ -123,6 +128,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 	}
 
+	/**
+	 * output.collect() 真正调用的方法
+	 */
 	public void emit(T record) throws IOException, InterruptedException {
 		checkErroneous();
 		emit(record, channelSelector.selectChannel(record));
@@ -131,6 +139,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 	/**
 	 * This is used to broadcast Streaming Watermarks in-band with records. This ignores
 	 * the {@link ChannelSelector}.
+	 */
+	/**
+	 * 用来广播 record，忽略 ChannelSelector
 	 */
 	public void broadcastEmit(T record) throws IOException, InterruptedException {
 		checkErroneous();
@@ -152,6 +163,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 	/**
 	 * This is used to send LatencyMarks to a random target channel.
 	 */
+	/**
+	 * 用来将延迟 mark 发送到任意一个目标 channel
+	 */
 	public void randomEmit(T record) throws IOException, InterruptedException {
 		emit(record, rng.nextInt(numberOfChannels));
 	}
@@ -168,9 +182,13 @@ public class RecordWriter<T extends IOReadableWritable> {
 	 * @param targetChannel
 	 * @return <tt>true</tt> if the intermediate serialization buffer should be pruned
 	 */
+	/**
+	 * 返回是否应该修剪中间序列化缓冲区
+	 */
 	private boolean copyFromSerializerToTargetChannel(int targetChannel) throws IOException, InterruptedException {
 		// We should reset the initial position of the intermediate serialization buffer before
 		// copying, so the serialization results can be copied to multiple target buffers.
+		// 我们应该在复制之前重置中间序列化缓冲区的初始位置，这样可以将序列化结果复制到多个目标缓冲区
 		serializer.reset();
 
 		boolean pruneTriggered = false;
@@ -183,6 +201,8 @@ public class RecordWriter<T extends IOReadableWritable> {
 			// If this was a full record, we are done. Not breaking out of the loop at this point
 			// will lead to another buffer request before breaking out (that would not be a
 			// problem per se, but it can lead to stalls in the pipeline).
+			// 如果这是一个完整的记录，我们就完成了
+			// 此时不断开循环将在爆发之前导致另一个缓冲请求（这本身不会有问题，但它可能导致管道中的停顿）
 			if (result.isFullRecord()) {
 				pruneTriggered = true;
 				bufferBuilders[targetChannel] = Optional.empty();
@@ -215,10 +235,16 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 	}
 
+	/**
+	 * writer flush 所有记录的操作
+	 */
 	public void flushAll() {
 		targetPartition.flushAll();
 	}
 
+	/**
+	 * 清空所有的 buffer
+	 */
 	public void clearBuffers() {
 		for (int targetChannel = 0; targetChannel < numberOfChannels; targetChannel++) {
 			closeBufferBuilder(targetChannel);
@@ -250,6 +276,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 	 * The {@link BufferBuilder} may already exist if not filled up last time, otherwise we need
 	 * request a new one for this target channel.
 	 */
+	/**
+	 * 如果上次没有填满，BufferBuilder可能已经存在，否则我们需要为此目标通道请求一个新的
+	 */
 	private BufferBuilder getBufferBuilder(int targetChannel) throws IOException, InterruptedException {
 		if (bufferBuilders[targetChannel].isPresent()) {
 			return bufferBuilders[targetChannel].get();
@@ -258,6 +287,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 	}
 
+	/**
+	 * 申请一个新的 BufferBuilder
+	 */
 	private BufferBuilder requestNewBufferBuilder(int targetChannel) throws IOException, InterruptedException {
 		checkState(!bufferBuilders[targetChannel].isPresent() || bufferBuilders[targetChannel].get().isFinished());
 
@@ -267,6 +299,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 		return bufferBuilder;
 	}
 
+	/**
+	 * 将目前被使用的 channel 关闭，清空
+	 */
 	private void closeBufferBuilder(int targetChannel) {
 		if (bufferBuilders[targetChannel].isPresent()) {
 			bufferBuilders[targetChannel].get().finish();
@@ -280,6 +315,7 @@ public class RecordWriter<T extends IOReadableWritable> {
 	public void close() {
 		clearBuffers();
 		// make sure we terminate the thread in any case
+		// 确保我们在任何情况下都关闭了线程
 		if (outputFlusher.isPresent()) {
 			outputFlusher.get().terminate();
 			try {
@@ -310,11 +346,17 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 	}
 
+	/**
+	 * 静态方法
+	 * 创建一个 RecordWriter
+	 */
 	public static RecordWriter createRecordWriter(
 			ResultPartitionWriter writer,
 			ChannelSelector channelSelector,
 			long timeout,
 			String taskName) {
+		// channelSelector 就是设置的各种 Partitioner
+		// 如果是 BroadcastPartitioner，返回 BroadcastRecordWriter
 		if (channelSelector.isBroadcast()) {
 			return new BroadcastRecordWriter<>(writer, channelSelector, timeout, taskName);
 		} else {

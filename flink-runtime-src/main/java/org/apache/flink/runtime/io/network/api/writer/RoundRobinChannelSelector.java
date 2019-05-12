@@ -27,6 +27,9 @@ import org.apache.flink.core.io.IOReadableWritable;
  * @param <T>
  *        the type of record which is sent through the attached output gate
  */
+/**
+ * RecordWriter 默认的 ChannelSelector，简单的轮询
+ */
 public class RoundRobinChannelSelector<T extends IOReadableWritable> implements ChannelSelector<T> {
 
 	/** Stores the index of the channel to send the next record to. */

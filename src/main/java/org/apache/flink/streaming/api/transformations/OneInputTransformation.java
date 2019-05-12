@@ -47,7 +47,7 @@ public class OneInputTransformation<IN, OUT> extends StreamTransformation<OUT> {
 
 	private final OneInputStreamOperator<IN, OUT> operator;
 
-	private KeySelector<IN, ?> stateKeySelector;
+	private KeySelector<IN, ?> stateKeySelector;  // 保存用户定义的 KeySelector
 
 	private TypeInformation<?> stateKeyType;
 
@@ -107,6 +107,9 @@ public class OneInputTransformation<IN, OUT> extends StreamTransformation<OUT> {
 	 *
 	 * @see #setStateKeySelector
 	 */
+	/**
+	 * 获取用户在 keyBy 的时候设置的 KeySelector
+	 */
 	public KeySelector<IN, ?> getStateKeySelector() {
 		return stateKeySelector;
 	}
@@ -115,6 +118,9 @@ public class OneInputTransformation<IN, OUT> extends StreamTransformation<OUT> {
 		this.stateKeyType = stateKeyType;
 	}
 
+	/**
+	 * 获取用户 KeySelector 返回 key 的 type
+	 */
 	public TypeInformation<?> getStateKeyType() {
 		return stateKeyType;
 	}

@@ -284,6 +284,7 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 		SingleOutputStreamOperator<R> returnStream = super.transform(operatorName, outTypeInfo, operator);
 
 		// inject the key selector and key type
+		// KeyedStream 会隐式的注入 KeySelector 和 key 的类型
 		OneInputTransformation<T, R> transform = (OneInputTransformation<T, R>) returnStream.getTransformation();
 		transform.setStateKeySelector(keySelector);  // 给新得到的 transformation 设置 keySelector 和 keyType
 		transform.setStateKeyType(keyType);

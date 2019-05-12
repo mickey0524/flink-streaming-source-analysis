@@ -65,8 +65,8 @@ public class StreamNode implements Serializable {
 	private final String operatorName;
 	private String slotSharingGroup;
 	private @Nullable String coLocationGroup;
-	private KeySelector<?, ?> statePartitioner1;
-	private KeySelector<?, ?> statePartitioner2;
+	private KeySelector<?, ?> statePartitioner1;  // 第一个输入的 KeySelector
+	private KeySelector<?, ?> statePartitioner2;  // 第二个输入的 KeySelector
 	private TypeSerializer<?> stateKeySerializer;
 
 	private transient StreamOperator<?> operator;

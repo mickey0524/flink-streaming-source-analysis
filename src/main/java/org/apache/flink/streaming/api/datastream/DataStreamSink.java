@@ -41,11 +41,15 @@ public class DataStreamSink<T> {
 
 	@SuppressWarnings("unchecked")
 	protected DataStreamSink(DataStream<T> inputStream, StreamSink<T> operator) {
+		// 生成 SinkTransformation
 		this.transformation = new SinkTransformation<T>(inputStream.getTransformation(), "Unnamed", operator, inputStream.getExecutionEnvironment().getParallelism());
 	}
 
 	/**
 	 * Returns the transformation that contains the actual sink operator of this sink.
+	 */
+	/**
+	 * 返回包含真正 sink 操作符的 transformation
 	 */
 	@Internal
 	public SinkTransformation<T> getTransformation() {
@@ -57,6 +61,10 @@ public class DataStreamSink<T> {
 	 * used by the visualization and logging during runtime.
 	 *
 	 * @return The named sink.
+	 */
+	/**
+	 * 为 sink 设置名称
+	 * 名称用于可视化的显示和运行时的 logging
 	 */
 	public DataStreamSink<T> name(String name) {
 		transformation.setName(name);

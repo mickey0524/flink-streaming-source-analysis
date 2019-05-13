@@ -61,8 +61,9 @@ public class StreamSourceContexts {
 			long watermarkInterval,
 			long idleTimeout) {
 
-		final SourceFunction.SourceContext<OUT> ctx;
+		final SourceFunction.SourceContext<OUT> ctx;  // 上下文
 		switch (timeCharacteristic) {
+			// 当 flink 采用事件时间
 			case EventTime:
 				ctx = new ManualWatermarkContext<>(
 					output,
@@ -72,6 +73,7 @@ public class StreamSourceContexts {
 					idleTimeout);
 
 				break;
+			// 当 flink 采用 record 进入 flink 的时间
 			case IngestionTime:
 				ctx = new AutomaticWatermarkContext<>(
 					output,
@@ -82,6 +84,7 @@ public class StreamSourceContexts {
 					idleTimeout);
 
 				break;
+			// 当 flink 采用进程时间
 			case ProcessingTime:
 				ctx = new NonTimestampContext<>(checkpointLock, output);
 				break;
@@ -121,6 +124,7 @@ public class StreamSourceContexts {
 		@Override
 		public void collectWithTimestamp(T element, long timestamp) {
 			// ignore the timestamp
+			// 忽略 ts
 			collect(element);
 		}
 
@@ -190,7 +194,7 @@ public class StreamSourceContexts {
 		@Override
 		protected void processAndCollect(T element) {
 			lastRecordTime = this.timeService.getCurrentProcessingTime();
-			output.collect(reuse.replace(element, lastRecordTime));
+			output.collect(reuse.replace(element, lastRecordTime));  // 时间戳定义为机器现在的时间
 
 			// this is to avoid lock contention in the lockingObject by
 			// sending the watermark before the firing of the watermark
@@ -228,6 +232,10 @@ public class StreamSourceContexts {
 		}
 
 		/** This will only be called if allowWatermark returned {@code true}. */
+		/**
+		 * 仅仅当 allowWatermark 方法返回 true 的时候
+		 * 调用 processAndEmitWatermark 方法，本方法仅当流没有数据的时候，调用一次
+		 */
 		@Override
 		protected void processAndEmitWatermark(Watermark mark) {
 			nextWatermarkTime = Long.MAX_VALUE;
@@ -285,6 +293,7 @@ public class StreamSourceContexts {
 							markAsTemporarilyIdle();
 
 							// no need to finish the next check, as we are now idle.
+							// 没有必要进行下一次的流状态检测，因为流现在已经是空闲的了
 							cancelNextIdleDetectionTask();
 						} else if (currentTime > nextWatermarkTime) {
 							// align the watermarks across all machines. this will ensure that we
@@ -298,6 +307,7 @@ public class StreamSourceContexts {
 					}
 				}
 
+				// 注册下一次 emit watermark 的定时器
 				long nextWatermark = currentTime + watermarkInterval;
 				nextWatermarkTimer = this.timeService.registerTimer(
 						nextWatermark, new WatermarkEmittingTask(this.timeService, lock, output));
@@ -437,6 +447,7 @@ public class StreamSourceContexts {
 		@Override
 		public void collect(T element) {
 			synchronized (checkpointLock) {
+				// collect 了 record，将流状态变更为 ACTIVE
 				streamStatusMaintainer.toggleStreamStatus(StreamStatus.ACTIVE);
 
 				if (nextCheck != null) {
@@ -452,6 +463,7 @@ public class StreamSourceContexts {
 		@Override
 		public void collectWithTimestamp(T element, long timestamp) {
 			synchronized (checkpointLock) {
+				// collect 了 record，将流状态变更为 ACTIVE
 				streamStatusMaintainer.toggleStreamStatus(StreamStatus.ACTIVE);
 
 				if (nextCheck != null) {
@@ -468,6 +480,7 @@ public class StreamSourceContexts {
 		public void emitWatermark(Watermark mark) {
 			if (allowWatermark(mark)) {
 				synchronized (checkpointLock) {
+					// collect 了 Watermark，将流状态变更为 ACTIVE
 					streamStatusMaintainer.toggleStreamStatus(StreamStatus.ACTIVE);
 
 					if (nextCheck != null) {
@@ -512,6 +525,7 @@ public class StreamSourceContexts {
 					nextCheck = null;
 
 					if (failOnNextCheck) {
+						// 触发的时候发现 failOnNextCheck 依旧是 true，发现空闲
 						markAsTemporarilyIdle();
 					} else {
 						scheduleNextIdleDetectionTask();
@@ -526,6 +540,7 @@ public class StreamSourceContexts {
 		private void scheduleNextIdleDetectionTask() {
 			if (idleTimeout != -1) {
 				// reset flag; if it remains true when task fires, we have detected idleness
+				// 如果定时器触发的时候，failOnNextCheck 变量依旧是 true，则说明发现了空闲
 				failOnNextCheck = true;
 				// 注册下一次空闲检测的时间
 				nextCheck = this.timeService.registerTimer(
@@ -540,6 +555,7 @@ public class StreamSourceContexts {
 		protected void cancelNextIdleDetectionTask() {
 			final ScheduledFuture<?> nextCheck = this.nextCheck;
 			if (nextCheck != null) {
+				// 取消定时器
 				nextCheck.cancel(true);
 			}
 		}
@@ -549,20 +565,25 @@ public class StreamSourceContexts {
 		//  These methods are guaranteed to be synchronized on the checkpoint lock,
 		//  so implementations don't need to do so.
 		// ------------------------------------------------------------------------
-
+		// 交由具体的子类来实现的抽象方法，这些方法保证依据 checkpoint lock 来保证同步
+		//
 		/** Process and collect record. */
+		// 处理和收集 record
 		protected abstract void processAndCollect(T element);
 
 		/** Process and collect record with timestamp. */
+		// 处理和收集带 ts 的 record
 		protected abstract void processAndCollectWithTimestamp(T element, long timestamp);
 
 		/** Whether or not a watermark should be allowed. */
+		// 是否允许水印
 		protected abstract boolean allowWatermark(Watermark mark);
 
 		/**
 		 * Process and emit watermark. Only called if
 		 * {@link WatermarkContext#allowWatermark(Watermark)} returns {@code true}.
 		 */
+		// 处理和发出水印，只有在 allowWatermark 方法返回 true 的时候才被调用
 		protected abstract void processAndEmitWatermark(Watermark mark);
 
 	}

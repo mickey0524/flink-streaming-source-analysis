@@ -76,14 +76,16 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 
 		LatencyMarksEmitter<OUT> latencyEmitter = null;
 		if (latencyTrackingInterval > 0) {
+			// 如果设置了延迟追踪时间间隔，那么我们需要定义一个 LatencyMarksEmitter
 			latencyEmitter = new LatencyMarksEmitter<>(
 				getProcessingTimeService(),
 				collector,
 				latencyTrackingInterval,
-				this.getOperatorID(),
+				this.getOperatorID(),  // 由 primaryHash 生成
 				getRuntimeContext().getIndexOfThisSubtask());
 		}
 
+		// 获取 Config 文件中发出 watermark 的时间间隔
 		final long watermarkInterval = getRuntimeContext().getExecutionConfig().getAutoWatermarkInterval();
 
 		this.ctx = StreamSourceContexts.getSourceContext(
@@ -97,6 +99,8 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 
 		try {
 			// 调用 SourceFunction 的 run 方法来 emit element
+			// SourceFunction 中的 run 方法在 emit record 的时候
+			// 都是调用 ctx 中的方法
 			userFunction.run(ctx);
 
 			// if we get here, then the user function either exited after being done (finite source)
@@ -148,6 +152,9 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 	 * Checks whether the source has been canceled or stopped.
 	 * @return True, if the source is canceled or stopped, false is not.
 	 */
+	/**
+	 * 检查 source 是否已经被 canceled 或 stopped
+	 */
 	protected boolean isCanceledOrStopped() {
 		return canceledOrStopped;
 	}
@@ -168,6 +175,7 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 					public void onProcessingTime(long timestamp) throws Exception {
 						try {
 							// ProcessingTimeService callbacks are executed under the checkpointing lock
+							// ProcessingTimeService 的回调在 checkpointing 锁下执行
 							output.emitLatencyMarker(new LatencyMarker(timestamp, operatorId, subtaskIndex));
 						} catch (Throwable t) {
 							// we catch the Throwables here so that we don't trigger the processing

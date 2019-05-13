@@ -319,19 +319,25 @@ public abstract class AbstractKeyedStateBackend<K> implements
 
 		checkNotNull(namespace, "Namespace");
 
+		// 如果 stateDescriptor 的名字与上一次请求相同
+		// 修改 lastState 的 namespace
+		// 直接返回 lastState
 		if (lastName != null && lastName.equals(stateDescriptor.getName())) {
 			lastState.setCurrentNamespace(namespace);
 			return (S) lastState;
 		}
 
+		// 从 HashMap 中查找对应 name 的 state
 		InternalKvState<K, ?, ?> previous = keyValueStatesByName.get(stateDescriptor.getName());
 		if (previous != null) {
+			// 如果存在，修改 lastState 之后返回
 			lastState = previous;
 			lastState.setCurrentNamespace(namespace);
 			lastName = stateDescriptor.getName();
 			return (S) previous;
 		}
 
+		// 不存在的话，新建 state，更新 lastState，然后返回 state
 		final S state = getOrCreateKeyedState(namespaceSerializer, stateDescriptor);
 		final InternalKvState<K, N, ?> kvState = (InternalKvState<K, N, ?>) state;
 

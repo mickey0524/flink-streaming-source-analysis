@@ -91,7 +91,8 @@ import java.util.Locale;
 /**
  * 所有 operator 的基类
  * 具体使用的话，需要实现 OneInputStreamOperator 接口或者 TwoInputStreamOperator 接口
- * 类方法不能被并发使用！！！
+ * StreamOperator 的方法需要保证不被并发调用。同理，如果使用了时间服务，定时器回调
+ * 也需要保证不并发调用 StreamOperator 中的方法
  */
 @PublicEvolving
 public abstract class AbstractStreamOperator<OUT>
@@ -105,7 +106,7 @@ public abstract class AbstractStreamOperator<OUT>
 	// ----------- configuration properties -------------
 
 	// A sane default for most operators
-	// 默认的链式操作策略
+	// 默认的链式操作策略，允许后续链式连接，不尝试链式连接前一个操作符
 	protected ChainingStrategy chainingStrategy = ChainingStrategy.HEAD;
 
 	// ---------------- runtime fields ------------------
@@ -119,6 +120,8 @@ public abstract class AbstractStreamOperator<OUT>
 
 	// operator 通过 output 来 emit element -> output.collect()
 	// output 的生成位于 operatorChain.java 文件中
+	// 链式内部的 output 用于调用 operator 的 processElement 方法
+	// chain 连接到外部的 output 是一个 RecordWriter
 	protected transient Output<StreamRecord<OUT>> output;
 
 	/** The runtime context for UDFs. */
@@ -152,7 +155,7 @@ public abstract class AbstractStreamOperator<OUT>
 	private transient KeySelector<?, ?> stateKeySelector2;
 
 	/** Backend for keyed state. This might be empty if we're not on a keyed stream. */
-	// 关键状态的 backend，当不是一个 keyed stream 的时候为空
+	// keyed state 的 backend，当不是一个 keyed stream 的时候为空
 	private transient AbstractKeyedStateBackend<?> keyedStateBackend;
 
 	/** Keyed state store view on the keyed backend. */
@@ -195,8 +198,8 @@ public abstract class AbstractStreamOperator<OUT>
 	@Override
 	// setup 方法添加操作符对 context 和 output 的访问
 	public void setup(StreamTask<?, ?> containingTask, StreamConfig config, Output<StreamRecord<OUT>> output) {
-		final Environment environment = containingTask.getEnvironment();
-		this.container = containingTask;
+		final Environment environment = containingTask.getEnvironment();  // 从 StreamTask 中获取当前的 runtime 环境
+		this.container = containingTask; 
 		this.config = config;
 		try {
 			OperatorMetricGroup operatorMetricGroup = environment.getMetricGroup().getOrAddOperator(config.getOperatorID(), config.getOperatorName());
@@ -235,6 +238,7 @@ public abstract class AbstractStreamOperator<OUT>
 					granularity);
 			}
 			TaskManagerJobMetricGroup jobMetricGroup = this.metrics.parent().parent();
+			// 用于可视化的显示 flink 网络中的延迟，不深究了
 			this.latencyStats = new LatencyStats(jobMetricGroup.addGroup("latency"),
 				historySize,
 				container.getIndexInSubtaskGroup(),
@@ -252,7 +256,7 @@ public abstract class AbstractStreamOperator<OUT>
 
 		this.runtimeContext = new StreamingRuntimeContext(this, environment, container.getAccumulatorMap());
 
-		// 从 StreamConfig 中获取 stateKeySelector
+		// 从 StreamConfig 中获取 stateKeySelector，生成 JobGraph 的时候写入 StreamConfig
 		stateKeySelector1 = config.getStatePartitioner(0, getUserCodeClassloader());
 		stateKeySelector2 = config.getStatePartitioner(1, getUserCodeClassloader());
 	}
@@ -590,6 +594,10 @@ public abstract class AbstractStreamOperator<OUT>
 	 * to interact with systems such as broadcast variables and managed state. This also allows
 	 * to register timers.
 	 */
+	/**
+	 * 返回一个上下文，该上下文允许操作符查询有关执行的信息
+	 * 并与系统（如广播变量和托管状态）进行交互。这也允许注册定时器
+	 */
 	public StreamingRuntimeContext getRuntimeContext() {
 		return runtimeContext;
 	}
@@ -620,10 +628,16 @@ public abstract class AbstractStreamOperator<OUT>
 	 * @throws IllegalStateException Thrown, if the key/value state was already initialized.
 	 * @throws Exception Thrown, if the state backend cannot create the key/value state.
 	 */
+	/**
+	 * 使用为此任务配置的状态后端创建分区状态句柄
+	 */
 	protected <S extends State> S getPartitionedState(StateDescriptor<S, ?> stateDescriptor) throws Exception {
 		return getPartitionedState(VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE, stateDescriptor);
 	}
 
+	/**
+	 * 如果状态存在已经存在，直接返回，否则，先创建再返回
+	 */
 	protected <N, S extends State, T> S getOrCreateKeyedState(
 			TypeSerializer<N> namespaceSerializer,
 			StateDescriptor<S, T> stateDescriptor) throws Exception {
@@ -643,6 +657,9 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * @throws IllegalStateException Thrown, if the key/value state was already initialized.
 	 * @throws Exception Thrown, if the state backend cannot create the key/value state.
+	 */
+	/**
+	 * 使用为此任务配置的状态后端创建分区状态句柄
 	 */
 	protected <S extends State, N> S getPartitionedState(
 			N namespace,
@@ -666,11 +683,13 @@ public abstract class AbstractStreamOperator<OUT>
 
 	@Override
 	@SuppressWarnings({"unchecked", "rawtypes"})
+	// 设置 currentKey，record 来自第一个 input
 	public void setKeyContextElement1(StreamRecord record) throws Exception {
 		setKeyContextElement(record, stateKeySelector1);
 	}
 
 	@Override
+	// 设置 currentKey，record 来自第二个 input
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public void setKeyContextElement2(StreamRecord record) throws Exception {
 		setKeyContextElement(record, stateKeySelector2);
@@ -678,6 +697,7 @@ public abstract class AbstractStreamOperator<OUT>
 
 	private <T> void setKeyContextElement(StreamRecord<T> record, KeySelector<T, ?> selector) throws Exception {
 		if (selector != null) {
+			// 利用 KeySelector 计算 key，然后设置 currentKey
 			Object key = selector.getKey(record.getValue());
 			setCurrentKey(key);
 		}

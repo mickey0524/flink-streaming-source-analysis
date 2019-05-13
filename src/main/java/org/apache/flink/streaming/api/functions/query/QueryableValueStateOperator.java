@@ -40,6 +40,7 @@ public class QueryableValueStateOperator<IN> extends AbstractQueryableStateOpera
 
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
+		// 传递进来的是 ValueDescriptor，用 state.update 来保存原始值
 		state.update(element.getValue());
 	}
 }

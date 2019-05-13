@@ -40,6 +40,7 @@ public class QueryableAppendingStateOperator<IN> extends AbstractQueryableStateO
 
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
+		// 传递进来的是 ReducingStateDescriptor，add 就会聚合状态
 		state.add(element.getValue());
 	}
 }

@@ -1122,6 +1122,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * @param queryableStateName Name under which to the publish the queryable state instance
 	 * @return Queryable state instance
 	 */
+	/**
+	 * 将 keyed 流发布为可查询的 ValueState 实例
+	 */
 	@PublicEvolving
 	public QueryableStateStream<KEY, T> asQueryableState(String queryableStateName) {
 		ValueStateDescriptor<T> valueStateDescriptor = new ValueStateDescriptor<T>(
@@ -1138,11 +1141,15 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * @param stateDescriptor State descriptor to create state instance from
 	 * @return Queryable state instance
 	 */
+	/**
+	 * 将 keyed 流发布为可查询的 ValueState 实例
+	 */
 	@PublicEvolving
 	public QueryableStateStream<KEY, T> asQueryableState(
 			String queryableStateName,
 			ValueStateDescriptor<T> stateDescriptor) {
-
+		
+		// 这里仅仅使用 env.addOperator() 加入了一个 transformation
 		transform("Queryable state: " + queryableStateName,
 				getType(),
 				new QueryableValueStateOperator<>(queryableStateName, stateDescriptor));
@@ -1188,6 +1195,9 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
 	 * @param queryableStateName Name under which to the publish the queryable state instance
 	 * @param stateDescriptor State descriptor to create state instance from
 	 * @return Queryable state instance
+	 */
+	/**
+	 * 将 keyed 流发布为可查询的 ReducingState 例子
 	 */
 	@PublicEvolving
 	public QueryableStateStream<KEY, T> asQueryableState(

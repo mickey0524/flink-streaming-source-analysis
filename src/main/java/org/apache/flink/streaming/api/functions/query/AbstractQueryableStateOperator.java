@@ -31,6 +31,10 @@ import org.apache.flink.util.Preconditions;
  * @param <S>  State type
  * @param <IN> Input type
  */
+/**
+ * 内部操作符处理可查询状态实例（设置和更新）
+ * https://www.jianshu.com/p/ecb4eea8ef60 Query 的用法
+ */
 @Internal
 abstract class AbstractQueryableStateOperator<S extends State, IN>
 		extends AbstractStreamOperator<IN>
@@ -39,10 +43,16 @@ abstract class AbstractQueryableStateOperator<S extends State, IN>
 	private static final long serialVersionUID = 7842489558298787382L;
 
 	/** State descriptor for the queryable state instance. */
+	/**
+	 * 可查询状态实例的状态描述器
+	 */
 	protected final StateDescriptor<? extends S, ?> stateDescriptor;
 
 	/**
 	 * Name under which the queryable state is registered.
+	 */
+	/**
+	 * 可查询状态注册的名称
 	 */
 	protected final String registrationName;
 
@@ -50,6 +60,10 @@ abstract class AbstractQueryableStateOperator<S extends State, IN>
 	 * The state instance created on open. This is updated by the subclasses
 	 * of this class, because the state update interface depends on the state
 	 * type (e.g. AppendingState#add(IN) vs. ValueState#update(OUT)).
+	 */
+	/**
+	 * open 的时候创建的状态实例，这个状态由 AbstractQueryableStateOperator 的子类更新
+	 * 因为状态更新接口依赖于描述符类型
 	 */
 	protected transient S state;
 

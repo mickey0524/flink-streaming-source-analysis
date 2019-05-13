@@ -29,16 +29,22 @@ import org.apache.flink.util.Preconditions;
  * @param <K>  State key type
  * @param <V>  State value type
  */
+/**
+ * 可查询状态流实例
+ */
 @PublicEvolving
 public class QueryableStateStream<K, V> {
 
 	/** Name under which the state is queryable. */
+	// 状态可查询的名称
 	private final String queryableStateName;
 
 	/** Key serializer for the state instance. */
+	// 状态实例的 key 序列器
 	private final TypeSerializer<K> keySerializer;
 
 	/** State descriptor for the state instance. */
+	// 状态实例的状态描述器，这个会被传入 QueryableValueStateOperator 和 QueryableAppendingStateOperator 中
 	private final StateDescriptor<?, V> stateDescriptor;
 
 	/**
@@ -63,6 +69,9 @@ public class QueryableStateStream<K, V> {
 	 *
 	 * @return Name under which state can be queried.
 	 */
+	/**
+	 * 返回可以查询状态的名称
+	 */
 	public String getQueryableStateName() {
 		return queryableStateName;
 	}
@@ -72,6 +81,9 @@ public class QueryableStateStream<K, V> {
 	 *
 	 * @return Key serializer for the state instance.
 	 */
+	/**
+	 * 返回可查询状态实例的 key 序列器
+	 */
 	public TypeSerializer<K> getKeySerializer() {
 		return keySerializer;
 	}
@@ -80,6 +92,9 @@ public class QueryableStateStream<K, V> {
 	 * Returns the state descriptor for the queryable state instance.
 	 *
 	 * @return State descriptor for the state instance
+	 */
+	/**
+	 * 返回可查询状态实例的状态描述器
 	 */
 	public StateDescriptor<?, V> getStateDescriptor() {
 		return stateDescriptor;

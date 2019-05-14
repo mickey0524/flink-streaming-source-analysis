@@ -1036,6 +1036,8 @@ public class DataStream<T> {
 	 * @see AssignerWithPeriodicWatermarks
 	 * @see AssignerWithPunctuatedWatermarks
 	 * @see #assignTimestampsAndWatermarks(AssignerWithPunctuatedWatermarks)
+	 *
+	 * 网上的例子 https://blog.csdn.net/u013560925/article/details/82285631
 	 */
 	public SingleOutputStreamOperator<T> assignTimestampsAndWatermarks(
 			AssignerWithPeriodicWatermarks<T> timestampAndWatermarkAssigner) {

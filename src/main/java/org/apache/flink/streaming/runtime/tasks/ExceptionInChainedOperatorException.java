@@ -26,6 +26,9 @@ import static java.util.Objects.requireNonNull;
 /**
  * A special exception that signifies that the cause exception came from a chained operator.
  */
+/**
+ * 一个特殊的异常，表示原因异常来自链式运算符
+ */
 @Internal
 public class ExceptionInChainedOperatorException extends WrappingRuntimeException {
 

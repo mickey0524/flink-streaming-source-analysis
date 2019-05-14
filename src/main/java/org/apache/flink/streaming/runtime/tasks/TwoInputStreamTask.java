@@ -35,6 +35,9 @@ import java.util.List;
 /**
  * A {@link StreamTask} for executing a {@link TwoInputStreamOperator}.
  */
+/**
+ * 用于执行 TwoInputStreamOperator 的 StreamTask
+ */
 @Internal
 public class TwoInputStreamTask<IN1, IN2, OUT> extends StreamTask<OUT, TwoInputStreamOperator<IN1, IN2, OUT>> {
 
@@ -60,18 +63,18 @@ public class TwoInputStreamTask<IN1, IN2, OUT> extends StreamTask<OUT, TwoInputS
 
 	@Override
 	public void init() throws Exception {
-		StreamConfig configuration = getConfiguration();
-		ClassLoader userClassLoader = getUserCodeClassLoader();
+		StreamConfig configuration = getConfiguration();  // 获取节点配置
+		ClassLoader userClassLoader = getUserCodeClassLoader();  // 获取类加载器
 
-		TypeSerializer<IN1> inputDeserializer1 = configuration.getTypeSerializerIn1(userClassLoader);
-		TypeSerializer<IN2> inputDeserializer2 = configuration.getTypeSerializerIn2(userClassLoader);
+		TypeSerializer<IN1> inputDeserializer1 = configuration.getTypeSerializerIn1(userClassLoader);  // 获取 input1 的类型序列器
+		TypeSerializer<IN2> inputDeserializer2 = configuration.getTypeSerializerIn2(userClassLoader);  // 获取 input2 的类型序列器
 
 		int numberOfInputs = configuration.getNumberOfInputs();
 
 		ArrayList<InputGate> inputList1 = new ArrayList<InputGate>();
 		ArrayList<InputGate> inputList2 = new ArrayList<InputGate>();
 
-		List<StreamEdge> inEdges = configuration.getInPhysicalEdges(userClassLoader);
+		List<StreamEdge> inEdges = configuration.getInPhysicalEdges(userClassLoader);  // 获取所有的物理入边
 
 		for (int i = 0; i < numberOfInputs; i++) {
 			int inputType = inEdges.get(i).getTypeNumber();

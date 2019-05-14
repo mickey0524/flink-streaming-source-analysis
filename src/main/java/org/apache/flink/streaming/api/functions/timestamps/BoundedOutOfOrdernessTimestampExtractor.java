@@ -31,9 +31,11 @@ import org.apache.flink.streaming.api.windowing.time.Time;
  * */
 /**
  * 这是一个 AssignerWithPeriodicWatermarks，用于发出滞后于元素的水印
- * 其中包含到目前为止固定时间t_late的最大时间戳（事件时间）
+ * 其中包含到目前为止固定时间 t_late 的最大时间戳（事件时间）
  * 当计算窗口的最终结果的时候，BoundedOutOfOrdernessTimestampExtractor 能帮助减少由于延迟到来
  * 而被 ignore 的 element 的数量
+ * BoundedOutOfOrdernessTimestampExtractor 和 WindowOperator 中的 allowedLateness
+ * 是做的类似的事情
  */
 public abstract class BoundedOutOfOrdernessTimestampExtractor<T> implements AssignerWithPeriodicWatermarks<T> {
 

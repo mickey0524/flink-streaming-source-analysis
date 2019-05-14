@@ -23,6 +23,9 @@ import org.apache.flink.annotation.Internal;
  * An exception that is thrown by the stream vertices when encountering an
  * illegal condition.
  */
+/**
+ * 遇到非法条件时流顶点抛出的异常
+ */
 @Internal
 public class StreamTaskException extends RuntimeException {
 

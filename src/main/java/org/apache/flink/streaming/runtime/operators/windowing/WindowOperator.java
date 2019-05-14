@@ -757,6 +757,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	/**
 	 * Special {@link AbstractPerWindowStateStore} that doesn't allow access to per-window state.
 	 */
+	/**
+	 * 特殊的 AbstractPerWindowStateStore，不允许访问单窗口的状态
+	 */
 	public class MergingWindowStateStore extends AbstractPerWindowStateStore {
 
 		public MergingWindowStateStore(KeyedStateBackend<?> keyedStateBackend, ExecutionConfig executionConfig) {
@@ -797,6 +800,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	/**
 	 * Regular per-window state store for use with
 	 * {@link org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction}.
+	 */
+	/**
+	 * 用于 ProcessWindowFunction 的常规单窗口状态存储
 	 */
 	public class PerWindowStateStore extends AbstractPerWindowStateStore {
 
@@ -923,6 +929,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		}
 
 		@Override
+		// 获取 kv 状态
 		public <S extends Serializable> ValueState<S> getKeyValueState(String name,
 			TypeInformation<S> stateType,
 			S defaultState) {
@@ -935,6 +942,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		}
 
 		@SuppressWarnings("unchecked")
+		// 获取分区状态
 		public <S extends State> S getPartitionedState(StateDescriptor<S, ?> stateDescriptor) {
 			try {
 				return WindowOperator.this.getPartitionedState(window, windowSerializer, stateDescriptor);
@@ -944,6 +952,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		}
 
 		@Override
+		// 合并分区状态
 		public <S extends MergingState<?, ?>> void mergePartitionedState(StateDescriptor<S, ?> stateDescriptor) {
 			if (mergedWindows != null && mergedWindows.size() > 0) {
 				try {

@@ -24,6 +24,9 @@ import org.apache.flink.annotation.Internal;
  * {@code RuntimeException} for wrapping exceptions that are thrown in the timer callback of
  * the timer service in {@link StreamTask}.
  */
+/**
+ * RuntimeException用于包装StreamTask中定时器服务的计时器回调中引发的异常
+ */
 @Internal
 public class TimerException extends AsynchronousException {
 	private static final long serialVersionUID = 1L;

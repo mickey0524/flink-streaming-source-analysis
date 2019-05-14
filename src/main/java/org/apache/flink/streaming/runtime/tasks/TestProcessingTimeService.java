@@ -34,15 +34,19 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * This is a {@link ProcessingTimeService} used <b>strictly for testing</b> the
  * processing time functionality.
- * */
+ */
+/**
+ * 这是一个严格用于测试处理时间功能的ProcessingTimeService
+ */
 public class TestProcessingTimeService extends ProcessingTimeService {
 
-	private volatile long currentTime = Long.MIN_VALUE;
+	private volatile long currentTime = Long.MIN_VALUE;  // 当前时间
 
-	private volatile boolean isTerminated;
-	private volatile boolean isQuiesced;
+	private volatile boolean isTerminated;  // 是否处于终止状态
+	private volatile boolean isQuiesced;  // 是否处于停顿状态
 
 	// sorts the timers by timestamp so that they are processed in the correct order.
+	// 按时间戳对计时器进行排序，以便按正确的顺序处理它们
 	private final PriorityQueue<Tuple2<Long, CallbackTask>> priorityQueue;
 
 	public TestProcessingTimeService() {
@@ -54,6 +58,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 		});
 	}
 
+	// 设置当前的时间
 	public void setCurrentTime(long timestamp) throws Exception {
 		this.currentTime = timestamp;
 
@@ -75,11 +80,13 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 	}
 
 	@Override
+	// 获取当前进程时间
 	public long getCurrentProcessingTime() {
 		return currentTime;
 	}
 
 	@Override
+	// 注册定时器
 	public ScheduledFuture<?> registerTimer(long timestamp, ProcessingTimeCallback target) {
 		if (isTerminated) {
 			throw new IllegalStateException("terminated");
@@ -112,11 +119,13 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 	}
 
 	@Override
+	// 是否终止
 	public boolean isTerminated() {
 		return isTerminated;
 	}
 
 	@Override
+	// 停顿
 	public void quiesce() {
 		if (!isTerminated) {
 			isQuiesced = true;
@@ -130,6 +139,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 	}
 
 	@Override
+	// 关闭服务
 	public void shutdownService() {
 		this.isTerminated = true;
 	}
@@ -146,6 +156,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 		return true;
 	}
 
+	// 获取当前等待的定时器个数
 	public int getNumActiveTimers() {
 		int count = 0;
 
@@ -158,6 +169,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 		return count;
 	}
 
+	// 获取定时器的触发时间
 	public Set<Long> getActiveTimerTimestamps() {
 		Set<Long> actualTimestamps = new HashSet<>();
 
@@ -174,7 +186,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 
 	private static class CallbackTask implements ScheduledFuture<Object> {
 
-		protected final ProcessingTimeCallback processingTimeCallback;
+		protected final ProcessingTimeCallback processingTimeCallback;  // 进程定时器回调
 
 		private AtomicReference<CallbackTaskState> state = new AtomicReference<>(CallbackTaskState.CREATED);
 
@@ -199,16 +211,19 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 		}
 
 		@Override
+		// 取消 CallbackTask
 		public boolean cancel(boolean mayInterruptIfRunning) {
 			return state.compareAndSet(CallbackTaskState.CREATED, CallbackTaskState.CANCELLED);
 		}
 
 		@Override
+		// 是否处于取消状态
 		public boolean isCancelled() {
 			return state.get() == CallbackTaskState.CANCELLED;
 		}
 
 		@Override
+		// 是否处于完成状态
 		public boolean isDone() {
 			return state.get() != CallbackTaskState.CREATED;
 		}
@@ -223,6 +238,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 			throw new UnsupportedOperationException();
 		}
 
+		// CallbackTask 的状态
 		enum CallbackTaskState {
 			CREATED,
 			CANCELLED,
@@ -230,6 +246,7 @@ public class TestProcessingTimeService extends ProcessingTimeService {
 		}
 	}
 
+	// 周期性的 CallbackTask
 	private static class PeriodicCallbackTask extends CallbackTask {
 
 		private final long period;

@@ -44,6 +44,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * A {@link ProcessingTimeService} which assigns as current processing time the result of calling
  * {@link System#currentTimeMillis()} and registers timers using a {@link ScheduledThreadPoolExecutor}.
  */
+/**
+ * 一个 ProcessingTimeService，它将调用 System.currentTimeMillis() 的结果指定为当前处理时间
+ * 并使用 ScheduledThreadPoolExecutor 注册计时器
+ */
 public class SystemProcessingTimeService extends ProcessingTimeService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SystemProcessingTimeService.class);
@@ -55,14 +59,18 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 	// ------------------------------------------------------------------------
 
 	/** The containing task that owns this time service provider. */
+	// 拥有此时间服务提供者的包含任务
 	private final AsyncExceptionHandler task;
 
 	/** The lock that timers acquire upon triggering. */
+	// 定时器在触发时获得的锁
 	private final Object checkpointLock;
 
 	/** The executor service that schedules and calls the triggers of this task. */
+	// 执行程序服务，用于调度和调用此任务的触发器
 	private final ScheduledThreadPoolExecutor timerService;
 
+	// 时间服务状态
 	private final AtomicInteger status;
 
 	public SystemProcessingTimeService(AsyncExceptionHandler failureHandler, Object checkpointLock) {
@@ -86,14 +94,17 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 		}
 
 		// tasks should be removed if the future is canceled
+		// 如果返回的 ScheduledFuture 被 cancel，task 需要被 remove
 		this.timerService.setRemoveOnCancelPolicy(true);
 
 		// make sure shutdown removes all pending tasks
+		// 确保关闭操作删除所有待处理的任务
 		this.timerService.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
 		this.timerService.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
 	}
 
 	@Override
+	// 获取当前的进程时间
 	public long getCurrentProcessingTime() {
 		return System.currentTimeMillis();
 	}
@@ -107,16 +118,23 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 	 * @return The future that represents the scheduled task. This always returns some future,
 	 *         even if the timer was shut down
 	 */
+	/**
+	 * 注册定时器
+	 */
 	@Override
 	public ScheduledFuture<?> registerTimer(long timestamp, ProcessingTimeCallback target) {
 
 		// delay the firing of the timer by 1 ms to align the semantics with watermark. A watermark
 		// T says we won't see elements in the future with a timestamp smaller or equal to T.
 		// With processing time, we therefore need to delay firing the timer by one ms.
+		// 将定时器的触发延迟1 ms以使语义与水印对齐
+		// 水印 T 表示我们将来不会看到时间戳小于或等于 T 的元素
+		// 因此，在处理时间内，我们需要将定时器的延迟时间延迟一毫秒
 		long delay = Math.max(timestamp - getCurrentProcessingTime(), 0) + 1;
 
 		// we directly try to register the timer and only react to the status on exception
 		// that way we save unnecessary volatile accesses for each timer
+		// 我们直接尝试注册定时器，只对异常状态作出反应，这样我们就可以为每个定时器节省不必要的易失性访问
 		try {
 			return timerService.schedule(
 					new TriggerTask(status, task, checkpointLock, target, timestamp), delay, TimeUnit.MILLISECONDS);
@@ -142,6 +160,7 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 
 		// we directly try to register the timer and only react to the status on exception
 		// that way we save unnecessary volatile accesses for each timer
+		// 我们直接尝试注册定时器，只对异常状态作出反应，这样我们就可以为每个定时器节省不必要的易失性访问
 		try {
 			return timerService.scheduleAtFixedRate(
 				new RepeatedTriggerTask(status, task, checkpointLock, callback, nextTimestamp, period),
@@ -167,17 +186,26 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 	 * @return {@code true} is the status of the service
 	 * is {@link #STATUS_ALIVE}, {@code false} otherwise.
 	 */
+	/**
+	 * 返回当前时间服务是否可用
+	 */
 	@VisibleForTesting
 	boolean isAlive() {
 		return status.get() == STATUS_ALIVE;
 	}
 
+	/**
+	 * 返回当前时间服务是否终止
+	 */
 	@Override
 	public boolean isTerminated() {
 		return status.get() == STATUS_SHUTDOWN;
 	}
 
 	@Override
+	/**
+	 * 停顿时间服务
+	 */
 	public void quiesce() throws InterruptedException {
 		if (status.compareAndSet(STATUS_ALIVE, STATUS_QUIESCED)) {
 			timerService.shutdown();
@@ -195,6 +223,9 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 	}
 
 	@Override
+	/**
+	 * 关闭时间服务
+	 */
 	public void shutdownService() {
 		if (status.compareAndSet(STATUS_ALIVE, STATUS_SHUTDOWN) ||
 				status.compareAndSet(STATUS_QUIESCED, STATUS_SHUTDOWN)) {
@@ -255,6 +286,9 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 	/**
 	 * Internal task that is invoked by the timer service and triggers the target.
 	 */
+	/**
+	 * 由计时器服务调用并触发目标的内部任务
+	 */
 	private static final class TriggerTask implements Runnable {
 
 		private final AtomicInteger serviceStatus;
@@ -294,6 +328,9 @@ public class SystemProcessingTimeService extends ProcessingTimeService {
 
 	/**
 	 * Internal task which is repeatedly called by the processing time service.
+	 */
+	/**
+	 * 由处理时间服务重复调用的内部任务
 	 */
 	private static final class RepeatedTriggerTask implements Runnable {
 

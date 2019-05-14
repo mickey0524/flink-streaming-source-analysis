@@ -34,6 +34,9 @@ import javax.annotation.Nullable;
 /**
  * A {@link StreamTask} for executing a {@link OneInputStreamOperator}.
  */
+/**
+ * 用于执行 OneInputStreamOperator 的 StreamTask
+ */
 @Internal
 public class OneInputStreamTask<IN, OUT> extends StreamTask<OUT, OneInputStreamOperator<IN, OUT>> {
 
@@ -74,7 +77,7 @@ public class OneInputStreamTask<IN, OUT> extends StreamTask<OUT, OneInputStreamO
 		StreamConfig configuration = getConfiguration();
 
 		TypeSerializer<IN> inSerializer = configuration.getTypeSerializerIn1(getUserCodeClassLoader());
-		int numberOfInputs = configuration.getNumberOfInputs();
+		int numberOfInputs = configuration.getNumberOfInputs();  // 获取当前节点有几个入度
 
 		if (numberOfInputs > 0) {
 			InputGate[] inputGates = getEnvironment().getAllInputGates();

@@ -30,6 +30,9 @@ import org.apache.flink.streaming.api.operators.StoppableStreamSource;
  * @param <OUT> Type of the produced elements
  * @param <SRC> Stoppable source function
  */
+/**
+ * 执行可停止流媒体源的可停止任务
+ */
 public class StoppableSourceStreamTask<OUT, SRC extends SourceFunction<OUT> & StoppableFunction>
 	extends SourceStreamTask<OUT, SRC, StoppableStreamSource<OUT, SRC>> implements StoppableTask {
 

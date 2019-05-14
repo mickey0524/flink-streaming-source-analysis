@@ -38,6 +38,10 @@ import java.util.concurrent.TimeUnit;
  * A special {@link StreamTask} that is used for executing feedback edges. This is used in
  * combination with {@link StreamIterationHead}.
  */
+/**
+ * 一个特殊的StreamTask，用于执行反馈边
+ * 它与StreamIterationHead结合使用
+ */
 @Internal
 public class StreamIterationTail<IN> extends OneInputStreamTask<IN, IN> {
 
@@ -50,11 +54,12 @@ public class StreamIterationTail<IN> extends OneInputStreamTask<IN, IN> {
 	@Override
 	public void init() throws Exception {
 
-		final String iterationId = getConfiguration().getIterationId();
+		final String iterationId = getConfiguration().getIterationId();  // broker-${StreamTransformation.id}
 		if (iterationId == null || iterationId.length() == 0) {
 			throw new Exception("Missing iteration ID in the task configuration");
 		}
 
+		// 迭代头和迭代尾巴的 brokerID 相同，通过这个 brokerID 共享 BlockingQueue，简单的生产者消费者模式
 		final String brokerID = StreamIterationHead.createBrokerIdString(getEnvironment().getJobID(), iterationId,
 				getEnvironment().getTaskInfo().getIndexOfThisSubtask());
 
@@ -122,6 +127,7 @@ public class StreamIterationTail<IN> extends OneInputStreamTask<IN, IN> {
 		public void collect(StreamRecord<IN> record) {
 			try {
 				if (shouldWait) {
+					// 如果设置了等待时间，则最多等待 iterationWaitTime
 					dataChannel.offer(record, iterationWaitTime, TimeUnit.MILLISECONDS);
 				}
 				else {

@@ -40,7 +40,9 @@ public interface ProcessingTimeCallback {
 	 * @param timestamp The timestamp for which the trigger event was scheduled.
 	 */
 	/**
-	 * 回调函数，ts 是 trigger 被调度的时间
+	 * 如果触发因任何原因而被延迟（触发计时器被阻止，JVM由于垃圾收集而停止）
+	 * 则提供给此功能的时间戳仍将是安排触发器的原始时间戳
+	 * 具体实现：会保存下注册的时候传递进去的时间戳，然后调用此函数
 	 */
 	void onProcessingTime(long timestamp) throws Exception;
 }

@@ -97,6 +97,9 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 	 *            Class of the elements in the feedback stream.
 	 * @return A {@link ConnectedIterativeStreams}.
 	 */
+	/**
+	 * 更改迭代的反馈类型，并允许用户对输入流和反馈流应用 co-transformations，就像 ConnectedStreams 一样
+	 */
 	public <F> ConnectedIterativeStreams<T, F> withFeedbackType(Class<F> feedbackTypeClass) {
 		return withFeedbackType(TypeInformation.of(feedbackTypeClass));
 	}
@@ -113,7 +116,7 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 	 * @return A {@link ConnectedIterativeStreams}.
 	 */
 	/**
-	 * 
+	 * 更改迭代的反馈类型，并允许用户对输入流和反馈流应用 co-transformations，就像 ConnectedStreams 一样
 	 */
 	public <F> ConnectedIterativeStreams<T, F> withFeedbackType(TypeHint<F> feedbackTypeHint) {
 		return withFeedbackType(TypeInformation.of(feedbackTypeHint));
@@ -184,6 +187,9 @@ public class IterativeStream<T> extends SingleOutputStreamOperator<T> {
 		 *            the iteration head.
 		 * @return The feedback stream.
 		 *
+		 */
+		/**
+		 * 关闭迭代。该方法定义了迭代程序部分的结束，该部分将作为连接流中的第二个输入反馈到迭代的开始
 		 */
 		public DataStream<F> closeWith(DataStream<F> feedbackStream) {
 

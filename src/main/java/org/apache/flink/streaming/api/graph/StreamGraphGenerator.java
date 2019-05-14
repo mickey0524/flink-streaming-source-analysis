@@ -394,6 +394,8 @@ public class StreamGraphGenerator {
 	 * 这样，下游操作符能够连接到输入和反馈
 	 *
 	 * 这负责创建用于反馈元素的 IterationSource 和 IterationSink
+	 * 最后反馈的头和尾会通过 BlockingQueue 来操作
+	 * 反馈头作为消费者，反馈尾作为生产者
 	 */
 	private <T> Collection<Integer> transformFeedback(FeedbackTransformation<T> iterate) {
 
@@ -438,6 +440,7 @@ public class StreamGraphGenerator {
 		// also add the feedback source ID to the result IDs, so that downstream operators will
 		// add both as input
 		// 将反馈源 id 加入到 result ids 中去，这样下游操作符会将 输入 + 反馈 一起当作输入
+		// 反馈头作为消费者，因此加入 resultIds
 		resultIds.add(itSource.getId());
 
 		// at the iterate to the already-seen-set with the result IDs, so that we can transform
@@ -453,6 +456,7 @@ public class StreamGraphGenerator {
 			Collection<Integer> feedbackIds = transform(feedbackEdge);  // 生成反馈节点
 			allFeedbackIds.addAll(feedbackIds);
 			for (Integer feedbackId: feedbackIds) {
+				// 因为反馈尾巴作为消费者，因此反馈尾节点是作为 edge 的 targetId 的
 				streamGraph.addEdge(feedbackId,
 						itSink.getId(),
 						0
@@ -460,6 +464,7 @@ public class StreamGraphGenerator {
 			}
 		}
 
+		// 反馈头节点和反馈尾节点的 slotSharingGroup 由所有的反馈节点共同决定
 		String slotSharingGroup = determineSlotSharingGroup(null, allFeedbackIds);
 
 		itSink.setSlotSharingGroup(slotSharingGroup);

@@ -69,6 +69,15 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * @param <IN> The type of the record that can be read with this record reader.
  */
+/**
+ * 用于 OneInputStreamTask 的 input reader
+ * 
+ * 内部使用 StatusWatermarkValve 来跟踪 Watermark 和 StreamStatus 事件
+ * 并在 StatusWatermarkValve 确定所有输入的 Watermark 已经提前
+ * 或者 StreamStatus 需要向下游传播以表示状态更改时将它们转发给事件订阅者
+ * 
+ * 这个类和 RecordWriter 联动使用，接收 RecordWriter 传递过来的数据
+ */
 @Internal
 public class StreamInputProcessor<IN> {
 
@@ -87,14 +96,19 @@ public class StreamInputProcessor<IN> {
 	// ---------------- Status and Watermark Valve ------------------
 
 	/** Valve that controls how watermarks and stream statuses are forwarded. */
+	// 控制水印和流状态如何转发的 Valve
 	private StatusWatermarkValve statusWatermarkValve;
 
 	/** Number of input channels the valve needs to handle. */
+	// value 需要处理的输入通道数量
 	private final int numInputChannels;
 
 	/**
 	 * The channel from which a buffer came, tracked so that we can appropriately map
 	 * the watermarks and watermark statuses to channel indexes of the valve.
+	 */
+	/**
+	 * 跟踪缓冲区来自的通道，以便我们可以将水印和流状态适当地映射到 value 的通道索引
 	 */
 	private int currentChannel = -1;
 
@@ -134,6 +148,7 @@ public class StreamInputProcessor<IN> {
 		this.deserializationDelegate = new NonReusingDeserializationDelegate<>(ser);
 
 		// Initialize one deserializer per input channel
+		// 由于 partitioner 的存在，需要分 channel 考虑很多东西
 		this.recordDeserializers = new SpillingAdaptiveSpanningRecordDeserializer[inputGate.getNumberOfInputChannels()];
 
 		for (int i = 0; i < recordDeserializers.length; i++) {
@@ -155,9 +170,11 @@ public class StreamInputProcessor<IN> {
 	}
 
 	public boolean processInput() throws Exception {
+		// 如果已经结束了，直接返回
 		if (isFinished) {
 			return false;
 		}
+		// 设置 metrics
 		if (numRecordsIn == null) {
 			try {
 				numRecordsIn = ((OperatorMetricGroup) streamOperator.getMetricGroup()).getIOMetricGroup().getNumRecordsInCounter();
@@ -181,20 +198,24 @@ public class StreamInputProcessor<IN> {
 
 					if (recordOrMark.isWatermark()) {
 						// handle watermark
+						// 处理 watermark
 						statusWatermarkValve.inputWatermark(recordOrMark.asWatermark(), currentChannel);
 						continue;
 					} else if (recordOrMark.isStreamStatus()) {
+						// 处理 StreamStatus
 						// handle stream status
 						statusWatermarkValve.inputStreamStatus(recordOrMark.asStreamStatus(), currentChannel);
 						continue;
 					} else if (recordOrMark.isLatencyMarker()) {
 						// handle latency marker
+						// 处理延迟 marker
 						synchronized (lock) {
 							streamOperator.processLatencyMarker(recordOrMark.asLatencyMarker());
 						}
 						continue;
 					} else {
 						// now we can do the actual processing
+						// 处理 StreamRecord
 						StreamRecord<IN> record = recordOrMark.asRecord();
 						synchronized (lock) {
 							numRecordsIn.inc();
@@ -205,7 +226,7 @@ public class StreamInputProcessor<IN> {
 					}
 				}
 			}
-
+			// 更新 currentChannel
 			final BufferOrEvent bufferOrEvent = barrierHandler.getNextNonBlocked();
 			if (bufferOrEvent != null) {
 				if (bufferOrEvent.isBuffer()) {

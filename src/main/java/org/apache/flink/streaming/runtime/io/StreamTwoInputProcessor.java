@@ -71,6 +71,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @param <IN1> The type of the records that arrive on the first input
  * @param <IN2> The type of the records that arrive on the second input
  */
+/**
+ * 和 StreamOneInputProcessor 相同，用于和接受 RecordWriter 的数据
+ * 区别是这里有两个 input，需要分开处理
+ */
 @Internal
 public class StreamTwoInputProcessor<IN1, IN2> {
 
@@ -93,11 +97,17 @@ public class StreamTwoInputProcessor<IN1, IN2> {
 	 * Stream status for the two inputs. We need to keep track for determining when
 	 * to forward stream status changes downstream.
 	 */
+	/**
+	 * 两个输入的流状态，我们需要跟踪以确定何时向下游转发流状态更改
+	 */
 	private StreamStatus firstStatus;
 	private StreamStatus secondStatus;
 
 	/**
 	 * Valves that control how watermarks and stream statuses from the 2 inputs are forwarded.
+	 */
+	/**
+	 * 控制如何转发来自2个输入的水印和流状态的 value
 	 */
 	private StatusWatermarkValve statusWatermarkValve1;
 	private StatusWatermarkValve statusWatermarkValve2;
@@ -214,6 +224,7 @@ public class StreamTwoInputProcessor<IN1, IN2> {
 				}
 
 				if (result.isFullRecord()) {
+					// 需要处理两个 input
 					if (currentChannel < numInputChannels1) {
 						StreamElement recordOrWatermark = deserializationDelegate1.getInstance();
 						if (recordOrWatermark.isWatermark()) {
@@ -324,6 +335,7 @@ public class StreamTwoInputProcessor<IN1, IN2> {
 			try {
 				synchronized (lock) {
 					input1WatermarkGauge.setCurrentWatermark(watermark.getTimestamp());
+					// 处理第一个 input 的 watermark
 					operator.processWatermark1(watermark);
 				}
 			} catch (Exception e) {
@@ -338,12 +350,15 @@ public class StreamTwoInputProcessor<IN1, IN2> {
 					firstStatus = streamStatus;
 
 					// check if we need to toggle the task's stream status
+					// 检查我们是否需要转换 task 的流状态
 					if (!streamStatus.equals(streamStatusMaintainer.getStreamStatus())) {
 						if (streamStatus.isActive()) {
 							// we're no longer idle if at least one input has become active
+							// 只要有一个 input active 了，task 就 active 了
 							streamStatusMaintainer.toggleStreamStatus(StreamStatus.ACTIVE);
 						} else if (secondStatus.isIdle()) {
 							// we're idle once both inputs are idle
+							// 当两个 input 都 idle 了，task 转换为 idle 状态
 							streamStatusMaintainer.toggleStreamStatus(StreamStatus.IDLE);
 						}
 					}
@@ -368,6 +383,7 @@ public class StreamTwoInputProcessor<IN1, IN2> {
 			try {
 				synchronized (lock) {
 					input2WatermarkGauge.setCurrentWatermark(watermark.getTimestamp());
+					// 处理第二个 input 的 watermark
 					operator.processWatermark2(watermark);
 				}
 			} catch (Exception e) {
@@ -382,12 +398,15 @@ public class StreamTwoInputProcessor<IN1, IN2> {
 					secondStatus = streamStatus;
 
 					// check if we need to toggle the task's stream status
+					// 检查我们是否需要转换 task 的流状态
 					if (!streamStatus.equals(streamStatusMaintainer.getStreamStatus())) {
 						if (streamStatus.isActive()) {
 							// we're no longer idle if at least one input has become active
+							// 只要有一个 input active 了，task 就 active 了
 							streamStatusMaintainer.toggleStreamStatus(StreamStatus.ACTIVE);
 						} else if (firstStatus.isIdle()) {
 							// we're idle once both inputs are idle
+							// 当两个 input 都 idle 了，task 转换为 idle 状态
 							streamStatusMaintainer.toggleStreamStatus(StreamStatus.IDLE);
 						}
 					}

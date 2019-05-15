@@ -30,6 +30,9 @@ import java.util.List;
  * the single {@link InputGate} that was passed in or create a {@link UnionInputGate} if several
  * {@link InputGate input gates} are given.
  */
+/**
+ * 处理 InputGate 的工具类 
+ */
 @Internal
 public class InputGateUtil {
 

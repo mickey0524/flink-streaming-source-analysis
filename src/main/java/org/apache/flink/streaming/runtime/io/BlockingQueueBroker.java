@@ -28,10 +28,15 @@ import java.util.concurrent.BlockingQueue;
  * {@link org.apache.flink.streaming.runtime.tasks.StreamIterationTail} for implementing feedback
  * streams.
  */
+/**
+ * BlockingQueue 的 broker 
+ * 用于 StreamIterationHead 和 StreamIterationTail 用于实现反馈流
+ */
 @Internal
 public class BlockingQueueBroker extends Broker<BlockingQueue<?>> {
 
 	/** Singleton instance. */
+	// 单例
 	public static final BlockingQueueBroker INSTANCE = new BlockingQueueBroker();
 
 	/** Cannot instantiate. */

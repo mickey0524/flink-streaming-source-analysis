@@ -27,6 +27,9 @@ import org.apache.flink.util.FlinkException;
  * trigger message from the checkpoint coordinator, but when their input data/events
  * indicate that a checkpoint should be triggered.
  *
+ * 实现此接口的源在从检查点协调器接收到触发器消息时不会触发检查点
+ * 但是这意味着当其输入数据/事件应触发检查点
+ * 
  * <p>Since sources cannot simply create a new checkpoint on their own, this mechanism
  * always goes together with a {@link WithMasterCheckpointHook hook on the master side}.
  * In a typical setup, the hook on the master tells the source system (for example
@@ -35,6 +38,10 @@ import org.apache.flink.util.FlinkException;
  * by the source function (implementing this interface) in Flink when seeing the relevant
  * events.
  *
+ * 由于源不能简单地创建一个新的检查点，因此该机制总是与主端的WithMasterCheckpointHook挂钩一起使用
+ * 在典型的设置中，主服务器上的挂钩告诉源头系统（例如消息队列）准备一个检查点
+ * 获取检查点的确切时间点由从源接收的事件流控制，并在看到相关事件时由Flink中的源函数（实现此接口）触发
+ * 
  * @param <T> Type of the elements produced by the source function
  * @param <CD> The type of the data stored in the checkpoint by the master that triggers
  */
@@ -46,6 +53,9 @@ public interface ExternallyInducedSource<T, CD> extends SourceFunction<T>, WithM
 	 *
 	 * @param checkpointTrigger The checkpoint trigger to set
 	 */
+	/**
+	 * 设置检查点触发器，源可以通过该触发器触发检查点
+	 */
 	void setCheckpointTrigger(CheckpointTrigger checkpointTrigger);
 
 	// ------------------------------------------------------------------------
@@ -54,16 +64,23 @@ public interface ExternallyInducedSource<T, CD> extends SourceFunction<T>, WithM
 	 * Through the {@code CheckpointTrigger}, the source function notifies the Flink
 	 * source operator when to trigger the checkpoint.
 	 */
+	/**
+	 * 通过 CheckpointTrigger，源函数通知 Flink 源操作符何时触发检查点
+	 */
 	interface CheckpointTrigger {
 
 		/**
 		 * Triggers a checkpoint. This method should be called by the source
 		 * when it sees the event that indicates that a checkpoint should be triggered.
 		 *
+		 * 触发检查点。当源看到指示应该触发检查点的事件时，源调用此方法
+		 * 
 		 * <p>When this method is called, the parallel operator instance in which the
 		 * calling source function runs will perform its checkpoint and insert the
 		 * checkpoint barrier into the data stream.
 		 *
+		 * 调用此方法时，调用源函数的并行操作符实例将执行其检查点并将检查点屏障插入到数据流中
+		 * 
 		 * @param checkpointId The ID that identifies the checkpoint.
 		 *
 		 * @throws FlinkException Thrown when the checkpoint could not be triggered, for example

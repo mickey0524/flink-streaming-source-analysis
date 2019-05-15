@@ -59,9 +59,10 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 	protected void init() {
 		// we check if the source is actually inducing the checkpoints, rather
 		// than the trigger
+		// 我们检查是否数据源在引发检查点，而不是触发器
 		SourceFunction<?> source = headOperator.getUserFunction();
 		if (source instanceof ExternallyInducedSource) {
-			externallyInducedCheckpoints = true;
+			externallyInducedCheckpoints = true;  // 检查点由数据源函数触发
 
 			ExternallyInducedSource.CheckpointTrigger triggerHook = new ExternallyInducedSource.CheckpointTrigger() {
 
@@ -72,7 +73,8 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 					// TODO -   message from the master, and the source's trigger notification
 					final CheckpointOptions checkpointOptions = CheckpointOptions.forCheckpointWithDefaultLocation();
 					final long timestamp = System.currentTimeMillis();
-
+					
+					// 检查点元数据，包含检查点 id 和 ts
 					final CheckpointMetaData checkpointMetaData = new CheckpointMetaData(checkpointId, timestamp);
 
 					try {
@@ -122,6 +124,7 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 		}
 		else {
 			// we do not trigger checkpoints here, we simply state whether we can trigger them
+			// 我们不会在这里触发检查点，我们只是说明我们是否可以触发它们
 			synchronized (getCheckpointLock()) {
 				return isRunning();
 			}

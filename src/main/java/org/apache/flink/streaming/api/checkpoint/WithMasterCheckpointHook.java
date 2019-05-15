@@ -25,6 +25,9 @@ import org.apache.flink.runtime.checkpoint.MasterTriggerRestoreHook;
  * This interface can be implemented by streaming functions that need to trigger a
  * "global action" on the master (in the checkpoint coordinator) as part of every
  * checkpoint and restore operation.
+ * 
+ * 此接口可以通过流式处理函数来实现，这些函数需要在主服务器（在检查点协调器中）触发“全局操作”
+ * 作为每个检查点和还原操作的一部分
  *
  * @param <E> The type of the data stored by the hook in the checkpoint, or {@code Void}, if none.
  */
@@ -33,6 +36,9 @@ public interface WithMasterCheckpointHook<E> extends java.io.Serializable {
 
 	/**
 	 * Creates the hook that should be called by the checkpoint coordinator.
+	 */
+	/**
+	 * 创建应由检查点协调器调用的挂钩
 	 */
 	MasterTriggerRestoreHook<E> createMasterTriggerRestoreHook();
 }

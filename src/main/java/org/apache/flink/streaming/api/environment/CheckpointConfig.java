@@ -29,47 +29,62 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Configuration that captures all checkpointing related settings.
  */
+/**
+ * 所有检查点相关的配置
+ */
 @Public
 public class CheckpointConfig implements java.io.Serializable {
 
 	private static final long serialVersionUID = -750378776078908147L;
 
 	/** The default checkpoint mode: exactly once. */
+	// 默认情况下，flink 采用 exactly once 的检查的模式
 	public static final CheckpointingMode DEFAULT_MODE = CheckpointingMode.EXACTLY_ONCE;
 
 	/** The default timeout of a checkpoint attempt: 10 minutes. */
+	// 检查的尝试的默认超时：10分钟
 	public static final long DEFAULT_TIMEOUT = 10 * 60 * 1000;
 
 	/** The default minimum pause to be made between checkpoints: none. */
+	// 检查点之间的默认最小停顿：无
 	public static final long DEFAULT_MIN_PAUSE_BETWEEN_CHECKPOINTS = 0;
 
 	/** The default limit of concurrently happening checkpoints: one. */
+	// 同时发生的检查点的默认限制：一
 	public static final int DEFAULT_MAX_CONCURRENT_CHECKPOINTS = 1;
 
 	// ------------------------------------------------------------------------
 
 	/** Checkpointing mode (exactly-once vs. at-least-once). */
+	// 检查点模式：exactly-once or at-least-once
 	private CheckpointingMode checkpointingMode = DEFAULT_MODE;
 
 	/** Periodic checkpoint triggering interval. */
+	// 检查点的触发周期 -1 代表关闭
 	private long checkpointInterval = -1; // disabled
 
 	/** Maximum time checkpoint may take before being discarded. */
+	// 检查点的最大超时时间
 	private long checkpointTimeout = DEFAULT_TIMEOUT;
 
 	/** Minimal pause between checkpointing attempts. */
+	// 检查点尝试之间的最小停顿
 	private long minPauseBetweenCheckpoints = DEFAULT_MIN_PAUSE_BETWEEN_CHECKPOINTS;
 
 	/** Maximum number of checkpoint attempts in progress at the same time. */
+	// 同一时间一同进行的检查点尝试的最大数量
 	private int maxConcurrentCheckpoints = DEFAULT_MAX_CONCURRENT_CHECKPOINTS;
 
 	/** Flag to force checkpointing in iterative jobs. */
+	// 在递归 job 中强制检查点
 	private boolean forceCheckpointing;
 
 	/** Cleanup behaviour for persistent checkpoints. */
+	// 持久检查点的清理行为
 	private ExternalizedCheckpointCleanup externalizedCheckpointCleanup;
 
 	/** Determines if a tasks are failed or not if there is an error in their checkpointing. Default: true */
+	// 如果检查点中存在错误，则确定任务是否失败。默认值：true
 	private boolean failOnCheckpointingErrors = true;
 
 	// ------------------------------------------------------------------------
@@ -78,6 +93,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * Checks whether checkpointing is enabled.
 	 *
 	 * @return True if checkpointing is enables, false otherwise.
+	 */
+	/**
+	 * 检查程序是否运行检查点
 	 */
 	public boolean isCheckpointingEnabled() {
 		return checkpointInterval > 0;
@@ -88,6 +106,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 *
 	 * @return The checkpointing mode.
 	 */
+	/**
+	 * 获取检查点的工作模式（exactly-once or at-least-once）
+	 */
 	public CheckpointingMode getCheckpointingMode() {
 		return checkpointingMode;
 	}
@@ -96,6 +117,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * Sets the checkpointing mode (exactly-once vs. at-least-once).
 	 *
 	 * @param checkpointingMode The checkpointing mode.
+	 */
+	/**
+	 * 设置检查点的模式
 	 */
 	public void setCheckpointingMode(CheckpointingMode checkpointingMode) {
 		this.checkpointingMode = requireNonNull(checkpointingMode);
@@ -109,6 +133,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 *
 	 * @return The checkpoint interval, in milliseconds.
 	 */
+	/**
+	 * 获取检查点调度的周期
+	 */
 	public long getCheckpointInterval() {
 		return checkpointInterval;
 	}
@@ -120,6 +147,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * {@link #setMaxConcurrentCheckpoints(int)} and {@link #setMinPauseBetweenCheckpoints(long)}.
 	 *
 	 * @param checkpointInterval The checkpoint interval, in milliseconds.
+	 */
+	/**
+	 * 设置检查点调度的周期
 	 */
 	public void setCheckpointInterval(long checkpointInterval) {
 		if (checkpointInterval <= 0) {
@@ -133,6 +163,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 *
 	 * @return The checkpoint timeout, in milliseconds.
 	 */
+	/**
+	 * 获取检查点的超时时间
+	 */
 	public long getCheckpointTimeout() {
 		return checkpointTimeout;
 	}
@@ -141,6 +174,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * Sets the maximum time that a checkpoint may take before being discarded.
 	 *
 	 * @param checkpointTimeout The checkpoint timeout, in milliseconds.
+	 */
+	/**
+	 * 设置检查点的超时时间
 	 */
 	public void setCheckpointTimeout(long checkpointTimeout) {
 		if (checkpointTimeout <= 0) {
@@ -157,6 +193,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 *
 	 * @return The minimal pause before the next checkpoint is triggered.
 	 */
+	/**
+	 * 获取检查点的最小停顿时间
+	 */
 	public long getMinPauseBetweenCheckpoints() {
 		return minPauseBetweenCheckpoints;
 	}
@@ -171,6 +210,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * that a minimum amount of time passes where no checkpoint is in progress at all.
 	 *
 	 * @param minPauseBetweenCheckpoints The minimal pause before the next checkpoint is triggered.
+	 */
+	/**
+	 * 设置检查点的最小停顿时间
 	 */
 	public void setMinPauseBetweenCheckpoints(long minPauseBetweenCheckpoints) {
 		if (minPauseBetweenCheckpoints < 0) {
@@ -187,6 +229,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 *
 	 * @return The maximum number of concurrent checkpoint attempts.
 	 */
+	/**
+	 * 获取检查点尝试的最大并行度
+	 */
 	public int getMaxConcurrentCheckpoints() {
 		return maxConcurrentCheckpoints;
 	}
@@ -198,6 +243,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * to finish or expire.
 	 *
 	 * @param maxConcurrentCheckpoints The maximum number of concurrent checkpoint attempts.
+	 */
+	/**
+	 * 设置检查点尝试的最大并行度
 	 */
 	public void setMaxConcurrentCheckpoints(int maxConcurrentCheckpoints) {
 		if (maxConcurrentCheckpoints < 1) {
@@ -236,6 +284,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * This determines the behaviour of tasks if there is an error in their local checkpointing. If this returns true,
 	 * tasks will fail as a reaction. If this returns false, task will only decline the failed checkpoint.
 	 */
+	/**
+	 * 获取检查点失败的时候，任务是否失败
+	 */
 	public boolean isFailOnCheckpointingErrors() {
 		return failOnCheckpointingErrors;
 	}
@@ -244,6 +295,9 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * Sets the expected behaviour for tasks in case that they encounter an error in their checkpointing procedure.
 	 * If this is set to true, the task will fail on checkpointing error. If this is set to false, the task will only
 	 * decline a the checkpoint and continue running. The default is true.
+	 */
+	/**
+	 * 设置检查点失败的时候，任务是否失败
 	 */
 	public void setFailOnCheckpointingErrors(boolean failOnCheckpointingErrors) {
 		this.failOnCheckpointingErrors = failOnCheckpointingErrors;
@@ -269,6 +323,15 @@ public class CheckpointConfig implements java.io.Serializable {
 	 * via {@link org.apache.flink.configuration.CheckpointingOptions#CHECKPOINTS_DIRECTORY}.
 	 *
 	 * @param cleanupMode Externalized checkpoint cleanup behaviour.
+	 */
+	/**
+	 * 允许检查点在外部持久化
+	 * 
+	 * 外部化检查点将其元数据写入持久存储，并且在拥有作业失败或暂停时不会自动清除（以作业状态FAILED或SUSPENDED终止）
+	 * 在这种情况下，您必须手动清除检查点状态，元数据和实际程序状态
+	 * 
+	 * ExternalizedCheckpointCleanup模式定义在取消作业时应如何清除外部化检查点
+	 * 如果您选择在取消时保留外部化检查点，您也可以在取消作业时手动处理检查点清理（终止作业状态已取消）
 	 */
 	@PublicEvolving
 	public void enableExternalizedCheckpoints(ExternalizedCheckpointCleanup cleanupMode) {
@@ -313,6 +376,9 @@ public class CheckpointConfig implements java.io.Serializable {
 		 * <p>Note that checkpoint state is always kept if the job terminates
 		 * with state {@link JobStatus#FAILED}.
 		 */
+		/**
+		 * 取消作业时删除外部检查点
+		 */
 		DELETE_ON_CANCELLATION(true),
 
 		/**
@@ -324,6 +390,9 @@ public class CheckpointConfig implements java.io.Serializable {
 		 *
 		 * <p>Note that checkpoint state is always kept if the job terminates
 		 * with state {@link JobStatus#FAILED}.
+		 */
+		/**
+		 * 取消工作时保留外部检查点
 		 */
 		RETAIN_ON_CANCELLATION(false);
 

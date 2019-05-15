@@ -36,6 +36,10 @@ import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
  *
  * @param <IN> Input record type
  */
+/**
+ * SinkFunction 的实现类
+ * 用于将数据流中的 StreamRecord 输出到标准输出流或者错误流
+ */
 @PublicEvolving
 public class PrintSinkFunction<IN> extends RichSinkFunction<IN> {
 
@@ -46,6 +50,10 @@ public class PrintSinkFunction<IN> extends RichSinkFunction<IN> {
 	/**
 	 * Instantiates a print sink function that prints to standard out.
 	 */
+	/**
+	 * 实例化一个 print sink function
+	 * 用于输出到标准输出流
+	 */
 	public PrintSinkFunction() {
 		writer = new PrintSinkOutputWriter<>(false);
 	}
@@ -54,6 +62,10 @@ public class PrintSinkFunction<IN> extends RichSinkFunction<IN> {
 	 * Instantiates a print sink function that prints to standard out.
 	 *
 	 * @param stdErr True, if the format should print to standard error instead of standard out.
+	 */
+	/**
+	 * 实例化一个 print sink function
+	 * 用于输出到标准错误流
 	 */
 	public PrintSinkFunction(final boolean stdErr) {
 		writer = new PrintSinkOutputWriter<>(stdErr);
@@ -64,6 +76,11 @@ public class PrintSinkFunction<IN> extends RichSinkFunction<IN> {
 	 *
 	 * @param stdErr True, if the format should print to standard error instead of standard out.
 	 * @param sinkIdentifier Message that identify sink and is prefixed to the output of the value
+	 */
+	/**
+	 * 实例化一个 print sink function
+	 * 用于输出到标准输出流或者错误输出流
+	 * 提供一个 sinkIdentifier 用于标识打印
 	 */
 	public PrintSinkFunction(final String sinkIdentifier, final boolean stdErr) {
 		writer = new PrintSinkOutputWriter<>(sinkIdentifier, stdErr);

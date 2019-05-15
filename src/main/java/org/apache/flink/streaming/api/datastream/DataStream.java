@@ -1117,7 +1117,7 @@ public class DataStream<T> {
 	// ------------------------------------------------------------------------
 	//  Data sinks
 	// ------------------------------------------------------------------------
-
+	// 数据下沉
 	/**
 	 * Writes a DataStream to the standard output stream (stdout).
 	 *
@@ -1127,6 +1127,11 @@ public class DataStream<T> {
 	 * worker.
 	 *
 	 * @return The closed DataStream.
+	 */
+	/**
+	 * 将 DataStream 写入标准输出流（stdout）
+	 * 对于数据流中的每一个元素，Object.toString() 的结果被 sink
+	 * 注意：这将在执行代码的机器上打印到 stdout
 	 */
 	@PublicEvolving
 	public DataStreamSink<T> print() {
@@ -1143,6 +1148,11 @@ public class DataStream<T> {
 	 * worker.
 	 *
 	 * @return The closed DataStream.
+	 */
+	/**
+	 * 将 DataStream 写入标准输出流（stderr）
+	 * 对于数据流中的每一个元素，Object.toString() 的结果被 sink
+	 * 注意：这将在执行代码的机器上打印到 stderr
 	 */
 	@PublicEvolving
 	public DataStreamSink<T> printToErr() {
@@ -1395,6 +1405,10 @@ public class DataStream<T> {
 	 * @param sinkFunction
 	 *            The object containing the sink's invoke function.
 	 * @return The closed DataStream.
+	 */
+	/**
+	 * 将给定的 sink 加入到 DataStream
+	 * 只有添加了 sink 操作的流在 env.execute() 的时候会被执行
 	 */
 	public DataStreamSink<T> addSink(SinkFunction<T> sinkFunction) {
 

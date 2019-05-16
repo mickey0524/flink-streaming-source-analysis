@@ -45,6 +45,9 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * Readers and writers for different versions of the {@link InternalTimersSnapshot}.
  * Outdated formats are also kept here for documentation of history backlog.
  */
+/**
+ * 不同 flink 版本的 Readers 和 Writers，用于 InternalTimersSnapshot
+ */
 @Internal
 public class InternalTimersSnapshotReaderWriters {
 
@@ -57,6 +60,7 @@ public class InternalTimersSnapshotReaderWriters {
 	//   - v2: Flink 1.8.0
 	// -------------------------------------------------------------------------------
 
+	// 根据不同的 Version，分配不同的 Writer
 	public static <K, N> InternalTimersSnapshotWriter getWriterForVersion(
 			int version,
 			InternalTimersSnapshot<K, N> timersSnapshot,
@@ -83,6 +87,9 @@ public class InternalTimersSnapshotReaderWriters {
 	/**
 	 * A writer for a {@link InternalTimersSnapshot}.
 	 */
+	/**
+	 * InternalTimersSnapshot 的 writer
+	 */
 	public interface InternalTimersSnapshotWriter {
 
 		/**
@@ -94,6 +101,9 @@ public class InternalTimersSnapshotReaderWriters {
 		void writeTimersSnapshot(DataOutputView out) throws IOException;
 	}
 
+	/**
+	 * Writer 的抽象类，实现了 InternalTimersSnapshotWriter 接口
+	 */
 	private abstract static class AbstractInternalTimersSnapshotWriter<K, N> implements InternalTimersSnapshotWriter {
 
 		protected final InternalTimersSnapshot<K, N> timersSnapshot;
@@ -110,6 +120,7 @@ public class InternalTimersSnapshotReaderWriters {
 			this.namespaceSerializer = checkNotNull(namespaceSerializer);
 		}
 
+		// 将 key 和命名空间的序列器写入快照
 		protected abstract void writeKeyAndNamespaceSerializers(DataOutputView out) throws IOException;
 
 		@Override
@@ -121,9 +132,10 @@ public class InternalTimersSnapshotReaderWriters {
 				namespaceSerializer);
 
 			// write the event time timers
+			// write 事件时间定时器
 			Set<TimerHeapInternalTimer<K, N>> eventTimers = timersSnapshot.getEventTimeTimers();
 			if (eventTimers != null) {
-				out.writeInt(eventTimers.size());
+				out.writeInt(eventTimers.size());  // 将事件时间定时器的数量写入快照
 				for (TimerHeapInternalTimer<K, N> eventTimer : eventTimers) {
 					timerSerializer.serialize(eventTimer, out);
 				}
@@ -132,9 +144,10 @@ public class InternalTimersSnapshotReaderWriters {
 			}
 
 			// write the processing time timers
+			// write 进程时间定时器
 			Set<TimerHeapInternalTimer<K, N>> processingTimers = timersSnapshot.getProcessingTimeTimers();
 			if (processingTimers != null) {
-				out.writeInt(processingTimers.size());
+				out.writeInt(processingTimers.size());  // 将进程时间定时器的数量写入快照
 				for (TimerHeapInternalTimer<K, N> processingTimer : processingTimers) {
 					timerSerializer.serialize(processingTimer, out);
 				}
@@ -356,6 +369,9 @@ public class InternalTimersSnapshotReaderWriters {
 	/**
 	 * A {@link TypeSerializer} used to serialize/deserialize a {@link TimerHeapInternalTimer}.
 	 */
+	/**
+	 * LegacyTimerSerializer 用于序列化/反序列化 TimerHeapInternalTimer
+	 */
 	public static class LegacyTimerSerializer<K, N> extends TypeSerializer<TimerHeapInternalTimer<K, N>> {
 
 		private static final long serialVersionUID = 1119562170939152304L;
@@ -413,6 +429,7 @@ public class InternalTimersSnapshotReaderWriters {
 			return -1;
 		}
 
+		// 序列化定时器，依次序列化定时器的 key、命名空间以及 ts
 		@Override
 		public void serialize(TimerHeapInternalTimer<K, N> record, DataOutputView target) throws IOException {
 			keySerializer.serialize(record.getKey(), target);

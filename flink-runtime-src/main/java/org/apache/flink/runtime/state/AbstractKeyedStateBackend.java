@@ -231,6 +231,10 @@ public abstract class AbstractKeyedStateBackend<K> implements
 	/**
 	 * @see KeyedStateBackend
 	 */
+	/**
+	 * 返回 keyGroupRange
+	 * 在检查点的时候用的很多
+	 */
 	@Override
 	public KeyGroupRange getKeyGroupRange() {
 		return keyGroupRange;

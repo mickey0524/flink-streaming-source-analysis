@@ -31,18 +31,24 @@ import java.util.Set;
  * A snapshot of internal timers, containing event and processing timers and
  * the serializers to use to write / read them.
  */
+/**
+ * 一个内部定时器的快照，包含事件时间定时器和进程时间定时器
+ * 以及用来读写的序列器
+ */
 public class InternalTimersSnapshot<K, N> {
 
-	private TypeSerializerSnapshot<K> keySerializerSnapshot;
-	private TypeSerializerSnapshot<N> namespaceSerializerSnapshot;
+	private TypeSerializerSnapshot<K> keySerializerSnapshot;  // key 序列器的快照
+	private TypeSerializerSnapshot<N> namespaceSerializerSnapshot;  // 命名空间序列器的快照
 
-	private Set<TimerHeapInternalTimer<K, N>> eventTimeTimers;
-	private Set<TimerHeapInternalTimer<K, N>> processingTimeTimers;
+	private Set<TimerHeapInternalTimer<K, N>> eventTimeTimers;  // 事件时间定时器的集合
+	private Set<TimerHeapInternalTimer<K, N>> processingTimeTimers;  // 进程时间定时器的集合
 
 	/** Empty constructor used when restoring the timers. */
+	// 当恢复定时器时用的空的构造器
 	public InternalTimersSnapshot() {}
 
 	/** Constructor to use when snapshotting the timers. */
+	// 当生成定时器快照的时候使用的构造器
 	public InternalTimersSnapshot(
 			TypeSerializer<K> keySerializer,
 			TypeSerializer<N> namespaceSerializer,

@@ -32,30 +32,40 @@ import java.util.concurrent.RunnableFuture;
 /**
  * This class is a default implementation for StateSnapshotContext.
  */
+/**
+ * StateSnapshotContext 的默认实现
+ */
 public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext, Closeable {
 
 	/** Checkpoint id of the snapshot. */
+	// 快照的检查点 id
 	private final long checkpointId;
 
 	/** Checkpoint timestamp of the snapshot. */
+	// 快照的检查点 ts
 	private final long checkpointTimestamp;
 	
 	/** Factory for he checkpointing stream */
+	// 检查点流的工厂
 	private final CheckpointStreamFactory streamFactory;
 	
 	/** Key group range for the operator that created this context. Only for keyed operators */
+	// 创建本上下文的操作符的 Key group range
 	private final KeyGroupRange keyGroupRange;
 
 	/**
 	 * Registry for opened streams to participate in the lifecycle of the stream task. Hence, this registry should be 
 	 * obtained from and managed by the stream task.
 	 */
+	// 用于打开流的注册表，以参与流任务的生命周期。因此，此注册表应从流任务获取并由其管理
 	private final CloseableRegistry closableRegistry;
 
 	/** Output stream for the raw keyed state. */
+	// raw keyed state 的输出流
 	private KeyedStateCheckpointOutputStream keyedStateCheckpointOutputStream;
 
 	/** Output stream for the raw operator state. */
+	// raw operator state 的输出流
 	private OperatorStateCheckpointOutputStream operatorStateCheckpointOutputStream;
 
 	@VisibleForTesting
@@ -82,16 +92,25 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 		this.closableRegistry = Preconditions.checkNotNull(closableRegistry);
 	}
 
+	/**
+	 * 获取检查点 id
+	 */
 	@Override
 	public long getCheckpointId() {
 		return checkpointId;
 	}
 
+	/**
+	 * 获取检查点时间戳
+	 */
 	@Override
 	public long getCheckpointTimestamp() {
 		return checkpointTimestamp;
 	}
 
+	/**
+	 * 打开一个新的流，并在 closableRegistry 中注册
+	 */
 	private CheckpointStreamFactory.CheckpointStateOutputStream openAndRegisterNewStream() throws Exception {
 		CheckpointStreamFactory.CheckpointStateOutputStream cout =
 				streamFactory.createCheckpointStateOutputStream(CheckpointedStateScope.EXCLUSIVE);
@@ -100,15 +119,22 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 		return cout;
 	}
 
+	/**
+	 * 创建用于 KeyedState 的检查点输出流
+	 */
 	@Override
 	public KeyedStateCheckpointOutputStream getRawKeyedOperatorStateOutput() throws Exception {
 		if (null == keyedStateCheckpointOutputStream) {
+			// 只有在 keyed 操作符能申请 KeyedState 的检查点输出流
 			Preconditions.checkState(keyGroupRange != KeyGroupRange.EMPTY_KEY_GROUP_RANGE, "Not a keyed operator");
 			keyedStateCheckpointOutputStream = new KeyedStateCheckpointOutputStream(openAndRegisterNewStream(), keyGroupRange);
 		}
 		return keyedStateCheckpointOutputStream;
 	}
 
+	/**
+	 * 创建用于 OperatorState 的检查点输出流
+	 */
 	@Override
 	public OperatorStateCheckpointOutputStream getRawOperatorStateOutput() throws Exception {
 		if (null == operatorStateCheckpointOutputStream) {
@@ -117,6 +143,9 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 		return operatorStateCheckpointOutputStream;
 	}
 
+	/**
+	 * 用于获取 KeyedState 的 Future
+	 */
 	@Nonnull
 	public RunnableFuture<SnapshotResult<KeyedStateHandle>> getKeyedStateStreamFuture() throws IOException {
 		KeyedStateHandle keyGroupsStateHandle =
@@ -124,6 +153,9 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 		return toDoneFutureOfSnapshotResult(keyGroupsStateHandle);
 	}
 
+	/**
+	 * 用于获取 OperatorState 的 Future
+	 */
 	@Nonnull
 	public RunnableFuture<SnapshotResult<OperatorStateHandle>> getOperatorStateStreamFuture() throws IOException {
 		OperatorStateHandle operatorStateHandle =
@@ -136,6 +168,7 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 		return DoneFuture.of(snapshotResult);
 	}
 
+	// 成功关闭流，获取 StreamStateHandle，同样需要解除注册
 	private <T extends StreamStateHandle> T closeAndUnregisterStreamToObtainStateHandle(
 		NonClosingCheckpointOutputStream<T> stream) throws IOException {
 
@@ -146,24 +179,28 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 		}
 	}
 
+	// 关闭输出流，同时解除注册
 	private <T extends StreamStateHandle> void closeAndUnregisterStream(
 		NonClosingCheckpointOutputStream<? extends T> stream) throws IOException {
 
 		Preconditions.checkNotNull(stream);
 
 		CheckpointStreamFactory.CheckpointStateOutputStream delegate = stream.getDelegate();
-
+		
+		// 从关闭注册表中删除，然后关闭流
 		if (closableRegistry.unregisterCloseable(delegate)) {
 			delegate.close();
 		}
 	}
 
 	@Override
+	// 关闭 StateSnapshotContext
 	public void close() throws IOException {
 		IOException exception = null;
 
 		if (keyedStateCheckpointOutputStream != null) {
 			try {
+				// 关闭 keyedStateCheckpointOutputStream
 				closeAndUnregisterStream(keyedStateCheckpointOutputStream);
 			} catch (IOException e) {
 				exception = new IOException("Could not close the raw keyed state checkpoint output stream.", e);
@@ -172,6 +209,7 @@ public class StateSnapshotContextSynchronousImpl implements StateSnapshotContext
 
 		if (operatorStateCheckpointOutputStream != null) {
 			try {
+				// 关闭 operatorStateCheckpointOutputStream
 				closeAndUnregisterStream(operatorStateCheckpointOutputStream);
 			} catch (IOException e) {
 				exception = ExceptionUtils.firstOrSuppressed(

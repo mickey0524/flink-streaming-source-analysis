@@ -32,6 +32,9 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Serialization proxy for the timer services for a given key-group.
  */
+/**
+ * 用于给定 key-group 的计时器服务的序列化代理
+ */
 @Internal
 public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIOReadableWritable {
 
@@ -50,6 +53,9 @@ public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIORe
 	/**
 	 * Constructor to use when restoring timer services.
 	 */
+	/**
+	 * 恢复时间服务时候使用的构造器
+	 */
 	public InternalTimerServiceSerializationProxy(
 		InternalTimeServiceManager<K> timerServicesManager,
 		ClassLoader userCodeClassLoader,
@@ -62,6 +68,9 @@ public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIORe
 	/**
 	 * Constructor to use when writing timer services.
 	 */
+	/**
+	 * 存储时间服务的时候使用的构造器
+	 */
 	public InternalTimerServiceSerializationProxy(
 		InternalTimeServiceManager<K> timerServicesManager,
 		int keyGroupIdx) {
@@ -69,6 +78,9 @@ public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIORe
 		this.keyGroupIdx = keyGroupIdx;
 	}
 
+	/**
+	 * 获取 version
+	 */
 	@Override
 	public int getVersion() {
 		return VERSION;
@@ -82,16 +94,20 @@ public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIORe
 	@Override
 	@SuppressWarnings("unchecked")
 	public void write(DataOutputView out) throws IOException {
+		// 写入版本信息
 		super.write(out);
+		// 从 timerServicesManager 中获取所有的定时器服务
 		final Map<String, InternalTimerServiceImpl<K, ?>> registeredTimerServices =
 			timerServicesManager.getRegisteredTimerServices();
 
+		// 写入时间服务个数
 		out.writeInt(registeredTimerServices.size());
 		for (Map.Entry<String, InternalTimerServiceImpl<K, ?>> entry : registeredTimerServices.entrySet()) {
 			String serviceName = entry.getKey();
 			InternalTimerServiceImpl<K, ?> timerService = entry.getValue();
 
-			out.writeUTF(serviceName);
+			out.writeUTF(serviceName);  // 写入定时器名称
+			// 将进程时间定时器和事件时间定时器写入快照
 			InternalTimersSnapshotReaderWriters
 				.getWriterForVersion(
 					VERSION,

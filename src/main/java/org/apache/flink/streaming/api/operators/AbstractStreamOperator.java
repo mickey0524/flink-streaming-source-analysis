@@ -433,9 +433,11 @@ public abstract class AbstractStreamOperator<OUT>
 	public final OperatorSnapshotFutures snapshotState(long checkpointId, long timestamp, CheckpointOptions checkpointOptions,
 			CheckpointStreamFactory factory) throws Exception {
 
+		// 获取 KeyGroupRange
 		KeyGroupRange keyGroupRange = null != keyedStateBackend ?
 				keyedStateBackend.getKeyGroupRange() : KeyGroupRange.EMPTY_KEY_GROUP_RANGE;
 
+		// 用于装载各种 Future 对象
 		OperatorSnapshotFutures snapshotInProgress = new OperatorSnapshotFutures();
 
 		try (StateSnapshotContextSynchronousImpl snapshotContext = new StateSnapshotContextSynchronousImpl(
@@ -446,15 +448,19 @@ public abstract class AbstractStreamOperator<OUT>
 				getContainingTask().getCancelables())) {
 
 			snapshotState(snapshotContext);
-
+			
+			// 设置 keyedState 输出流的 Future 对象
 			snapshotInProgress.setKeyedStateRawFuture(snapshotContext.getKeyedStateStreamFuture());
+			// 设置 operatorState 输出流的 Future 对象
 			snapshotInProgress.setOperatorStateRawFuture(snapshotContext.getOperatorStateStreamFuture());
-
+			
+			// 如果 operatorStateBackend 不为空的时候，设置操作符状态管理 Future
 			if (null != operatorStateBackend) {
 				snapshotInProgress.setOperatorStateManagedFuture(
 					operatorStateBackend.snapshot(checkpointId, timestamp, factory, checkpointOptions));
 			}
 
+			// 如果 keyedStateBackend 不为空的时候，设置 keyedStateBackend Future
 			if (null != keyedStateBackend) {
 				snapshotInProgress.setKeyedStateManagedFuture(
 					keyedStateBackend.snapshot(checkpointId, timestamp, factory, checkpointOptions));
@@ -483,6 +489,9 @@ public abstract class AbstractStreamOperator<OUT>
 	 *
 	 * @param context context that provides information and means required for taking a snapshot
 	 */
+	/**
+	 * 具有状态的流操作符（想要参与快照）需要覆盖此挂钩方法
+	 */
 	public void snapshotState(StateSnapshotContext context) throws Exception {
 		final KeyedStateBackend<?> keyedStateBackend = getKeyedStateBackend();
 		//TODO all of this can be removed once heap-based timers are integrated with RocksDB incremental snapshots
@@ -492,16 +501,16 @@ public abstract class AbstractStreamOperator<OUT>
 			KeyedStateCheckpointOutputStream out;
 
 			try {
-				out = context.getRawKeyedOperatorStateOutput();
+				out = context.getRawKeyedOperatorStateOutput();  // 获取 keyed state 的输出流
 			} catch (Exception exception) {
 				throw new Exception("Could not open raw keyed operator state stream for " +
 					getOperatorName() + '.', exception);
 			}
 
 			try {
-				KeyGroupsList allKeyGroups = out.getKeyGroupList();
+				KeyGroupsList allKeyGroups = out.getKeyGroupList();  // 获取全部的 key-group
 				for (int keyGroupIdx : allKeyGroups) {
-					out.startNewKeyGroup(keyGroupIdx);
+					out.startNewKeyGroup(keyGroupIdx);  // 开始当前 key group 的写入
 
 					timeServiceManager.snapshotStateForKeyGroup(
 						new DataOutputViewStreamWrapper(out), keyGroupIdx);
@@ -671,7 +680,7 @@ public abstract class AbstractStreamOperator<OUT>
 	    This method should be removed for the sake of namespaces being lazily fetched from the keyed
 	    state backend, or being set on the state directly.
 	    */
-
+		// 只有 keyedStateStore 存在，才可能有 keyedStateBackend
 		if (keyedStateStore != null) {
 			return keyedStateBackend.getPartitionedState(namespace, namespaceSerializer, stateDescriptor);
 		} else {

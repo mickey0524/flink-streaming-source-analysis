@@ -309,6 +309,9 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	 * @param keyGroupIdx the id of the key-group to be put in the snapshot.
 	 * @return a snapshot containing the timers for the given key-group, and the serializers for them
 	 */
+	/**
+	 * 根据给定的 keyGroupIdx，快照存储进程时间定时器和事件时间定时器
+	 */
 	public InternalTimersSnapshot<K, N> snapshotTimersForKeyGroup(int keyGroupIdx) {
 		return new InternalTimersSnapshot<>(
 			keySerializer,

@@ -30,10 +30,16 @@ public interface StateSnapshotContext extends FunctionSnapshotContext {
 	/**
 	 * Returns an output stream for keyed state
 	 */
+	/**
+	 * 返回 keyed state 的输出流
+	 */
 	KeyedStateCheckpointOutputStream getRawKeyedOperatorStateOutput() throws Exception;
 
 	/**
 	 * Returns an output stream for operator state
+	 */
+	/**
+	 * 返回 operator state 的输出流
 	 */
 	OperatorStateCheckpointOutputStream getRawOperatorStateOutput() throws Exception;
 

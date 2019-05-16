@@ -33,17 +33,28 @@ import javax.annotation.Nullable;
  * state object that is not null also requires a state to report to the job manager that is not null, because the
  * Job Manager always owns the ground truth about the checkpointed state.
  */
+/**
+ * SnapshotResult 包含状态 backend 快照的组合结果:
+ * 1. 一个状态对象，表示将报告给作业管理器以确认检查点的状态
+ * 2. 一个状态对象，表示TaskLocalStateStoreImpl的状态
+ * 
+ * 两个状态对象都是可选的，可以为 null。例如，backend 没有状态快照
+ * 非 null 的本地状态对象还需要状态向作业管理器报告非空，因为作业管理器始终拥有关于检查点状态的基本事实
+ */
 public class SnapshotResult<T extends StateObject> implements StateObject {
 
 	private static final long serialVersionUID = 1L;
 
 	/** An singleton instance to represent an empty snapshot result. */
+	// 单例表示一个空的 snapshot result
 	private static final SnapshotResult<?> EMPTY = new SnapshotResult<>(null, null);
 
 	/** This is the state snapshot that will be reported to the Job Manager to acknowledge a checkpoint. */
+	// 这是将报告给作业管理器以确认检查点的状态快照
 	private final T jobManagerOwnedSnapshot;
 
 	/** This is the state snapshot that will be reported to the Job Manager to acknowledge a checkpoint. */
+	// 这是将报告给作业管理器以确认检查点的状态快照
 	private final T taskLocalSnapshot;
 
 	/**
@@ -53,6 +64,10 @@ public class SnapshotResult<T extends StateObject> implements StateObject {
 	 * @param jobManagerOwnedSnapshot Snapshot for report to job manager. Can be null.
 	 * @param taskLocalSnapshot Snapshot for report to local state manager. This is optional and requires
 	 *                             jobManagerOwnedSnapshot to be not null if this is not also null.
+	 */
+	/**
+	 * 创建一个 SnapshotResult
+	 * 如果 jobManagerOwnedSnapshot 为空，taskLocalSnapshot 一定为空
 	 */
 	private SnapshotResult(T jobManagerOwnedSnapshot, T taskLocalSnapshot) {
 
@@ -72,6 +87,9 @@ public class SnapshotResult<T extends StateObject> implements StateObject {
 		return taskLocalSnapshot;
 	}
 
+	/**
+	 * 丢弃状态
+	 */
 	@Override
 	public void discardState() throws Exception {
 
@@ -108,6 +126,7 @@ public class SnapshotResult<T extends StateObject> implements StateObject {
 		return (SnapshotResult<T>) EMPTY;
 	}
 
+	// 静态工厂函数
 	public static <T extends StateObject> SnapshotResult<T> of(@Nullable T jobManagerState) {
 		return jobManagerState != null ? new SnapshotResult<>(jobManagerState, null) : empty();
 	}

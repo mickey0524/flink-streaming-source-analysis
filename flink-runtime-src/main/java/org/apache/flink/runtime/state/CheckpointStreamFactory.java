@@ -31,6 +31,9 @@ import java.io.OutputStream;
  * <p>Stream factories can be created from the {@link CheckpointStorage} through
  * {@link CheckpointStorage#resolveCheckpointStorageLocation(long, CheckpointStorageLocationReference)}.
  */
+/**
+ * 检查点输出流的工厂，用于检查点的持久化数据
+ */
 public interface CheckpointStreamFactory {
 
 	/**
@@ -41,6 +44,10 @@ public interface CheckpointStreamFactory {
 	 * @return An output stream that writes state for the given checkpoint.
 	 *
 	 * @throws IOException Exceptions may occur while creating the stream and should be forwarded.
+	 */
+	/**
+	 * 创建一个新的 CheckpointStateOutputStream，当流关闭的时候
+	 * 返回一个状态处理器，用于检索状态
 	 */
 	CheckpointStateOutputStream createCheckpointStateOutputStream(CheckpointedStateScope scope) throws IOException;
 
@@ -58,6 +65,15 @@ public interface CheckpointStreamFactory {
 	 * <p>Note: This is an abstract class and not an interface because {@link OutputStream}
 	 * is an abstract class.
 	 */
+	/**
+	 * 一个专用输出流，在关闭时生成 StreamStateHandle
+	 * 
+	 * 输出成功之后，关闭流，你需要调用 closeAndGetHandle()
+	 * 只有这个方法实际上会保留写入的资源，该方法具有“成功时候关闭”的语义
+	 * 如果在 closeAndGetHandle() 之前调用，则 close() 方法应该删除目标资源
+	 * 因此具有“失败时关闭”的语义. 这样，简单的 try-with-resources
+	 * 语句会在写入未完成的情况下自动清除不成功的部分状态资源
+	 */
 	abstract class CheckpointStateOutputStream extends FSDataOutputStream {
 
 		/**
@@ -70,6 +86,11 @@ public interface CheckpointStreamFactory {
 		 *
 		 * @return A state handle that can create an input stream producing the data written to this stream.
 		 * @throws IOException Thrown, if the stream cannot be closed.
+		 */
+		/**
+		 * 关闭流并获取状态句柄，该句柄可以创建输入流，从而生成写入此流的数据
+		 * 必须调用此关闭（当调用者对句柄不感兴趣时​​）才能成功关闭流并保留生成的资源
+		 * 相反，close() 方法在调用时删除目标资源
 		 */
 		@Nullable
 		public abstract StreamStateHandle closeAndGetHandle() throws IOException;
@@ -84,6 +105,11 @@ public interface CheckpointStreamFactory {
 		 * Closing the stream for the successful case must go through {@link #closeAndGetHandle()}.
 		 *
 		 * @throws IOException Thrown, if the stream cannot be closed.
+		 */
+		/**
+		 * 如果之前尚未关闭，此方法应关闭流。如果此方法实际关闭流，则应删除/释放流后面的资源，例如流写入的文件
+		 * 以上暗示该方法旨在成为“不成功关闭”，例如取消流写入时或发生异常时
+		 * 关闭成功案例的流必须通过 closeAndGetHandle()
 		 */
 		@Override
 		public abstract void close() throws IOException;

@@ -173,6 +173,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	private final Map<String, Accumulator<?, ?>> accumulatorMap;
 
 	/** The currently active background materialization threads. */
+	// 用于需要关闭的实例注册，然后在服务挂掉的时候，统一 close，释放资源
 	private final CloseableRegistry cancelables = new CloseableRegistry();
 
 	/**

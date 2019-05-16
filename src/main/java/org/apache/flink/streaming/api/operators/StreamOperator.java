@@ -112,7 +112,7 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	// ------------------------------------------------------------------------
 	//  state snapshots
 	// ------------------------------------------------------------------------
-
+	// 状态快照
 	/**
 	 * This method is called when the operator should do a snapshot, before it emits its
 	 * own checkpoint barrier.
@@ -132,7 +132,15 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	 * @throws Exception Throwing an exception here causes the operator to fail and go into recovery.
 	 */
 	/**
-	 * 在操作符发出检查点障碍之前，需要生成一个快照，调用这个方法
+	 * 在操作符发出检查点屏障之前，需要生成一个快照，调用这个方法
+	 * 
+	 * 此方法不适用于任何实际的状态持久性，而仅适用于在发出检查点屏障之前发出一些数据
+	 * 操作符维持一些小的 transient 状态，这些状态对检查点来说是低效的
+	 * （特别是当它需要以可重新扩展的方式进行检查点时），但可以简单地在检查点之前向下游发送
+	 * 一个例子是机会预聚合运算符，它具有经常在下游刷新的预聚合状态
+	 * 
+	 * 此方法不应用于任何实际的状态快照逻辑，因为它本身就位于运算符检查点的同步部分内
+	 * 如果在此方法中进行繁重的工作，则会影响延迟和下游检查点对齐
 	 */
 	void prepareSnapshotPreBarrier(long checkpointId) throws Exception;
 
@@ -164,7 +172,7 @@ public interface StreamOperator<OUT> extends CheckpointListener, KeyContext, Dis
 	// ------------------------------------------------------------------------
 	//  miscellaneous
 	// ------------------------------------------------------------------------
-
+	// input1 传递过来数据，从 KeySelector1 中获取 key，调用 setCurrentKey
 	void setKeyContextElement1(StreamRecord<?> record) throws Exception;
 
 	void setKeyContextElement2(StreamRecord<?> record) throws Exception;

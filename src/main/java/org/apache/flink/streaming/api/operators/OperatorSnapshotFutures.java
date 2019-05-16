@@ -32,6 +32,9 @@ import java.util.concurrent.RunnableFuture;
 /**
  * Result of {@link StreamOperator#snapshotState}.
  */
+/**
+ * StreamOperator.snapshotState 的结果
+ */
 public class OperatorSnapshotFutures {
 
 	@Nonnull
@@ -105,6 +108,7 @@ public class OperatorSnapshotFutures {
 		this.operatorStateRawFuture = operatorStateRawFuture;
 	}
 
+	// cancel 的时候，需要将 Future 对象全部 cancel
 	public void cancel() throws Exception {
 		Exception exception = null;
 

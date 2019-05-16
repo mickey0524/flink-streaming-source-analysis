@@ -27,18 +27,25 @@ import java.util.Iterator;
  * This class defines a range of key-group indexes. Key-groups are the granularity into which the keyspace of a job
  * is partitioned for keyed state-handling in state backends. The boundaries of the range are inclusive.
  */
+/**
+ * KeyGroupRange 定义了 key-group 索引的范围
+ */
 public class KeyGroupRange implements KeyGroupsList, Serializable {
 
 	private static final long serialVersionUID = 4869121477592070607L;
 
 	/** The empty key-group */
+	// 空的 key-group
 	public static final KeyGroupRange EMPTY_KEY_GROUP_RANGE = new KeyGroupRange();
 
-	private final int startKeyGroup;
-	private final int endKeyGroup;
+	private final int startKeyGroup;  // range 的开端
+	private final int endKeyGroup;  // range 的末端
 
 	/**
 	 * Empty KeyGroup Constructor
+	 */
+	/**
+	 * 空的 KeyGroup 构造器
 	 */
 	private KeyGroupRange() {
 		this.startKeyGroup = 0;
@@ -50,6 +57,9 @@ public class KeyGroupRange implements KeyGroupsList, Serializable {
 	 *
 	 * @param startKeyGroup start of the range (inclusive)
 	 * @param endKeyGroup end of the range (inclusive)
+	 */
+	/**
+	 * 定义范围 [startKeyGroup, endKeyGroup]
 	 */
 	public KeyGroupRange(int startKeyGroup, int endKeyGroup) {
 		Preconditions.checkArgument(startKeyGroup >= 0);
@@ -66,6 +76,9 @@ public class KeyGroupRange implements KeyGroupsList, Serializable {
 	 * @param keyGroup Key-group to check for inclusion.
 	 * @return True, only if the key-group is in the range.
 	 */
+	/**
+	 * 检查是否一个 key-group 位于范围中
+	 */
 	@Override
 	public boolean contains(int keyGroup) {
 		return keyGroup >= startKeyGroup && keyGroup <= endKeyGroup;
@@ -77,6 +90,9 @@ public class KeyGroupRange implements KeyGroupsList, Serializable {
 	 * @param other A KeyGroupRange to intersect.
 	 * @return Key-group range that is the intersection between this and the given key-group range.
 	 */
+	/**
+	 * 给出两个 KeyGroupRange 的交集
+	 */
 	public KeyGroupRange getIntersection(KeyGroupRange other) {
 		int start = Math.max(startKeyGroup, other.startKeyGroup);
 		int end = Math.min(endKeyGroup, other.endKeyGroup);
@@ -86,6 +102,9 @@ public class KeyGroupRange implements KeyGroupsList, Serializable {
 	/**
 	 *
 	 * @return The number of key-groups in the range
+	 */
+	/**
+	 * 给出 range 中 key-group 的范围
 	 */
 	@Override
 	public int getNumberOfKeyGroups() {

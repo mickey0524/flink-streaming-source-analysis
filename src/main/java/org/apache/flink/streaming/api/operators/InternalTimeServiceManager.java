@@ -143,7 +143,9 @@ public class InternalTimeServiceManager<K> {
 	}
 
 	//////////////////				Fault Tolerance Methods				///////////////////
-
+	/**
+	 * 每一个 KeyGroup，快照存储状态
+	 */
 	public void snapshotStateForKeyGroup(DataOutputView stream, int keyGroupIdx) throws IOException {
 		Preconditions.checkState(useLegacySynchronousSnapshots);
 		InternalTimerServiceSerializationProxy<K> serializationProxy =

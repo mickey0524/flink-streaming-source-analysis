@@ -186,9 +186,10 @@ public class StreamingRuntimeContext extends AbstractRuntimeUDFContext {
 		return keyedStateStore.getMapState(stateProperties);
 	}
 
+	// 返回 State 先进行校验
 	private KeyedStateStore checkPreconditionsAndGetKeyedStateStore(StateDescriptor<?, ?> stateDescriptor) {
 		Preconditions.checkNotNull(stateDescriptor, "The state properties must not be null");
-		KeyedStateStore keyedStateStore = operator.getKeyedStateStore();
+		KeyedStateStore keyedStateStore = operator.getKeyedStateStore();  // 返回流状态存储
 		Preconditions.checkNotNull(keyedStateStore, "Keyed state can only be used on a 'keyed stream', i.e., after a 'keyBy()' operation.");
 		return keyedStateStore;
 	}

@@ -24,6 +24,9 @@ import org.apache.flink.annotation.Internal;
  * An exception for wrapping exceptions that are thrown by an operator in threads other than the
  * main compute thread of that operator.
  */
+/**
+ * 一种异常，用于包裹运算符在该运算符的主计算线程以外的线程中抛出的异常
+ */
 @Internal
 public class AsynchronousException extends Exception {
 	private static final long serialVersionUID = 1L;

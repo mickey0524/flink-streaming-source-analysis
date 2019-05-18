@@ -424,6 +424,8 @@ public abstract class AbstractStreamOperator<OUT>
 	}
 
 	@Override
+	// 默认实现什么也不做，并接受检查点，这纯粹是为了子类重写
+	// 在 peratorChain.java 中调用本方法
 	public void prepareSnapshotPreBarrier(long checkpointId) throws Exception {
 		// the default implementation does nothing and accepts the checkpoint
 		// this is purely for subclasses to override

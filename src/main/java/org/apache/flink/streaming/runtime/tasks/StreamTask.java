@@ -134,9 +134,11 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		implements AsyncExceptionHandler {
 
 	/** The thread group that holds all trigger timer threads. */
+	// 包含所有触发器计时器线程的线程组
 	public static final ThreadGroup TRIGGER_THREAD_GROUP = new ThreadGroup("Triggers");
 
 	/** The logger used by the StreamTask and its subclasses. */
+	// StreamTask 和其子类使用的 logger
 	private static final Logger LOG = LoggerFactory.getLogger(StreamTask.class);
 
 	// ------------------------------------------------------------------------
@@ -145,21 +147,27 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * All interaction with the {@code StreamOperator} must be synchronized on this lock object to
 	 * ensure that we don't have concurrent method calls that void consistent checkpoints.
 	 */
+	// 必须在此锁定对象上同步与StreamOperator的所有交互，以确保我们没有使一致检查点无效的并发方法调用
 	private final Object lock = new Object();
 
 	/** the head operator that consumes the input streams of this task. */
+	// 消费 task 输入流的头部操作符
 	protected OP headOperator;
 
 	/** The chain of operators executed by this task. */
+	// task 执行的操作符链
 	protected OperatorChain<OUT, OP> operatorChain;
 
 	/** The configuration of this streaming task. */
+	// 流任务的配置
 	protected final StreamConfig configuration;
 
 	/** Our state backend. We use this to create checkpoint streams and a keyed state backend. */
+	// 状态 backend，使用它来创建检查点流以及一个 keyed state backend
 	protected StateBackend stateBackend;
 
 	/** The external storage where checkpoint data is persisted. */
+	// 持久存储检查点数据的外部存储
 	private CheckpointStorageWorkerView checkpointStorage;
 
 	/**
@@ -167,9 +175,14 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * processing time (default = {@code System.currentTimeMillis()}) and
 	 * register timers for tasks to be executed in the future.
 	 */
+	/**
+	 * 内部 ProcessingTimeService 用于定义当前处理时间(default = System.currentTimeMillis())
+	 * 并注册将来要执行的任务的计时器
+	 */
 	protected ProcessingTimeService timerService;
 
 	/** The map of user-defined accumulators of this task. */
+	// 此任务的用户定义累加器的映射
 	private final Map<String, Accumulator<?, ?>> accumulatorMap;
 
 	/** The currently active background materialization threads. */
@@ -180,18 +193,25 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * Flag to mark the task "in operation", in which case check needs to be initialized to true,
 	 * so that early cancel() before invoke() behaves correctly.
 	 */
+	// 标记任务“正在运行”的标志，在这种情况下，检查需要初始化为 true
+	// 以便在 invoke() 之前的早期 cancel() 行为正确
 	private volatile boolean isRunning;
 
 	/** Flag to mark this task as canceled. */
+	// 标记 task 为取消的
 	private volatile boolean canceled;
 
 	/** Thread pool for async snapshot workers. */
+	// 异步快照 workers 使用的线程池
 	private ExecutorService asyncOperationsThreadPool;
 
 	/** Handler for exceptions during checkpointing in the stream task. Used in synchronous part of the checkpoint. */
+	// 在流任务中检查点期间处理异常，用于检查点的同步部分
 	private CheckpointExceptionHandler synchronousCheckpointExceptionHandler;
 
 	/** Wrapper for synchronousCheckpointExceptionHandler to deal with rethrown exceptions. Used in the async part. */
+	// 用于 synchronCheckpointExceptionHandler 的包装器
+	// 用于处理重新抛出的异常，用于异步部分
 	private AsyncCheckpointExceptionHandler asynchronousCheckpointExceptionHandler;
 
 	private final List<RecordWriter<SerializationDelegate<StreamRecord<OUT>>>> recordWriters;
@@ -202,6 +222,9 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * Constructor for initialization, possibly with initial state (recovery / savepoint / etc).
 	 *
 	 * @param env The task environment for this task.
+	 */
+	/**
+	 * 用于初始化的构造函数，可能具有初始状态（恢复/保存点/等）
 	 */
 	protected StreamTask(Environment env) {
 		this(env, null);
@@ -216,6 +239,12 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 *
 	 * @param environment The task environment for this task.
 	 * @param timeProvider Optionally, a specific time provider to use.
+	 */
+	/**
+	 * 用于初始化的构造函数，可能具有初始状态（恢复/保存点/等）
+	 * 
+	 * 此构造函数接受特殊的 ProcessingTimeService
+	 * 默认情况下（如果时间提供程序为null），将使用 SystemProcessingTimeService
 	 */
 	protected StreamTask(
 			Environment environment,
@@ -260,20 +289,25 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			// -------- Initialize ---------
 			LOG.debug("Initializing {}.", getName());
 
+			// 异步操作线程池
 			asyncOperationsThreadPool = Executors.newCachedThreadPool();
 
+			// 生成检查点异常处理工厂的实例
 			CheckpointExceptionHandlerFactory cpExceptionHandlerFactory = createCheckpointExceptionHandlerFactory();
 
+			// 获取同步检查点异常处理方式
 			synchronousCheckpointExceptionHandler = cpExceptionHandlerFactory.createCheckpointExceptionHandler(
 				getExecutionConfig().isFailTaskOnCheckpointError(),
 				getEnvironment());
-
+			
+			// 异步检查点异常处理方式
 			asynchronousCheckpointExceptionHandler = new AsyncCheckpointExceptionHandler(this);
 
 			stateBackend = createStateBackend();
 			checkpointStorage = stateBackend.createCheckpointStorage(getEnvironment().getJobID());
 
 			// if the clock is not already set, then assign a default TimeServiceProvider
+			// 如果 clock 没有设置，使用 SystemProcessingTimeService
 			if (timerService == null) {
 				ThreadFactory timerThreadFactory = new DispatcherThreadFactory(TRIGGER_THREAD_GROUP,
 					"Time Trigger for " + getName(), getUserCodeClassLoader());
@@ -288,6 +322,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			init();
 
 			// save the work of reloading state, etc, if the task is already canceled
+			// 如果任务已被取消，则保存重新加载状态等的工作
 			if (canceled) {
 				throw new CancelTaskException();
 			}
@@ -297,11 +332,14 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 			// we need to make sure that any triggers scheduled in open() cannot be
 			// executed before all operators are opened
+			// 我们需要确保在打开所有运算符之前无法执行 open() 中调度的任何触发器
 			synchronized (lock) {
 
 				// both the following operations are protected by the lock
 				// so that we avoid race conditions in the case that initializeState()
 				// registers a timer, that fires before the open() is called.
+				// 以下操作都受锁保护，以便在 initializeState() 注册一个计时器时避免竞争条件
+				// 该计时器在调用 open() 前触发
 
 				initializeState();
 				openAllOperators();
@@ -347,6 +385,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			LOG.debug("Closed operators for task {}", getName());
 
 			// make sure all buffered data is flushed
+			// 确保所有缓存的数据 flush
 			operatorChain.flushOutputs();
 
 			// make an attempt to dispose the operators such that failures in the dispose call
@@ -356,6 +395,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 		finally {
 			// clean up everything we initialized
+			// clean up 我们初始化的所有东西
 			isRunning = false;
 
 			// Now that we are outside the user code, we do not want to be interrupted further
@@ -366,12 +406,15 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			setShouldInterruptOnCancel(false);
 
 			// clear any previously issued interrupt for a more graceful shutdown
+			// 清除任何先前发出的中断以获得更优雅的关闭
 			Thread.interrupted();
 
 			// stop all timers and threads
+			// 停止所有的定时器
 			tryShutdownTimerService();
 
 			// stop all asynchronous checkpoint threads
+			// 停止所有的异步检查点线程
 			try {
 				cancelables.close();
 				shutdownAsyncThreads();
@@ -396,9 +439,12 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			}
 
 			// release the output resources. this method should never fail.
+			// 释放 output resources，释放 recordWriter
 			if (operatorChain != null) {
 				// beware: without synchronization, #performCheckpoint() may run in
 				//         parallel and this call is not thread-safe
+				// 如果不使用 synchronized，performCheckpoint 方法可能和本方法一起调用
+				// 不是线程安全的了
 				synchronized (lock) {
 					operatorChain.releaseOutputs();
 				}
@@ -435,6 +481,10 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * to {@link StreamOperator#close()} which happens <b>head to tail</b>
 	 * (see {@link #closeAllOperators()}.
 	 */
+	/**
+	 * 执行操作链中所有操作符的 open 方法
+	 * 从尾到头 open
+	 */
 	private void openAllOperators() throws Exception {
 		for (StreamOperator<?> operator : operatorChain.getAllOperators()) {
 			if (operator != null) {
@@ -449,9 +499,14 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * contrary to {@link StreamOperator#open()} which happens <b>tail to head</b>
 	 * (see {@link #openAllOperators()}.
 	 */
+	/**
+	 * 执行操作链中所有操作符的 close 方法
+	 * 从头到尾 close
+	 */
 	private void closeAllOperators() throws Exception {
 		// We need to close them first to last, since upstream operators in the chain might emit
 		// elements in their close methods.
+		// 我们需要从头到尾关闭，因为链中的上游操作符可能在 close 方法中 emit elements
 		StreamOperator<?>[] allOperators = operatorChain.getAllOperators();
 		for (int i = allOperators.length - 1; i >= 0; i--) {
 			StreamOperator<?> operator = allOperators[i];
@@ -465,6 +520,9 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * Execute {@link StreamOperator#dispose()} of each operator in the chain of this
 	 * {@link StreamTask}. Disposing happens from <b>tail to head</b> operator in the chain.
 	 */
+	/**
+	 * 执行操作链中所有操作符的 dispose 方法
+	 */
 	private void tryDisposeAllOperators() throws Exception {
 		for (StreamOperator<?> operator : operatorChain.getAllOperators()) {
 			if (operator != null) {
@@ -473,6 +531,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
+	// 关闭异步处理线程
 	private void shutdownAsyncThreads() throws Exception {
 		if (!asyncOperationsThreadPool.isShutdown()) {
 			asyncOperationsThreadPool.shutdownNow();
@@ -485,6 +544,10 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 *
 	 * <p>The difference with the {@link #tryDisposeAllOperators()} is that in case of an
 	 * exception, this method catches it and logs the message.
+	 */
+	/**
+	 * 执行操作链中所有操作符的 dispose 方法，本方法与 tryDisposeAllOperators 的不同在于
+	 * 本方法会捕获 operator.dispose 方法抛出的异常
 	 */
 	private void disposeAllOperators() {
 		if (operatorChain != null) {
@@ -507,6 +570,11 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 *
 	 * <p>This should not be relied upon! It will cause shutdown to happen much later than if manual
 	 * shutdown is attempted, and cause threads to linger for longer than needed.
+	 */
+	/**
+	 * finalize 方法关闭计时器。这是一个故障安全的关闭，以防从未调用原始关闭方法
+	 * 
+	 * 这不应该依赖！与尝试手动关闭相比，它将导致关闭发生的时间要晚得多，并导致线程停留的时间超过所需的时间
 	 */
 	@Override
 	protected void finalize() throws Throwable {
@@ -570,6 +638,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	//  Checkpoint and Restore
 	// ------------------------------------------------------------------------
 
+	// 触发检查点
 	@Override
 	public boolean triggerCheckpoint(CheckpointMetaData checkpointMetaData, CheckpointOptions checkpointOptions) throws Exception {
 		try {
@@ -613,19 +682,23 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
+	// 停止检查点
 	@Override
 	public void abortCheckpointOnBarrier(long checkpointId, Throwable cause) throws Exception {
 		LOG.debug("Aborting checkpoint via cancel-barrier {} for task {}", checkpointId, getName());
 
 		// notify the coordinator that we decline this checkpoint
+		// 通知协调员我们拒绝此检查点
 		getEnvironment().declineCheckpoint(checkpointId, cause);
 
 		// notify all downstream operators that they should not wait for a barrier from us
+		// 通知所有下游操作符，他们不应该等我们的障碍
 		synchronized (lock) {
 			operatorChain.broadcastCheckpointCancelMarker(checkpointId);
 		}
 	}
 
+	// 检查点操作
 	private boolean performCheckpoint(
 			CheckpointMetaData checkpointMetaData,
 			CheckpointOptions checkpointOptions,
@@ -637,17 +710,20 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		synchronized (lock) {
 			if (isRunning) {
 				// we can do a checkpoint
-
+				// 我们可以产生一个检查点
 				// All of the following steps happen as an atomic step from the perspective of barriers and
 				// records/watermarks/timers/callbacks.
 				// We generally try to emit the checkpoint barrier as soon as possible to not affect downstream
 				// checkpoint alignments
+				// 从障碍和记录/水印/定时器/回调的角度来看，所有以下步骤都是作为原子步骤发生的
 
 				// Step (1): Prepare the checkpoint, allow operators to do some pre-barrier work.
 				//           The pre-barrier work should be nothing or minimal in the common case.
+				// 步骤一：准备检查点，允许操作符做一些 pre-barrier 的工作
 				operatorChain.prepareSnapshotPreBarrier(checkpointMetaData.getCheckpointId());
 
 				// Step (2): Send the checkpoint barrier downstream
+				// 步骤二：将 checkpoint barrier 传给下游
 				operatorChain.broadcastCheckpointBarrier(
 						checkpointMetaData.getCheckpointId(),
 						checkpointMetaData.getTimestamp(),
@@ -655,15 +731,17 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 				// Step (3): Take the state snapshot. This should be largely asynchronous, to not
 				//           impact progress of the streaming topology
+				// 步骤三：拍摄状态快照。这应该在很大程度上是异步的，不会影响流式拓扑的进度
 				checkpointState(checkpointMetaData, checkpointOptions, checkpointMetrics);
 				return true;
 			}
 			else {
 				// we cannot perform our checkpoint - let the downstream operators know that they
 				// should not wait for any input from this operator
-
+				// 我们无法执行检查点 - 让下游操作符知道他们不应该等待来自此操作符的任何输入，以免影响流式拓扑的进度
 				// we cannot broadcast the cancellation markers on the 'operator chain', because it may not
 				// yet be created
+				// 我们不能操作符链上广播取消标记，因为它可能尚未创建，不能调用 operatorChain.broadcastCheckpointCancelMarker() 方法
 				final CancelCheckpointMarker message = new CancelCheckpointMarker(checkpointMetaData.getCheckpointId());
 				Exception exception = null;
 
@@ -690,6 +768,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		return asyncOperationsThreadPool;
 	}
 
+	// 通知检查点完成
 	@Override
 	public void notifyCheckpointComplete(long checkpointId) throws Exception {
 		synchronized (lock) {
@@ -708,6 +787,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
+	// 尝试关闭时间定时器服务
 	private void tryShutdownTimerService() {
 
 		if (timerService != null && !timerService.isTerminated()) {
@@ -727,6 +807,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
+	// 检查点状态
 	private void checkpointState(
 			CheckpointMetaData checkpointMetaData,
 			CheckpointOptions checkpointOptions,
@@ -746,6 +827,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		checkpointingOperation.executeCheckpointing();
 	}
 
+	// 调用操作链中所有操作符的 initializeState 方法
 	private void initializeState() throws Exception {
 
 		StreamOperator<?>[] allOperators = operatorChain.getAllOperators();
@@ -771,6 +853,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 				LOG);
 	}
 
+	// 创建检查点异常处理工厂实例
 	protected CheckpointExceptionHandlerFactory createCheckpointExceptionHandlerFactory() {
 		return new CheckpointExceptionHandlerFactory();
 	}
@@ -779,6 +862,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * Returns the {@link ProcessingTimeService} responsible for telling the current
 	 * processing time and registering timers.
 	 */
+	// 返回时间定时器服务
 	public ProcessingTimeService getProcessingTimeService() {
 		if (timerService == null) {
 			throw new IllegalStateException("The timer service has not been initialized.");
@@ -821,20 +905,23 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	/**
 	 * This runnable executes the asynchronous parts of all involved backend snapshots for the subtask.
 	 */
+	/**
+	 * 此 runnable 执行子任务的所有相关后端快照的异步部分
+	 */
 	@VisibleForTesting
 	protected static final class AsyncCheckpointRunnable implements Runnable, Closeable {
 
 		private final StreamTask<?, ?> owner;
 
-		private final Map<OperatorID, OperatorSnapshotFutures> operatorSnapshotsInProgress;
+		private final Map<OperatorID, OperatorSnapshotFutures> operatorSnapshotsInProgress;  // 所有 operator 的快照 map
 
 		private final CheckpointMetaData checkpointMetaData;
 		private final CheckpointMetrics checkpointMetrics;
 
-		private final long asyncStartNanos;
+		private final long asyncStartNanos;  // 异步开始的时间
 
 		private final AtomicReference<CheckpointingOperation.AsyncCheckpointState> asyncCheckpointState = new AtomicReference<>(
-			CheckpointingOperation.AsyncCheckpointState.RUNNING);
+			CheckpointingOperation.AsyncCheckpointState.RUNNING);  // 异步检查点状态
 
 		AsyncCheckpointRunnable(
 			StreamTask<?, ?> owner,
@@ -867,6 +954,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 					OperatorSnapshotFutures snapshotInProgress = entry.getValue();
 
 					// finalize the async part of all by executing all snapshot runnables
+					// 通过执行所有快照可运行来完成所有异步部分
 					OperatorSnapshotFinalizer finalizedSnapshots =
 						new OperatorSnapshotFinalizer(snapshotInProgress);
 
@@ -883,7 +971,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 				final long asyncDurationMillis = (asyncEndNanos - asyncStartNanos) / 1_000_000L;
 
 				checkpointMetrics.setAsyncDurationMillis(asyncDurationMillis);
-
+				
+				// 全部执行完毕，更新状态
 				if (asyncCheckpointState.compareAndSet(CheckpointingOperation.AsyncCheckpointState.RUNNING,
 					CheckpointingOperation.AsyncCheckpointState.COMPLETED)) {
 
@@ -905,11 +994,13 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			}
 		}
 
+		// 报告快照生成完毕
 		private void reportCompletedSnapshotStates(
 			TaskStateSnapshot acknowledgedTaskStateSnapshot,
 			TaskStateSnapshot localTaskStateSnapshot,
 			long asyncDurationMillis) {
 
+			// 获取当前 task 执行的 taskManager
 			TaskStateManager taskStateManager = owner.getEnvironment().getTaskStateManager();
 
 			boolean hasAckState = acknowledgedTaskStateSnapshot.hasState();
@@ -922,6 +1013,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			// we signal stateless tasks by reporting null, so that there are no attempts to assign empty state
 			// to stateless tasks on restore. This enables simple job modifications that only concern
 			// stateless without the need to assign them uids to match their (always empty) states.
+			// 我们通过报告 null 来表示无状态任务，因此在还原时没有尝试将空状态分配给无状态任务
+			// 这使得简单的作业修改只涉及无状态，而无需在失败任务的时候为其分配 uid 来匹配它们总是空的状态
 			taskStateManager.reportTaskStateSnapshots(
 				checkpointMetaData,
 				checkpointMetrics,
@@ -935,6 +1028,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 				owner.getName(), checkpointMetaData.getCheckpointId(), acknowledgedTaskStateSnapshot);
 		}
 
+		// 处理执行异常
 		private void handleExecutionException(Exception e) {
 
 			boolean didCleanup = false;
@@ -961,6 +1055,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 					// We only report the exception for the original cause of fail and cleanup.
 					// Otherwise this followup exception could race the original exception in failing the task.
+					// 我们只报告失败和清理的原始异常
+					// 否则，此后续异常可能会在失败任务时使原始异常竞争
 					owner.asynchronousCheckpointExceptionHandler.tryHandleCheckpointException(
 						checkpointMetaData,
 						checkpointException);
@@ -1029,7 +1125,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	}
 
 	// ------------------------------------------------------------------------
-
+	// 检查点操作
 	private static final class CheckpointingOperation {
 
 		private final StreamTask<?, ?> owner;
@@ -1068,6 +1164,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			startSyncPartNano = System.nanoTime();
 
 			try {
+				// 执行每个操作符的 snapshotState 方法
 				for (StreamOperator<?> op : allOperators) {
 					checkpointStreamOperator(op);
 				}
@@ -1082,6 +1179,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 				checkpointMetrics.setSyncDurationMillis((startAsyncPartNano - startSyncPartNano) / 1_000_000);
 
 				// we are transferring ownership over snapshotInProgressList for cleanup to the thread, active on submit
+				// 我们正在通过 snapshotInProgressList 将所有权转移到线程，在提交时激活
 				AsyncCheckpointRunnable asyncCheckpointRunnable = new AsyncCheckpointRunnable(
 					owner,
 					operatorSnapshotsInProgress,
@@ -1089,8 +1187,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 					checkpointMetrics,
 					startAsyncPartNano);
 
-				owner.cancelables.registerCloseable(asyncCheckpointRunnable);
-				owner.asyncOperationsThreadPool.submit(asyncCheckpointRunnable);
+				owner.cancelables.registerCloseable(asyncCheckpointRunnable);  // 注册 close
+				owner.asyncOperationsThreadPool.submit(asyncCheckpointRunnable);  // 提交到线程池
 
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("{} - finished synchronous part of checkpoint {}. " +
@@ -1124,6 +1222,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 
 		@SuppressWarnings("deprecation")
+		// 执行每个操作符的 snapshotState 方法
 		private void checkpointStreamOperator(StreamOperator<?> op) throws Exception {
 			if (null != op) {
 
@@ -1136,6 +1235,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			}
 		}
 
+		// 异步检查点状态
 		private enum AsyncCheckpointState {
 			RUNNING,
 			DISCARDED,
@@ -1147,6 +1247,11 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * Wrapper for synchronous {@link CheckpointExceptionHandler}. This implementation catches unhandled, rethrown
 	 * exceptions and reports them through {@link #handleAsyncException(String, Throwable)}. As this implementation
 	 * always handles the exception in some way, it never rethrows.
+	 */
+	/**
+	 * 同步 CheckpointExceptionHandler 的包裹
+	 * 本类捕获未处理的，重新抛出的异常，并且通过 handleAsyncException 方法来报告
+	 * 由于此实现始终以某种方式处理异常，因此它永远不会重新抛出
 	 */
 	static final class AsyncCheckpointExceptionHandler implements CheckpointExceptionHandler {
 

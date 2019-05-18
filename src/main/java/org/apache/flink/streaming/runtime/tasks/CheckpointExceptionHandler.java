@@ -23,6 +23,10 @@ import org.apache.flink.runtime.checkpoint.CheckpointMetaData;
 /**
  * Handler for exceptions that happen on checkpointing. The handler can reject and rethrow the offered exceptions.
  */
+/**
+ * 检查点上发生异常的处理程序
+ * 处理程序可以拒绝并重新抛出提供的异常
+ */
 public interface CheckpointExceptionHandler {
 
 	/**
@@ -31,6 +35,9 @@ public interface CheckpointExceptionHandler {
 	 * @param checkpointMetaData metadata for the checkpoint for which the exception occurred.
 	 * @param exception  the exception to handle.
 	 * @throws Exception rethrows the exception if it cannot be handled.
+	 */
+	/**
+	 * 提供对异常的处理。如果无法从此实例处理异常，则会重新抛出该异常
 	 */
 	void tryHandleCheckpointException(CheckpointMetaData checkpointMetaData, Exception exception) throws Exception;
 }

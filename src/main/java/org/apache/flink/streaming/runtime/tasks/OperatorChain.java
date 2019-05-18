@@ -220,6 +220,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 		}
 	}
 
+	// 广播检查点屏障
 	public void broadcastCheckpointBarrier(long id, long timestamp, CheckpointOptions checkpointOptions) throws IOException {
 		CheckpointBarrier barrier = new CheckpointBarrier(id, timestamp, checkpointOptions);
 		for (RecordWriterOutput<?> streamOutput : streamOutputs) {
@@ -227,6 +228,7 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 		}
 	}
 
+	// 广播检查点的取消
 	public void broadcastCheckpointCancelMarker(long id) throws IOException {
 		CancelCheckpointMarker barrier = new CancelCheckpointMarker(id);
 		for (RecordWriterOutput<?> streamOutput : streamOutputs) {
@@ -237,7 +239,9 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 	public void prepareSnapshotPreBarrier(long checkpointId) throws Exception {
 		// go forward through the operator chain and tell each operator
 		// to prepare the checkpoint
+		// 通过操作符链向前走，告诉每个操作符准备检查点
 		final StreamOperator<?>[] operators = this.allOperators;
+		// 从后往前通知
 		for (int i = operators.length - 1; i >= 0; --i) {
 			final StreamOperator<?> op = operators[i];
 			if (op != null) {

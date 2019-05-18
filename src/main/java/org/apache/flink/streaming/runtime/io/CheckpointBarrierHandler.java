@@ -29,6 +29,10 @@ import java.io.IOException;
  * Different implementations may either simply track barriers, or block certain inputs on
  * barriers.
  */
+/**
+ * CheckpointBarrierHandler 对来自输入通道的检查点障碍作出反应
+ * 不同的实现可以简单地跟踪障碍，或阻止障碍上的某些输入
+ */
 @Internal
 public interface CheckpointBarrierHandler {
 

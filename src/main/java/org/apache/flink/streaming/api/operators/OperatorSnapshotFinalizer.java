@@ -32,12 +32,19 @@ import java.util.concurrent.ExecutionException;
  * This class finalizes {@link OperatorSnapshotFutures}. Each object is created with a {@link OperatorSnapshotFutures}
  * that is executed. The object can then deliver the results from the execution as {@link OperatorSubtaskState}.
  */
+/**
+ * 本类最终确定了 OperatorSnapshotFutures
+ * 使用执行的 OperatorSnapshotFutures 创建每个对象
+ * 然后，该对象可以将执行结果作为 OperatorSubtaskState 传递
+ */
 public class OperatorSnapshotFinalizer {
 
 	/** Primary replica of the operator subtask state for report to JM. */
+	// 操作员子任务状态的主要副本，用于向 JM 报告
 	private final OperatorSubtaskState jobManagerOwnedState;
 
 	/** Secondary replica of the operator subtask state for faster, local recovery on TM. */
+	// 操作员子任务状态的辅助副本，用于在 TM 上进行更快的本地恢复
 	private final OperatorSubtaskState taskLocalState;
 
 	public OperatorSnapshotFinalizer(

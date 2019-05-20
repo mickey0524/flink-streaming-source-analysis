@@ -163,9 +163,11 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 	@Override
 	public long getAlignmentDurationNanos() {
 		// this one does not do alignment at all
+		// 这里不对齐任何东西
 		return 0L;
 	}
 
+	// 处理 barrier
 	private void processBarrier(CheckpointBarrier receivedBarrier, int channelIndex) throws Exception {
 		// 获取检查点 ID
 		final long barrierId = receivedBarrier.getId();
@@ -178,11 +180,13 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 		}
 
 		// general path for multiple input channels
+		// 多输入 channel 记录日志
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("Received barrier for checkpoint {} from channel {}", barrierId, channelIndex);
 		}
 
 		// find the checkpoint barrier in the queue of pending barriers
+		// 在等待队列中寻找检查点 barrier
 		CheckpointBarrierCount cbc = null;
 		int pos = 0;
 
@@ -194,18 +198,22 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 			pos++;
 		}
 
+		// 检查点之前就存在
 		if (cbc != null) {
 			// add one to the count to that barrier and check for completion
+			// 给 count 加一，判断是否完成了 checkpoint
 			int numBarriersNew = cbc.incrementBarrierCount();
 			if (numBarriersNew == totalNumberOfInputChannels) {
 				// checkpoint can be triggered (or is aborted and all barriers have been seen)
 				// first, remove this checkpoint and all all prior pending
 				// checkpoints (which are now subsumed)
+				// 检查点可以被触发（或被中止并且已经看到所有障碍）首先，删除此检查点以及所有先前的待处理检查点（现在已包含）
 				for (int i = 0; i <= pos; i++) {
 					pendingCheckpoints.pollFirst();
 				}
 
 				// notify the listener
+				// 通知监听者
 				if (!cbc.isAborted()) {
 					if (LOG.isDebugEnabled()) {
 						LOG.debug("Received all barriers for checkpoint {}", barrierId);
@@ -215,16 +223,21 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 				}
 			}
 		}
+		// 检查点之前不存在，是一个全新的 checkpoint
 		else {
 			// first barrier for that checkpoint ID
 			// add it only if it is newer than the latest checkpoint.
 			// if it is not newer than the latest checkpoint ID, then there cannot be a
 			// successful checkpoint for that ID anyways
+			// 该 checkpointID 的第一个屏障
+			// 添加该 checkpointID 当其 id 大于最近的一个 checkpoint
+			// 否则，无论如何都不能成功获得该ID的检查点
 			if (barrierId > latestPendingCheckpointID) {
 				latestPendingCheckpointID = barrierId;
 				pendingCheckpoints.addLast(new CheckpointBarrierCount(barrierId));
 
 				// make sure we do not track too many checkpoints
+				// 确保我们不能同时跟踪多个检查点
 				if (pendingCheckpoints.size() > MAX_CHECKPOINTS_TO_TRACK) {
 					pendingCheckpoints.pollFirst();
 				}
@@ -232,6 +245,7 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 		}
 	}
 
+	// 处理检查点取消
 	private void processCheckpointAbortBarrier(CancelCheckpointMarker barrier, int channelIndex) throws Exception {
 		final long checkpointId = barrier.getCheckpointId();
 
@@ -240,6 +254,7 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 		}
 
 		// fast path for single channel trackers
+		// 单通道跟踪器的快速通道
 		if (totalNumberOfInputChannels == 1) {
 			notifyAbort(checkpointId);
 			return;
@@ -249,24 +264,30 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 
 		// find the checkpoint barrier in the queue of pending barriers
 		// while doing this we "abort" all checkpoints before that one
+		// 找到该 checkpointID 在队列中的位置
+		// 并且执行该 checkpointID 之前所有 checkpoint 的 notifyAbort 方法
 		CheckpointBarrierCount cbc;
 		while ((cbc = pendingCheckpoints.peekFirst()) != null && cbc.checkpointId() < checkpointId) {
 			pendingCheckpoints.removeFirst();
 
 			if (cbc.markAborted()) {
 				// abort the subsumed checkpoints if not already done
+				// 如果尚未完成，则中止对应的检查点
 				notifyAbort(cbc.checkpointId());
 			}
 		}
 
 		if (cbc != null && cbc.checkpointId() == checkpointId) {
 			// make sure the checkpoint is remembered as aborted
+			// 确保检查点被标记为中止
 			if (cbc.markAborted()) {
 				// this was the first time the checkpoint was aborted - notify
+				// 这是检查点第一次中止 - 通知
 				notifyAbort(checkpointId);
 			}
 
 			// we still count the barriers to be able to remove the entry once all barriers have been seen
+			// 我们依旧对 barrier 计数，并且在所有的 barrier 到来之后，从等待队列中将其删除
 			if (cbc.incrementBarrierCount() == totalNumberOfInputChannels) {
 				// we can remove this entry
 				pendingCheckpoints.removeFirst();
@@ -283,6 +304,7 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 
 			// we have removed all other pending checkpoint barrier counts --> no need to check that
 			// we don't exceed the maximum checkpoints to track
+			// 我们已经删除了所有其他待处理的检查点障碍计数 - > 无需检查我们是否超过能跟踪的最大检查点数目
 		} else {
 			// trailing cancellation barrier which was already cancelled
 		}

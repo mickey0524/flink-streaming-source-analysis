@@ -50,6 +50,13 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * BarrierBuffer continues receiving buffers from the blocked channels and stores them internally until
  * the blocks are released.
  */
+/**
+ * BarrierBuffer 是 CheckpointBarrierHandler
+ * 它阻止带有障碍的输入，直到所有输入都接收到给定检查点的屏障
+ * 
+ * 为了避免对输入流进行反压（这可能导致分布式死锁）
+ * BarrierBuffer 持续从阻塞的通道接收缓冲区并在内部存储它们直到块被释放
+ */
 @Internal
 public class BarrierBuffer implements CheckpointBarrierHandler {
 

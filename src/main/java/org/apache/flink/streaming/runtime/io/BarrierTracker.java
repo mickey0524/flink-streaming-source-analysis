@@ -46,6 +46,14 @@ import java.util.Optional;
  *
  * <p>NOTE: This implementation strictly assumes that newer checkpoints have higher checkpoint IDs.
  */
+/**
+ * BarrierTracker 跟踪从哪些输入通道接收到的检查点障碍
+ * 一旦它观察到检查点 ID 的所有检查点障碍，它就会通知其监听器检查点已完成
+ * 
+ * 与 BarrierBuffer 不同，BarrierTracker 不会阻止已发送障碍的输入通道
+ * 因此它不能用于获得 "完全一次" 处理保证
+ * 但是，它可用于获得 "至少一次" 处理保证
+ */
 @Internal
 public class BarrierTracker implements CheckpointBarrierHandler {
 
@@ -55,65 +63,83 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 	 * The tracker tracks a maximum number of checkpoints, for which some, but not all barriers
 	 * have yet arrived.
 	 */
+	/**
+	 * 跟踪器跟踪最大数量的检查点，其中有一些，但不是全部的障碍没有到达
+	 */
 	private static final int MAX_CHECKPOINTS_TO_TRACK = 50;
 
 	// ------------------------------------------------------------------------
 
 	/** The input gate, to draw the buffers and events from. */
+	// input gate，用于绘制缓冲区和事件
 	private final InputGate inputGate;
 
 	/**
 	 * The number of channels. Once that many barriers have been received for a checkpoint, the
 	 * checkpoint is considered complete.
 	 */
+	// channel 的数量，一旦检查点收到了这么多 barriers，检查点被认为完成
 	private final int totalNumberOfInputChannels;
 
 	/**
 	 * All checkpoints for which some (but not all) barriers have been received, and that are not
 	 * yet known to be subsumed by newer checkpoints.
 	 */
+	/**
+	 * 已收到一些（但不是全部）障碍的所有检查点，以及目前不知道是否还有更新的检查点
+	 */
 	private final ArrayDeque<CheckpointBarrierCount> pendingCheckpoints;
 
 	/** The listener to be notified on complete checkpoints. */
+	// 检查点完成的时候触发的监听器
 	private AbstractInvokable toNotifyOnCheckpoint;
 
 	/** The highest checkpoint ID encountered so far. */
+	// 到目前位置遇到的最大检查点 ID
 	private long latestPendingCheckpointID = -1;
 
 	// ------------------------------------------------------------------------
 
+	// 新建一个跟踪器
 	public BarrierTracker(InputGate inputGate) {
 		this.inputGate = inputGate;
 		this.totalNumberOfInputChannels = inputGate.getNumberOfInputChannels();
 		this.pendingCheckpoints = new ArrayDeque<>();
 	}
 
+	// 这是一个 blocking 的函数
 	@Override
 	public BufferOrEvent getNextNonBlocked() throws Exception {
 		while (true) {
 			Optional<BufferOrEvent> next = inputGate.getNextBufferOrEvent();
 			if (!next.isPresent()) {
 				// buffer or input exhausted
+				// 缓存或输入耗尽
 				return null;
 			}
 
 			BufferOrEvent bufferOrEvent = next.get();
+			// 如果是 buffer 的话
 			if (bufferOrEvent.isBuffer()) {
 				return bufferOrEvent;
 			}
+			// 收到了检查点 barrier
 			else if (bufferOrEvent.getEvent().getClass() == CheckpointBarrier.class) {
 				processBarrier((CheckpointBarrier) bufferOrEvent.getEvent(), bufferOrEvent.getChannelIndex());
 			}
+			// 收到了取消检查点
 			else if (bufferOrEvent.getEvent().getClass() == CancelCheckpointMarker.class) {
 				processCheckpointAbortBarrier((CancelCheckpointMarker) bufferOrEvent.getEvent(), bufferOrEvent.getChannelIndex());
 			}
 			else {
 				// some other event
+				// 一些其他的 event
 				return bufferOrEvent;
 			}
 		}
 	}
 
+	// 注册检查点时间处理器，其实就是设置 StreamTask
 	@Override
 	public void registerCheckpointEventHandler(AbstractInvokable toNotifyOnCheckpoint) {
 		if (this.toNotifyOnCheckpoint == null) {
@@ -141,9 +167,11 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 	}
 
 	private void processBarrier(CheckpointBarrier receivedBarrier, int channelIndex) throws Exception {
+		// 获取检查点 ID
 		final long barrierId = receivedBarrier.getId();
 
 		// fast path for single channel trackers
+		// 单通道跟踪器的快速路径，只有一个通道的话，接到一个 Barrier，就说明检查点完成
 		if (totalNumberOfInputChannels == 1) {
 			notifyCheckpoint(barrierId, receivedBarrier.getTimestamp(), receivedBarrier.getCheckpointOptions());
 			return;
@@ -260,6 +288,9 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 		}
 	}
 
+	/**
+	 * 通知检查点完成
+	 */
 	private void notifyCheckpoint(long checkpointId, long timestamp, CheckpointOptions checkpointOptions) throws Exception {
 		if (toNotifyOnCheckpoint != null) {
 			CheckpointMetaData checkpointMetaData = new CheckpointMetaData(checkpointId, timestamp);
@@ -271,6 +302,9 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 		}
 	}
 
+	/**
+	 * 通知检查点取消
+	 */
 	private void notifyAbort(long checkpointId) throws Exception {
 		if (toNotifyOnCheckpoint != null) {
 			toNotifyOnCheckpoint.abortCheckpointOnBarrier(
@@ -282,6 +316,10 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 
 	/**
 	 * Simple class for a checkpoint ID with a barrier counter.
+	 */
+	/**
+	 * checkpoint ID 用的简单的类
+	 * 记录了收集到的 barrier 的数目
 	 */
 	private static final class CheckpointBarrierCount {
 
@@ -309,7 +347,7 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 		}
 
 		public boolean markAborted() {
-			boolean firstAbort = !this.aborted;
+			boolean firstAbort = !this.aborted;  // 是否是第一次 abort
 			this.aborted = true;
 			return firstAbort;
 		}

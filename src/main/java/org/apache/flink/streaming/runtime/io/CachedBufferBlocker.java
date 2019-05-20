@@ -31,6 +31,13 @@ import java.util.ArrayDeque;
  *
  * <p>This buffer blocked can be used in credit-based flow control for better barrier alignment in exactly-once mode.
  */
+/**
+ * CachedBufferBlocker 从数据流中获取缓冲区和事件，并将它们添加到内存队列中
+ * 在缓存了许多元素之后，阻塞程序进行 "翻转"
+ * 它将缓存的元素作为可读序列呈现，并创建一个新的内存队列
+ * 
+ * CachedBufferBlocker 可用于基于信用的流量控制，以便在 exactly-once 下实现更好的屏障对齐
+ */
 @Internal
 public class CachedBufferBlocker implements BufferBlocker {
 

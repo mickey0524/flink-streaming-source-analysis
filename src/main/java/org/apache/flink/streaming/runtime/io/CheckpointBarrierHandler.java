@@ -50,12 +50,19 @@ public interface CheckpointBarrierHandler {
 	 * @throws Exception Thrown in case that a checkpoint fails that is started as the result of receiving
 	 *                   the last checkpoint barrier
 	 */
+	/**
+	 * 返回运算符可能使用的下一个 BufferOrEvent
+	 * 此调用将阻塞，直到下一个 BufferOrEvent 可用，或者直到确定流已完成为止
+	 */
 	BufferOrEvent getNextNonBlocked() throws Exception;
 
 	/**
 	 * Registers the task be notified once all checkpoint barriers have been received for a checkpoint.
 	 *
 	 * @param task The task to notify
+	 */
+	/**
+	 * 一旦收到检查点的所有检查点障碍，就会通知注册任务
 	 */
 	void registerCheckpointEventHandler(AbstractInvokable task);
 
@@ -64,11 +71,17 @@ public interface CheckpointBarrierHandler {
 	 *
 	 * @throws IOException Thrown if the cleanup of I/O resources failed.
 	 */
+	/**
+	 * 清理所有内部资源
+	 */
 	void cleanup() throws IOException;
 
 	/**
 	 * Checks if the barrier handler has buffered any data internally.
 	 * @return {@code True}, if no data is buffered internally, {@code false} otherwise.
+	 */
+	/**
+	 * 检查屏障处理程序是否在内部缓冲了任何数据
 	 */
 	boolean isEmpty();
 
@@ -78,6 +91,10 @@ public interface CheckpointBarrierHandler {
 	 * current alignment so far.
 	 *
 	 * @return The duration in nanoseconds
+	 */
+	/**
+	 * 获取最新对齐所用的时间，以纳秒为单位
+	 * 如果当前正在进行对齐，则它将返回到目前为止在当前对齐中花费的时间
 	 */
 	long getAlignmentDurationNanos();
 }

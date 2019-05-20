@@ -32,6 +32,10 @@ import java.io.IOException;
  * Utility for creating {@link CheckpointBarrierHandler} based on checkpoint mode
  * for {@link StreamInputProcessor} and {@link StreamTwoInputProcessor}.
  */
+/**
+ * 根据 StreamInputProcessor 和 StreamTwoInputProcessor 的检查点模式
+ * 创建 CheckpointBarrierHandler 的工具类
+ */
 @Internal
 public class InputProcessorUtil {
 
@@ -43,6 +47,7 @@ public class InputProcessorUtil {
 			Configuration taskManagerConfig) throws IOException {
 
 		CheckpointBarrierHandler barrierHandler;
+		// 当检查点模式为 EXACTLY_ONCE 的时候
 		if (checkpointMode == CheckpointingMode.EXACTLY_ONCE) {
 			long maxAlign = taskManagerConfig.getLong(TaskManagerOptions.TASK_CHECKPOINT_ALIGNMENT_BYTES_LIMIT);
 			if (!(maxAlign == -1 || maxAlign > 0)) {
@@ -56,13 +61,16 @@ public class InputProcessorUtil {
 			} else {
 				barrierHandler = new BarrierBuffer(inputGate, new BufferSpiller(ioManager, inputGate.getPageSize()), maxAlign);
 			}
-		} else if (checkpointMode == CheckpointingMode.AT_LEAST_ONCE) {
+		}
+		// 当检查点模式为 AT_LEAST_ONCE 的时候
+		else if (checkpointMode == CheckpointingMode.AT_LEAST_ONCE) {
 			barrierHandler = new BarrierTracker(inputGate);
 		} else {
 			throw new IllegalArgumentException("Unrecognized Checkpointing Mode: " + checkpointMode);
 		}
 
 		if (checkpointedTask != null) {
+			// 用于访问 StreamTask 中的 triggerCheckpointOnBarrier 方法
 			barrierHandler.registerCheckpointEventHandler(checkpointedTask);
 		}
 

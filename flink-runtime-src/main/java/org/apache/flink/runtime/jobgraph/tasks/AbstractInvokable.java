@@ -206,6 +206,13 @@ public abstract class AbstractInvokable {
 	 *
 	 * @return {@code false} if the checkpoint can not be carried out, {@code true} otherwise
 	 */
+	/**
+	 * 检查点协调者异步的调用此方法来触发一个检查点
+	 * 
+	 * task 调用这个方法，通过注入初始 barriers 来开始检查点，例如源任务
+	 * 相反，下游操作符的检查点是接收检查点障碍的结果，调用
+	 * triggerCheckpointOnBarrier 方法
+	 */
 	public boolean triggerCheckpoint(CheckpointMetaData checkpointMetaData, CheckpointOptions checkpointOptions) throws Exception {
 		throw new UnsupportedOperationException(String.format("triggerCheckpoint not supported by %s", this.getClass().getName()));
 	}
@@ -219,6 +226,9 @@ public abstract class AbstractInvokable {
 	 * @param checkpointMetrics Metrics about this checkpoint
 	 *
 	 * @throws Exception Exceptions thrown as the result of triggering a checkpoint are forwarded.
+	 */
+	/**
+	 * 当在所有输入流上接收检查点障碍而触发检查点时，将调用此方法
 	 */
 	public void triggerCheckpointOnBarrier(CheckpointMetaData checkpointMetaData, CheckpointOptions checkpointOptions, CheckpointMetrics checkpointMetrics) throws Exception {
 		throw new UnsupportedOperationException(String.format("triggerCheckpointOnBarrier not supported by %s", this.getClass().getName()));
@@ -234,6 +244,10 @@ public abstract class AbstractInvokable {
 	 * @param checkpointId The ID of the checkpoint to be aborted.
 	 * @param cause The reason why the checkpoint was aborted during alignment
 	 */
+	/**
+	 * 作为接收可能的一些检查点障碍的结果，中止检查点，但至少有一个 CancelCheckpointMarker
+	 * 这需要实现任务以将 CancelCheckpointMarker 转发到他们的输出
+	 */
 	public void abortCheckpointOnBarrier(long checkpointId, Throwable cause) throws Exception {
 		throw new UnsupportedOperationException(String.format("abortCheckpointOnBarrier not supported by %s", this.getClass().getName()));
 	}
@@ -244,6 +258,9 @@ public abstract class AbstractInvokable {
 	 *
 	 * @param checkpointId The ID of the checkpoint that is complete..
 	 * @throws Exception The notification method may forward its exceptions.
+	 */
+	/**
+	 * 检查点完成时调用，即检查点协调者已收到所有参与任务的通知时调用
 	 */
 	public void notifyCheckpointComplete(long checkpointId) throws Exception {
 		throw new UnsupportedOperationException(String.format("notifyCheckpointComplete not supported by %s", this.getClass().getName()));

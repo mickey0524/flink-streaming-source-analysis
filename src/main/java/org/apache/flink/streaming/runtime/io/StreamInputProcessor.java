@@ -83,10 +83,13 @@ public class StreamInputProcessor<IN> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(StreamInputProcessor.class);
 
+	// 不同 cchannel 的 record 反序列化工具
 	private final RecordDeserializer<DeserializationDelegate<StreamElement>>[] recordDeserializers;
-
+	
+	// 当前 channel 的 record 反序列化工具
 	private RecordDeserializer<DeserializationDelegate<StreamElement>> currentRecordDeserializer;
 
+	// StreamElement 的反序列化工具
 	private final DeserializationDelegate<StreamElement> deserializationDelegate;
 
 	private final CheckpointBarrierHandler barrierHandler;
@@ -238,6 +241,7 @@ public class StreamInputProcessor<IN> {
 					// Event received
 					final AbstractEvent event = bufferOrEvent.getEvent();
 					if (event.getClass() != EndOfPartitionEvent.class) {
+						// 接收到预期之外的事件
 						throw new IOException("Unexpected event: " + event);
 					}
 				}

@@ -155,6 +155,7 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 
 		// Make sure we don't hold onto the large intermediate serialization buffer for too long
+		// 确保我们不会长时间保留大型中间序列化缓冲区
 		if (pruneAfterCopying) {
 			serializer.prune();
 		}
@@ -170,6 +171,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 		emit(record, rng.nextInt(numberOfChannels));
 	}
 
+	/**
+	 * 将 record 发送到指定的 targetChannel 通道
+	 */
 	private void emit(T record, int targetChannel) throws IOException, InterruptedException {
 		serializer.serializeRecord(record);
 
@@ -183,6 +187,7 @@ public class RecordWriter<T extends IOReadableWritable> {
 	 * @return <tt>true</tt> if the intermediate serialization buffer should be pruned
 	 */
 	/**
+	 * 将序列化之后的 record 拷贝到目标 channel
 	 * 返回是否应该修剪中间序列化缓冲区
 	 */
 	private boolean copyFromSerializerToTargetChannel(int targetChannel) throws IOException, InterruptedException {
@@ -277,7 +282,7 @@ public class RecordWriter<T extends IOReadableWritable> {
 	 * request a new one for this target channel.
 	 */
 	/**
-	 * 如果上次没有填满，BufferBuilder可能已经存在，否则我们需要为此目标通道请求一个新的
+	 * 如果上次没有填满，BufferBuilder 可能已经存在，否则我们需要为此目标通道请求一个新的
 	 */
 	private BufferBuilder getBufferBuilder(int targetChannel) throws IOException, InterruptedException {
 		if (bufferBuilders[targetChannel].isPresent()) {
@@ -291,6 +296,7 @@ public class RecordWriter<T extends IOReadableWritable> {
 	 * 申请一个新的 BufferBuilder
 	 */
 	private BufferBuilder requestNewBufferBuilder(int targetChannel) throws IOException, InterruptedException {
+		// 要么该 targetChannel 目前没有 BufferBuilder，要么 targetChannel 的 BufferBuilder 完成了
 		checkState(!bufferBuilders[targetChannel].isPresent() || bufferBuilders[targetChannel].get().isFinished());
 
 		BufferBuilder bufferBuilder = targetPartition.getBufferProvider().requestBufferBuilderBlocking();
@@ -333,6 +339,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 	 *
 	 * @param t The exception to report.
 	 */
+	/**
+	 * 更新 flusherException，表明定时 flush 线程遇到了异常
+	 */
 	private void notifyFlusherException(Throwable t) {
 		if (flusherException == null) {
 			LOG.error("An exception happened while flushing the outputs", t);
@@ -340,6 +349,9 @@ public class RecordWriter<T extends IOReadableWritable> {
 		}
 	}
 
+	/**
+	 * 检查当前是否存在异常
+	 */
 	private void checkErroneous() throws IOException {
 		if (flusherException != null) {
 			throw new IOException("An exception happened while flushing the outputs", flusherException);

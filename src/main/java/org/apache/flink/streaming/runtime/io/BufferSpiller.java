@@ -51,6 +51,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>IMPORTANT: The SpilledBufferOrEventSequences created by this spiller all reuse the same
  * reading memory (to reduce overhead) and can consequently not be read concurrently.
  */
+/**
+ * BufferSpiller 从数据流中获取缓冲区和事件，并将它们添加到溢出文件中
+ * 在溢出了一定数量的元素之后，spiller 进行翻转操作：它将溢出的元素表现为可读的序列
+ * 并打开一个新的 spill 文件
+ * 
+ * 此实现有效地在OS缓存中缓冲数据，缓存优雅地扩展到磁盘
+ * 大多数数据都是在写入后几毫秒就重新读取，读取后删除该文件
+ * 因此，在大多数情况下，数据实际上永远不会到达物理磁盘
+ * 
+ * 需要注意的是：由此 spiller 创建的 SpilledBufferOrEventSequences 都重用相同的读取内存（以减少开销）
+ * 因此无法同时读取
+ */
 @Internal
 @Deprecated
 public class BufferSpiller implements BufferBlocker {

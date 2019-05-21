@@ -108,6 +108,7 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 	}
 
 	// 这是一个 blocking 的函数
+	// while (true) 确保能返回一个 buffer，否则代表没有输入了
 	@Override
 	public BufferOrEvent getNextNonBlocked() throws Exception {
 		while (true) {

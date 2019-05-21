@@ -662,6 +662,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
+	// 触发检查点，由 BarrierBuffer.java 和 BarrierTracker.java 调用
 	@Override
 	public void triggerCheckpointOnBarrier(
 			CheckpointMetaData checkpointMetaData,
@@ -682,7 +683,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
-	// 停止检查点
+	// 停止检查点，由 BarrierBuffer.java 和 BarrierTracker.java 调用
 	@Override
 	public void abortCheckpointOnBarrier(long checkpointId, Throwable cause) throws Exception {
 		LOG.debug("Aborting checkpoint via cancel-barrier {} for task {}", checkpointId, getName());
@@ -768,7 +769,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		return asyncOperationsThreadPool;
 	}
 
-	// 通知检查点完成
+	// 通知检查点完成，由 Task.java 调用
 	@Override
 	public void notifyCheckpointComplete(long checkpointId) throws Exception {
 		synchronized (lock) {
@@ -807,12 +808,12 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
-	// 检查点状态
+	// 检查点状态，这是 performCheckpoint 方法的第三步
 	private void checkpointState(
 			CheckpointMetaData checkpointMetaData,
 			CheckpointOptions checkpointOptions,
 			CheckpointMetrics checkpointMetrics) throws Exception {
-
+		// 生成检查点流工厂，主要用于 StateSnapshotContextSynchronousImpl.java 中生成检查点状态的输出流
 		CheckpointStreamFactory storage = checkpointStorage.resolveCheckpointStorageLocation(
 				checkpointMetaData.getCheckpointId(),
 				checkpointOptions.getTargetLocation());

@@ -30,6 +30,10 @@ import java.io.IOException;
  * {@link CheckpointBarrierHandler}. The sequence of buffers and events can be
  * read back using the method {@link #getNext()}.
  */
+/**
+ * 此类表示由 CheckpointBarrierHandler 缓存的一系列缓冲区和事件
+ * 可以使用 getNext() 方法读回缓冲区和事件的序列
+ */
 @Internal
 public interface BufferOrEventSequence {
 
@@ -44,16 +48,26 @@ public interface BufferOrEventSequence {
 	 *
 	 * @return The next BufferOrEvent from the buffered sequence, or {@code null} (end of sequence).
 	 */
+	/**
+	 * 从队列中获取下一个 BufferOrEvent
+	 * 如果队列中没有其他元素，返回 null
+	 */
 	@Nullable
 	BufferOrEvent getNext() throws IOException;
 
 	/**
 	 * Cleans up all the resources held by the sequence.
 	 */
+	/**
+	 * 清空队列申请的资源
+	 */
 	void cleanup() throws IOException;
 
 	/**
 	 * Gets the size of the sequence.
+	 */
+	/**
+	 * 获取队列的大小
 	 */
 	long size();
 }

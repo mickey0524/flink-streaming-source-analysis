@@ -228,6 +228,9 @@ public class StatusWatermarkValve {
 		}
 	}
 
+	/**
+	 * 从所有 channel 中找出 watermark 最大的
+	 */
 	private void findAndOutputMaxWatermarkAcrossAllChannels() {
 		long maxWatermark = Long.MIN_VALUE;
 

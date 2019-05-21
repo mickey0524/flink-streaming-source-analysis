@@ -140,8 +140,10 @@ public class StreamInputProcessor<IN> {
 			TaskIOMetricGroup metrics,
 			WatermarkGauge watermarkGauge) throws IOException {
 
+		// 创建 InputGate，从多个 subPartition 获取数据
 		InputGate inputGate = InputGateUtil.createInputGate(inputGates);
 
+		// 创建 barrierHandler，处理检查点的 barrier
 		this.barrierHandler = InputProcessorUtil.createCheckpointBarrierHandler(
 			checkpointedTask, checkpointMode, ioManager, inputGate, taskManagerConfig);
 

@@ -42,12 +42,15 @@ import java.util.ArrayDeque;
 public class CachedBufferBlocker implements BufferBlocker {
 
 	/** The page size, to estimate the total cached data size. */
+	// 页面大小，用于估计总缓存数据大小
 	private final int pageSize;
 
 	/** The number of bytes cached since the last roll over. */
+	// 自上次翻转以来缓存的字节数
 	private long bytesBlocked;
 
 	/** The current memory queue for caching the buffers or events. */
+	// 用于缓存缓冲区或事件的当前内存队列
 	private ArrayDeque<BufferOrEvent> currentBuffers;
 
 	/**
@@ -55,11 +58,17 @@ public class CachedBufferBlocker implements BufferBlocker {
 	 *
 	 * @param pageSize The page size used to estimate the cached size.
 	 */
+	/**
+	 * 创建一个新的 CachedBufferBlocker，缓存内存队列中的缓冲区或事件
+	 */
 	public CachedBufferBlocker(int pageSize) {
 		this.pageSize = pageSize;
 		this.currentBuffers = new ArrayDeque<BufferOrEvent>();
 	}
 
+	/**
+	 * 添加一个 BufferOrEvent
+	 */
 	@Override
 	public void add(BufferOrEvent boe) {
 		bytesBlocked += pageSize;
@@ -70,11 +79,15 @@ public class CachedBufferBlocker implements BufferBlocker {
 	/**
 	 * It is never reusing resources and is defaulting to {@link #rollOverWithoutReusingResources()}.
 	 */
+	/**
+	 * CachedBufferBlocker 不重用资源
+	 */
 	@Override
 	public BufferOrEventSequence rollOverReusingResources() {
 		return rollOverWithoutReusingResources();
 	}
 
+	// 反转，获取缓存的队列
 	@Override
 	public BufferOrEventSequence rollOverWithoutReusingResources() {
 		if (bytesBlocked == 0) {
@@ -108,6 +121,9 @@ public class CachedBufferBlocker implements BufferBlocker {
 	/**
 	 * This class represents a sequence of cached buffers and events, created by the
 	 * {@link CachedBufferBlocker}.
+	 */
+	/**
+	 * 此类表示由 CachedBufferBlocker 创建的缓存缓冲区和事件序列
 	 */
 	public static class CachedBufferOrEventSequence implements BufferOrEventSequence {
 

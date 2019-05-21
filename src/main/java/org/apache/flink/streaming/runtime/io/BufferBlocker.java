@@ -28,6 +28,11 @@ import java.io.IOException;
  * After a number of elements have been added, the blocker can "roll over": It presents the added
  * elements as a readable sequence, and creates a new sequence.
  */
+/**
+ * BufferBlocker 从数据流中获取缓冲区和事件，并按顺序添加它们
+ * 添加了许多元素后，BufferBlocker 可以"翻转"
+ * 它将添加的元素作为可读序列呈现，并创建新序列
+ */
 @Internal
 public interface BufferBlocker {
 
@@ -35,6 +40,9 @@ public interface BufferBlocker {
 	 * Adds a buffer or event to the blocker.
 	 *
 	 * @param boe The buffer or event to be added into the blocker.
+	 */
+	/**
+	 * 向 blocker 中添加一个 buffer 或一个 event
 	 */
 	void add(BufferOrEvent boe) throws IOException;
 
@@ -44,6 +52,9 @@ public interface BufferBlocker {
 	 *
 	 * @return The readable sequence of buffers and events, or 'null', if nothing was added.
 	 */
+	/**
+	 * 启动一个新的缓冲区和事件序列，而不重用相同的资源，并返回当前的缓冲区序列以供读取
+	 */
 	BufferOrEventSequence rollOverWithoutReusingResources() throws IOException;
 
 	/**
@@ -52,10 +63,16 @@ public interface BufferBlocker {
 	 *
 	 * @return The readable sequence of buffers and events, or 'null', if nothing was added.
 	 */
+	/**
+	 * 启动一个新的缓冲区和事件序列，重用相同的资源，并返回当前的缓冲区序列以供读取
+	 */
 	BufferOrEventSequence rollOverReusingResources() throws IOException;
 
 	/**
 	 * Cleans up all the resources in the current sequence.
+	 */
+	/**
+	 * 清空当前序列中的全部资源
 	 */
 	void close() throws IOException;
 
@@ -63,6 +80,9 @@ public interface BufferBlocker {
 	 * Gets the number of bytes blocked in the current sequence.
 	 *
 	 * @return the number of bytes blocked in the current sequence.
+	 */
+	/**
+	 * 获取当前序列中缓存的字节数
 	 */
 	long getBytesBlocked();
 }

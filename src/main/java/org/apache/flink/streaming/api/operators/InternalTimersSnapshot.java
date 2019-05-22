@@ -34,6 +34,9 @@ import java.util.Set;
 /**
  * 一个内部定时器的快照，包含事件时间定时器和进程时间定时器
  * 以及用来读写的序列器
+ * 
+ * 保存进程时间定时器和事件时间定时器的集合以及
+ * key 序列器的快照和命名空间序列器的快照
  */
 public class InternalTimersSnapshot<K, N> {
 

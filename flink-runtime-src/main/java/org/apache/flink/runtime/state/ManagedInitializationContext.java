@@ -39,15 +39,24 @@ public interface ManagedInitializationContext {
 	 * Returns true, if state was restored from the snapshot of a previous execution. This returns always false for
 	 * stateless tasks.
 	 */
+	/**
+	 * 如果状态是从之前的快照中恢复过来的，返回 true
+	 */
 	boolean isRestored();
 
 	/**
 	 * Returns an interface that allows for registering operator state with the backend.
 	 */
+	/**
+	 * 返回允许向后端注册 operator state 的接口
+	 */
 	OperatorStateStore getOperatorStateStore();
 
 	/**
 	 * Returns an interface that allows for registering keyed state with the backend.
+	 */
+	/**
+	 * 返回允许向后端注册 keyed state 的接口
 	 */
 	KeyedStateStore getKeyedStateStore();
 

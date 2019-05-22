@@ -53,6 +53,9 @@ import java.util.Optional;
  * 与 BarrierBuffer 不同，BarrierTracker 不会阻止已发送障碍的输入通道
  * 因此它不能用于获得 "完全一次" 处理保证
  * 但是，它可用于获得 "至少一次" 处理保证
+ * 
+ * BarrierTracker 同时在 pendingCheckpoints 中维持多个 checkpointId 的计数
+ * 这和 BarrierBuffer 有很大区别
  */
 @Internal
 public class BarrierTracker implements CheckpointBarrierHandler {

@@ -279,6 +279,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 		InternalTimer<K, N> timer;
 
 		// 将所有进程时间定时器的 ts <= time 的都触发
+		// 这里的 while 循环保证了快照恢复过来的定时器也能被触发
 		while ((timer = processingTimeTimersQueue.peek()) != null && timer.getTimestamp() <= time) {
 			processingTimeTimersQueue.poll();
 			keyContext.setCurrentKey(timer.getKey());
@@ -296,6 +297,7 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 
 		InternalTimer<K, N> timer;
 		// 查看是否 eventTimeTimersQueue 有可以触发的定时器
+		// 这里的 while 循环保证了快照恢复过来的定时器也能被触发
 		while ((timer = eventTimeTimersQueue.peek()) != null && timer.getTimestamp() <= time) {
 			eventTimeTimersQueue.poll();
 			keyContext.setCurrentKey(timer.getKey());
@@ -335,6 +337,9 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 	 *                       and the serializers that were used to write them
 	 * @param keyGroupIdx the id of the key-group to be put in the snapshot.
 	 */
+	/**
+	 * 恢复给定 keyGroupIdx 的定时器（进程时间定时器和事件时间定时器）
+	 */
 	@SuppressWarnings("unchecked")
 	public void restoreTimersForKeyGroup(InternalTimersSnapshot<?, ?> restoredSnapshot, int keyGroupIdx) {
 		this.restoredTimersSnapshot = (InternalTimersSnapshot<K, N>) restoredSnapshot;
@@ -343,21 +348,25 @@ public class InternalTimerServiceImpl<K, N> implements InternalTimerService<N>, 
 		if (this.keyDeserializer != null && !this.keyDeserializer.equals(restoredKeySerializer)) {
 			throw new IllegalArgumentException("Tried to restore timers for the same service with different key serializers.");
 		}
+		// 恢复 key 序列器
 		this.keyDeserializer = restoredKeySerializer;
 
 		TypeSerializer<N> restoredNamespaceSerializer = restoredTimersSnapshot.getNamespaceSerializerSnapshot().restoreSerializer();
 		if (this.namespaceDeserializer != null && !this.namespaceDeserializer.equals(restoredNamespaceSerializer)) {
 			throw new IllegalArgumentException("Tried to restore timers for the same service with different namespace serializers.");
 		}
+		// 恢复命名空间序列器
 		this.namespaceDeserializer = restoredNamespaceSerializer;
 
 		checkArgument(localKeyGroupRange.contains(keyGroupIdx),
 			"Key Group " + keyGroupIdx + " does not belong to the local range.");
 
 		// restore the event time timers
+		// 恢复所有的事件时间定时器
 		eventTimeTimersQueue.addAll(restoredTimersSnapshot.getEventTimeTimers());
 
 		// restore the processing time timers
+		// 恢复所有的进程时间定时器
 		processingTimeTimersQueue.addAll(restoredTimersSnapshot.getProcessingTimeTimers());
 	}
 

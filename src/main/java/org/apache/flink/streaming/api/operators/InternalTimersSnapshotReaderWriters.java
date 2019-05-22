@@ -243,6 +243,9 @@ public class InternalTimersSnapshotReaderWriters {
 	/**
 	 * A reader for a {@link InternalTimersSnapshot}.
 	 */
+	/**
+	 * 内部时间定时器快照的 reader
+	 */
 	public interface InternalTimersSnapshotReader<K, N> {
 
 		/**
@@ -251,6 +254,9 @@ public class InternalTimersSnapshotReaderWriters {
 		 * @param in the input view
 		 * @return the read timers snapshot
 		 * @throws IOException
+		 */
+		/**
+		 * 从提供的输入视图中读取定时器快照
 		 */
 		InternalTimersSnapshot<K, N> readTimersSnapshot(DataInputView in) throws IOException;
 	}
@@ -263,10 +269,12 @@ public class InternalTimersSnapshotReaderWriters {
 			this.userCodeClassLoader = checkNotNull(userCodeClassLoader);
 		}
 
+		// 恢复 key 和命名空间
 		protected abstract void restoreKeyAndNamespaceSerializers(
 				InternalTimersSnapshot<K, N> restoredTimersSnapshot,
 				DataInputView in) throws IOException;
 
+		// 阅读定时器快照
 		@Override
 		public final InternalTimersSnapshot<K, N> readTimersSnapshot(DataInputView in) throws IOException {
 			InternalTimersSnapshot<K, N> restoredTimersSnapshot = new InternalTimersSnapshot<>();
@@ -279,10 +287,12 @@ public class InternalTimersSnapshotReaderWriters {
 					restoredTimersSnapshot.getNamespaceSerializerSnapshot().restoreSerializer());
 
 			// read the event time timers
+			// 读取事件时间定时器的数目
 			int sizeOfEventTimeTimers = in.readInt();
 			Set<TimerHeapInternalTimer<K, N>> restoredEventTimers = new HashSet<>(sizeOfEventTimeTimers);
 			if (sizeOfEventTimeTimers > 0) {
 				for (int i = 0; i < sizeOfEventTimeTimers; i++) {
+					// 依次反序列化每个事件时间定时器
 					TimerHeapInternalTimer<K, N> timer = timerSerializer.deserialize(in);
 					restoredEventTimers.add(timer);
 				}
@@ -290,10 +300,12 @@ public class InternalTimersSnapshotReaderWriters {
 			restoredTimersSnapshot.setEventTimeTimers(restoredEventTimers);
 
 			// read the processing time timers
+			// 读取进程事件定时器的数目
 			int sizeOfProcessingTimeTimers = in.readInt();
 			Set<TimerHeapInternalTimer<K, N>> restoredProcessingTimers = new HashSet<>(sizeOfProcessingTimeTimers);
 			if (sizeOfProcessingTimeTimers > 0) {
 				for (int i = 0; i < sizeOfProcessingTimeTimers; i++) {
+					// 依次反序列化每个进程时间定时器
 					TimerHeapInternalTimer<K, N> timer = timerSerializer.deserialize(in);
 					restoredProcessingTimers.add(timer);
 				}
@@ -437,6 +449,7 @@ public class InternalTimersSnapshotReaderWriters {
 			LongSerializer.INSTANCE.serialize(record.getTimestamp(), target);
 		}
 
+		// 反序列化定时器，key -> namespace -> ts
 		@Override
 		public TimerHeapInternalTimer<K, N> deserialize(DataInputView source) throws IOException {
 			K key = keySerializer.deserialize(source);

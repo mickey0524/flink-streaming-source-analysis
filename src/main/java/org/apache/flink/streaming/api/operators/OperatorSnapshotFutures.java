@@ -34,6 +34,14 @@ import java.util.concurrent.RunnableFuture;
  */
 /**
  * StreamOperator.snapshotState 的结果
+ * 
+ * http://flink-cn.shinonomelab.com/dev/stream/state/state.html 4 类 state
+ * rawState 就是一堆字节，flink 并不知道
+ * manageState 是 flink 知道的，ListState，ReduceState 这样的，推荐使用 manageState
+ * flink 能够自动重新分配 manageState 当并行度改变的时候
+ * 
+ * keyed manage state 只能用于 KeyedStream
+ * Operator manage state 没有这个限制，function 需要实现 CheckpointedFunction or ListCheckpointed
  */
 public class OperatorSnapshotFutures {
 

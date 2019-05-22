@@ -25,6 +25,8 @@ import org.apache.flink.annotation.PublicEvolving;
  * is managed by state backends) or iterating over streams of state partitions written as raw state in a previous
  * snapshot.
  *
+ * 此接口提供一个上下文，操作符能通过注册管理状态（由状态后端管理的状态）来初始化
+ * 
  * <p>
  * Similar to the managed state from {@link ManagedInitializationContext} and in general,  raw operator state is
  * available to all operators, while raw keyed state is only available for operators after keyBy.
@@ -41,11 +43,17 @@ public interface StateInitializationContext extends FunctionInitializationContex
 	 * Returns an iterable to obtain input streams for previously stored operator state partitions that are assigned to
 	 * this operator.
 	 */
+	/**
+	 * 返回一个 iterable，以获取分配给此运算符的先前存储的运算符状态分区的输入流
+	 */
 	Iterable<StatePartitionStreamProvider> getRawOperatorStateInputs();
 
 	/**
 	 * Returns an iterable to obtain input streams for previously stored keyed state partitions that are assigned to
 	 * this operator.
+	 */
+	/**
+	 * 返回一个 iterable，以获取分配给此运算符的先前存储的键控状态分区的输入流
 	 */
 	Iterable<KeyGroupStatePartitionStreamProvider> getRawKeyedStateInputs();
 

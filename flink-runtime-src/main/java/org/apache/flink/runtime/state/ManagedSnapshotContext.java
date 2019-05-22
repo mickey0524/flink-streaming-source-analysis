@@ -36,11 +36,17 @@ public interface ManagedSnapshotContext {
 	 * <i>B</i> subsumes checkpoint <i>A</i>, i.e., checkpoint <i>B</i> contains a later state
 	 * than checkpoint <i>A</i>.
 	 */
+	/**
+	 * 获取检查点的 ID
+	 */
 	long getCheckpointId();
 
 	/**
 	 * Returns timestamp (wall clock time) when the master node triggered the checkpoint for which
 	 * the state snapshot is taken.
+	 */
+	/**
+	 * 获取检查点触发的时间
 	 */
 	long getCheckpointTimestamp();
 }

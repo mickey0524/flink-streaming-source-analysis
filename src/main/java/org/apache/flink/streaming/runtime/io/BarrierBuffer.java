@@ -56,6 +56,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * 
  * 为了避免对输入流进行反压（这可能导致分布式死锁）
  * BarrierBuffer 持续从阻塞的通道接收缓冲区并在内部存储它们直到块被释放
+ * 
+ * BarrierBuffer 与 BarrierTracker 完全不同
+ * BarrierTracker 同时保存多个 checkpointId 的计数
+ * BarrierBuffer 只保存一个 checkpointId 的阻塞通道
  */
 @Internal
 public class BarrierBuffer implements CheckpointBarrierHandler {

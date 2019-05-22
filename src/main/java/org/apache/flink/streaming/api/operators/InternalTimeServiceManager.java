@@ -154,6 +154,9 @@ public class InternalTimeServiceManager<K> {
 		serializationProxy.write(stream);
 	}
 
+	/**
+	 * 为每一个 KeyGroup，从快照中恢复状态
+	 */
 	public void restoreStateForKeyGroup(
 			InputStream stream,
 			int keyGroupIdx,

@@ -120,9 +120,11 @@ public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIORe
 
 	@Override
 	protected void read(DataInputView in, boolean wasVersioned) throws IOException {
+		// 读取时间服务的个数
 		int noOfTimerServices = in.readInt();
 
 		for (int i = 0; i < noOfTimerServices; i++) {
+			// 读取时间服务的名称
 			String serviceName = in.readUTF();
 
 			int readerVersion = wasVersioned ? getReadVersion() : InternalTimersSnapshotReaderWriters.NO_VERSION;
@@ -133,12 +135,14 @@ public class InternalTimerServiceSerializationProxy<K> extends PostVersionedIORe
 			InternalTimerServiceImpl<K, ?> timerService = registerOrGetTimerService(
 				serviceName,
 				restoredTimersSnapshot);
-
+			
+			// 根据 restoredTimersSnapshot 快照恢复
 			timerService.restoreTimersForKeyGroup(restoredTimersSnapshot, keyGroupIdx);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
+	// 在 timerServicesManager 中创建一个 InternalTimerServiceImpl
 	private <N> InternalTimerServiceImpl<K, N> registerOrGetTimerService(
 		String serviceName, InternalTimersSnapshot<?, ?> restoredTimersSnapshot) {
 		final TypeSerializer<K> keySerializer = (TypeSerializer<K>) restoredTimersSnapshot.getKeySerializerSnapshot().restoreSerializer();

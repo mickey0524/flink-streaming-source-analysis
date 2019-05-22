@@ -66,8 +66,14 @@ import java.util.NoSuchElementException;
  * {@link StreamOperatorStateContext} objects for stream operators from the {@link TaskStateManager} of the task that
  * runs the stream task and hence the operator.
  *
+ * 此类是 StreamTaskStateInitializer 的主要实现
+ * 此类获取状态，以便从运行流任务的 TaskStateManager 创建流操作符的
+ * StreamOperatorStateContext 对象
+ * 
  * <p>This implementation operates on top a {@link TaskStateManager}, from which it receives everything required to
  * restore state in the backends from checkpoints or savepoints.
+ * 
+ * 此实现在 TaskStateManager 上运行，从中接收从检查点或保存点恢复后端状态所需的所有内容
  */
 public class StreamTaskStateInitializerImpl implements StreamTaskStateInitializer {
 
@@ -77,15 +83,19 @@ public class StreamTaskStateInitializerImpl implements StreamTaskStateInitialize
 	/**
 	 * The environment of the task. This is required as parameter to construct state backends via their factory.
 	 */
+	// 任务的环境，这是通过工厂构造状态后端的参数
 	private final Environment environment;
 
 	/** This processing time service is required to construct an internal timer service manager. */
+	// 需要此进程时间服务来构建内部计时器服务管理器
 	private final ProcessingTimeService processingTimeService;
 
 	/** The state manager of the tasks provides the information used to restore potential previous state. */
+	// 任务的状态管理器提供用于恢复潜在先前状态的信息
 	private final TaskStateManager taskStateManager;
 
 	/** This object is the factory for everything related to state backends and checkpointing. */
+	// 此对象是与状态后端和检查点相关的所有内容的工厂
 	private final StateBackend stateBackend;
 
 	public StreamTaskStateInitializerImpl(
@@ -118,8 +128,9 @@ public class StreamTaskStateInitializerImpl implements StreamTaskStateInitialize
 				taskInfo.getIndexOfThisSubtask(),
 				taskInfo.getNumberOfParallelSubtasks());
 
-		final String operatorIdentifierText = operatorSubtaskDescription.toString();
+		final String operatorIdentifierText = operatorSubtaskDescription.toString();  // 得到一个操作符的标识语句
 
+		// 返回表示恢复在本 task 中运行的运算符的先前报告状态
 		final PrioritizedOperatorSubtaskState prioritizedOperatorSubtaskStates =
 			taskStateManager.prioritizedOperatorState(operatorID);
 
@@ -196,6 +207,7 @@ public class StreamTaskStateInitializerImpl implements StreamTaskStateInitialize
 		}
 	}
 
+	// 获取内部定时器服务管理者
 	protected <K> InternalTimeServiceManager<K> internalTimeServiceManager(
 		AbstractKeyedStateBackend<K> keyedStatedBackend,
 		KeyContext keyContext, //the operator
@@ -204,9 +216,11 @@ public class StreamTaskStateInitializerImpl implements StreamTaskStateInitialize
 		if (keyedStatedBackend == null) {
 			return null;
 		}
-
+		
+		// 获取 keyedStateBackend 的 KeyGroupRange
 		final KeyGroupRange keyGroupRange = keyedStatedBackend.getKeyGroupRange();
 
+		// 创建 InternalTimeServiceManager 实例
 		final InternalTimeServiceManager<K> timeServiceManager = new InternalTimeServiceManager<>(
 			keyGroupRange,
 			keyContext,
@@ -215,6 +229,7 @@ public class StreamTaskStateInitializerImpl implements StreamTaskStateInitialize
 			keyedStatedBackend.requiresLegacySynchronousTimerSnapshots());
 
 		// and then initialize the timer services
+		// 初始化定时器服务
 		for (KeyGroupStatePartitionStreamProvider streamProvider : rawKeyedStates) {
 			int keyGroupIdx = streamProvider.getKeyGroupId();
 
@@ -261,6 +276,7 @@ public class StreamTaskStateInitializerImpl implements StreamTaskStateInitialize
 		}
 	}
 
+	// 返回 keyed 状态后端
 	protected <K> AbstractKeyedStateBackend<K> keyedStatedBackend(
 		TypeSerializer<K> keySerializer,
 		String operatorIdentifierText,

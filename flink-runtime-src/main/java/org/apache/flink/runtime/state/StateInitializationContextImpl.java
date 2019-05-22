@@ -24,9 +24,13 @@ import org.apache.flink.api.common.state.OperatorStateStore;
 /**
  * Default implementation of {@link StateInitializationContext}.
  */
+/**
+ * StateInitializationContext 的默认实现
+ */
 public class StateInitializationContextImpl implements StateInitializationContext {
 
 	/** Signal whether any state to restore was found */
+	// 是否存在要恢复的状态的信号
 	private final boolean restored;
 
 	private final OperatorStateStore operatorStateStore;
@@ -43,11 +47,11 @@ public class StateInitializationContextImpl implements StateInitializationContex
 			Iterable<KeyGroupStatePartitionStreamProvider> rawKeyedStateInputs,
 			Iterable<StatePartitionStreamProvider> rawOperatorStateInputs) {
 
-		this.restored = restored;
-		this.operatorStateStore = operatorStateStore;
-		this.keyedStateStore = keyedStateStore;
-		this.rawOperatorStateInputs = rawOperatorStateInputs;
-		this.rawKeyedStateInputs = rawKeyedStateInputs;
+		this.restored = restored;  // 标识我们是第一次启动还是恢复
+		this.operatorStateStore = operatorStateStore;  // 操作符状态存储
+		this.keyedStateStore = keyedStateStore;  // keyed 状态存储
+		this.rawOperatorStateInputs = rawOperatorStateInputs;  // 连接 keyed 状态流
+		this.rawKeyedStateInputs = rawKeyedStateInputs;  // 连接操作符状态流
 	}
 
 	@Override

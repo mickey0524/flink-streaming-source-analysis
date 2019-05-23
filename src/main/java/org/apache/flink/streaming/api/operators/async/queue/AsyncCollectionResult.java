@@ -27,6 +27,10 @@ import java.util.Collection;
  *
  * @param <T> Type of the collection elements.
  */
+/**
+ * AsyncResult 的子类
+ * 异步结果集合
+ */
 @Internal
 public interface AsyncCollectionResult<T> extends AsyncResult {
 

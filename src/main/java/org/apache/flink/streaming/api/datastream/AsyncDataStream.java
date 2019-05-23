@@ -37,12 +37,17 @@ import java.util.concurrent.TimeUnit;
  * }
  * </pre>
  */
-
+/**
+ * 将 AsyncFunction 应用于数据流的辅助类
+ */
 @PublicEvolving
 public class AsyncDataStream {
 
 	/**
 	 * Output mode for asynchronous operations.
+	 */
+	/**
+	 * 异步操作的输出模式
 	 */
 	public enum OutputMode { ORDERED, UNORDERED }
 
@@ -59,6 +64,15 @@ public class AsyncDataStream {
 	 * @param <IN> Input type.
 	 * @param <OUT> Output type.
 	 * @return A new {@link SingleOutputStreamOperator}
+	 */
+	/**
+	 * 添加一个 AsyncWaitOperator
+	 * 
+	 * @param in 添加 AsyncWaitOperator 的 DataStream
+	 * @param func AsyncWaitOperator 中包含的 AsyncFunction
+	 * @param timeout 异步操作的 ttl
+	 * @param bufSize AsyncWaitOperator可以容纳的最大输入数
+	 * @param AsyncWaitOperator 的处理模式
 	 */
 	private static <IN, OUT> SingleOutputStreamOperator<OUT> addOperator(
 			DataStream<IN> in,
@@ -83,7 +97,7 @@ public class AsyncDataStream {
 			timeout,
 			bufSize,
 			mode);
-
+		
 		return in.transform("async wait operator", outTypeInfo, operator);
 	}
 
@@ -98,6 +112,12 @@ public class AsyncDataStream {
 	 * @param <IN> Type of input record
 	 * @param <OUT> Type of output record
 	 * @return A new {@link SingleOutputStreamOperator}.
+	 */
+	/**
+	 * 添加一个 AsyncWaitOperator
+	 * 输出流记录的顺序可以重新排序
+	 * 
+	 * 函数参数中提供了队列的容量
 	 */
 	public static <IN, OUT> SingleOutputStreamOperator<OUT> unorderedWait(
 			DataStream<IN> in,
@@ -117,6 +137,10 @@ public class AsyncDataStream {
 	 * @param <IN> Type of input record
 	 * @param <OUT> Type of output record
 	 * @return A new {@link SingleOutputStreamOperator}.
+	 */
+	/**
+	 * 添加一个 AsyncWaitOperator
+	 * 输出流记录的顺序可以重新排序
 	 */
 	public static <IN, OUT> SingleOutputStreamOperator<OUT> unorderedWait(
 			DataStream<IN> in,
@@ -144,6 +168,12 @@ public class AsyncDataStream {
 	 * @param <OUT> Type of output record
 	 * @return A new {@link SingleOutputStreamOperator}.
 	 */
+	/**
+	 * 添加一个 AsyncWaitOperator
+	 * 处理输入记录的顺序保证与输入记录相同
+	 * 
+	 * 函数参数中提供了队列的容量
+	 */
 	public static <IN, OUT> SingleOutputStreamOperator<OUT> orderedWait(
 			DataStream<IN> in,
 			AsyncFunction<IN, OUT> func,
@@ -164,6 +194,10 @@ public class AsyncDataStream {
 	 * @param <IN> Type of input record
 	 * @param <OUT> Type of output record
 	 * @return A new {@link SingleOutputStreamOperator}.
+	 */
+	/**
+	 * 添加一个 AsyncWaitOperator
+	 * 处理输入记录的顺序保证与输入记录相同
 	 */
 	public static <IN, OUT> SingleOutputStreamOperator<OUT> orderedWait(
 			DataStream<IN> in,

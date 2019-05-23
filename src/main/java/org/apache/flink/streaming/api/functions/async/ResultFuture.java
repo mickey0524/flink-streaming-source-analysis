@@ -27,6 +27,9 @@ import java.util.Collection;
  *
  * @param <OUT> Output type
  */
+/**
+ * ResultFuture 在处理异步 i/o 时收集用户代码中的数据/错误
+ */
 @PublicEvolving
 public interface ResultFuture<OUT> {
 	/**
@@ -39,12 +42,23 @@ public interface ResultFuture<OUT> {
 	 *
 	 * @param result A list of results.
 	 */
+	/**
+	 * 使用结果对象集合完成结果
+	 * 
+	 * 请注意，应该在用户代码中只调用一次
+	 * 多次调用此函数将导致数据丢失
+	 * 
+	 * 将所有结果放入 Collection 中，然后 emit 输出
+	 */
 	void complete(Collection<OUT> result);
 
 	/**
 	 * Completes the result future exceptionally with an exception.
 	 *
 	 * @param error A Throwable object.
+	 */
+	/**
+	 * 发生异常
 	 */
 	void completeExceptionally(Throwable error);
 }

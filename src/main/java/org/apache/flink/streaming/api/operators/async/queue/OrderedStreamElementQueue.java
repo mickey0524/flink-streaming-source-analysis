@@ -38,26 +38,36 @@ import java.util.concurrent.locks.ReentrantLock;
  * to the queue. Thus, even if the completion order can be arbitrary, the output order strictly
  * follows the insertion order (element cannot overtake each other).
  */
+/**
+ * StreamElementQueue 的有序实现
+ * 有序流元素队列按照 StreamElementQueueEntry 被加入队列的顺序 emit 异步结果
+ * 因此，即使完成顺序是任意的，队列的输出顺序还是严格按照插入的顺序来（元素不能互相超过对方输出）
+ */
 @Internal
 public class OrderedStreamElementQueue implements StreamElementQueue {
 
 	private static final Logger LOG = LoggerFactory.getLogger(OrderedStreamElementQueue.class);
 
 	/** Capacity of this queue. */
+	// 队列的容量
 	private final int capacity;
 
 	/** Executor to run the onCompletion callback. */
+	// 执行 onCompletion 回调的 Executor
 	private final Executor executor;
 
 	/** Operator actions to signal a failure to the operator. */
+	// OperatorActions 向所属操作符的发出故障信号
 	private final OperatorActions operatorActions;
 
 	/** Lock and conditions for the blocking queue. */
+	// 锁和条件，用于阻塞队列
 	private final ReentrantLock lock;
 	private final Condition notFull;
 	private final Condition headIsCompleted;
 
 	/** Queue for the inserted StreamElementQueueEntries. */
+	// 用于插入 StreamElementQueueEntries 的队列
 	private final ArrayDeque<StreamElementQueueEntry<?>> queue;
 
 	public OrderedStreamElementQueue(
@@ -79,6 +89,9 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 		this.queue = new ArrayDeque<>(capacity);
 	}
 
+	/**
+	 * 获取队列首部的元素，如果队列为空，或者队列首部的元素没有执行完，阻塞
+	 */
 	@Override
 	public AsyncResult peekBlockingly() throws InterruptedException {
 		lock.lockInterruptibly();
@@ -97,6 +110,9 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 		}
 	}
 
+	/**
+	 * 获取并删除队列首部的元素，如果队列为空，或者队列首部的元素没有执行完，阻塞
+	 */
 	@Override
 	public AsyncResult poll() throws InterruptedException {
 		lock.lockInterruptibly();
@@ -106,6 +122,7 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 				headIsCompleted.await();
 			}
 
+			// 唤醒 notFull 条件阻塞的 put 方法
 			notFull.signalAll();
 
 			LOG.debug("Polled head element from ordered stream element queue. New filling degree " +
@@ -117,6 +134,9 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 		}
 	}
 
+	/**
+	 * 返回队列中所有 StreamElementQueueEntry 组成的集合
+	 */
 	@Override
 	public Collection<StreamElementQueueEntry<?>> values() throws InterruptedException {
 		lock.lockInterruptibly();
@@ -142,6 +162,7 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 		return queue.size();
 	}
 
+	// 插入一个 StreamElementQueueEntry，如果队列满，阻塞
 	@Override
 	public <T> void put(StreamElementQueueEntry<T> streamElementQueueEntry) throws InterruptedException {
 		lock.lockInterruptibly();
@@ -157,6 +178,7 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 		}
 	}
 
+	// 插入一个 StreamElementQueueEntry，如果队列满，返回 false
 	@Override
 	public <T> boolean tryPut(StreamElementQueueEntry<T> streamElementQueueEntry) throws InterruptedException {
 		lock.lockInterruptibly();
@@ -187,6 +209,10 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 	 * @param streamElementQueueEntry to be inserted
 	 * @param <T> Type of the stream element queue entry's result
 	 */
+	/**
+	 * 将 StreamElementQueueEntry 加入队列
+	 * 并且注册一个 entry 完成时候调用的回调函数
+	 */
 	private <T> void addEntry(StreamElementQueueEntry<T> streamElementQueueEntry) {
 		assert(lock.isHeldByCurrentThread());
 
@@ -215,10 +241,14 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 	 * @param streamElementQueueEntry which has been completed
 	 * @throws InterruptedException if the current thread is interrupted
 	 */
+	/**
+	 * 检查当前队列的首部元素是否执行完毕
+	 */
 	private void onCompleteHandler(StreamElementQueueEntry<?> streamElementQueueEntry) throws InterruptedException {
 		lock.lockInterruptibly();
 
 		try {
+			// 我觉得这里应该是 while 而不是 if
 			if (!queue.isEmpty() && queue.peek().isDone()) {
 				LOG.debug("Signal ordered stream element queue has completed head element.");
 				headIsCompleted.signalAll();

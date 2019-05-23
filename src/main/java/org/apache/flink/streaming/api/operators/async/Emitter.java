@@ -39,25 +39,33 @@ import java.util.Collection;
  *
  * @param <OUT> Type of the output elements
  */
+/**
+ * Runnable 负责消耗给定队列中的元素并将它们输出到给定的 output/timestampedCollector
+ */
 @Internal
 public class Emitter<OUT> implements Runnable {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Emitter.class);
 
 	/** Lock to hold before outputting. */
+	// 在 output 之前需要加速
 	private final Object checkpointLock;
 
 	/** Output for the watermark elements. */
+	// 输出 watermark
 	private final Output<StreamRecord<OUT>> output;
 
 	/** Queue to consume the async results from. */
+	// 消费队列中的异步结果
 	private final StreamElementQueue streamElementQueue;
 
 	private final OperatorActions operatorActions;
 
 	/** Output for stream records. */
+	// 输出 StreamRecord
 	private final TimestampedCollector<OUT> timestampedCollector;
 
+	// Emitter 是否处于运行状态
 	private volatile boolean running;
 
 	public Emitter(
@@ -80,6 +88,7 @@ public class Emitter<OUT> implements Runnable {
 		try {
 			while (running) {
 				LOG.debug("Wait for next completed async stream element result.");
+				// 阻塞等待下一个队列中完成异步操作的元素
 				AsyncResult streamElementEntry = streamElementQueue.peekBlockingly();
 
 				output(streamElementEntry);
@@ -97,23 +106,30 @@ public class Emitter<OUT> implements Runnable {
 		}
 	}
 
+	// 输出已完成的异步操作
 	private void output(AsyncResult asyncResult) throws InterruptedException {
+		// 如果是 watermark 的话
 		if (asyncResult.isWatermark()) {
 			synchronized (checkpointLock) {
+				// 将 asyncResult 转为 watermark
 				AsyncWatermarkResult asyncWatermarkResult = asyncResult.asWatermark();
 
 				LOG.debug("Output async watermark.");
+				// 输出 watermark
 				output.emitWatermark(asyncWatermarkResult.getWatermark());
 
 				// remove the peeked element from the async collector buffer so that it is no longer
 				// checkpointed
+				// 从异步收集器缓冲区中删除 peeked 元素，以便不再检查点
 				streamElementQueue.poll();
 
 				// notify the main thread that there is again space left in the async collector
 				// buffer
+				// 通知主线程异步收集器缓冲区中还剩余空间
 				checkpointLock.notifyAll();
 			}
 		} else {
+			// 将 asyncResult 转为结果集合
 			AsyncCollectionResult<OUT> streamRecordResult = asyncResult.asResultCollection();
 
 			if (streamRecordResult.hasTimestamp()) {
@@ -127,7 +143,7 @@ public class Emitter<OUT> implements Runnable {
 
 				try {
 					Collection<OUT> resultCollection = streamRecordResult.get();
-
+					// 结果集合中的 StreamRecord 时间戳相同
 					if (resultCollection != null) {
 						for (OUT result : resultCollection) {
 							timestampedCollector.collect(result);
@@ -150,6 +166,7 @@ public class Emitter<OUT> implements Runnable {
 		}
 	}
 
+	// stop 方法停止 Emitter，将 running 变量设置为 false
 	public void stop() {
 		running = false;
 	}

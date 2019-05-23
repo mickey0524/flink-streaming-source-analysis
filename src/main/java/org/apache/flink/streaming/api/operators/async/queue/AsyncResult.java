@@ -27,6 +27,10 @@ import org.apache.flink.streaming.api.watermark.Watermark;
  * either be a {@link Watermark} or a collection of new output elements produced by the
  * {@link AsyncFunction}.
  */
+/**
+ * StreamElementQueue 返回的异步结果
+ * 异步结果可以是 Watermark 或 AsyncFunction 生成的新输出元素的集合
+ */
 @Internal
 public interface AsyncResult {
 
@@ -35,12 +39,18 @@ public interface AsyncResult {
 	 *
 	 * @return True if the async result is a {@link Watermark}; otherwise false.
 	 */
+	/**
+	 * 返回异步结果是否是 Watermark
+	 */
 	boolean isWatermark();
 
 	/**
-	 * True fi the async result is a collection of output elements; otherwise false.
+	 * True if the async result is a collection of output elements; otherwise false.
 	 *
 	 * @return True if the async result is a collection of output elements; otherwise false
+	 */
+	/**
+	 * 返回异步结果是否是输出元素的集合
 	 */
 	boolean isResultCollection();
 
@@ -49,6 +59,9 @@ public interface AsyncResult {
 	 *
 	 * @return this result as a {@link AsyncWatermarkResult}.
 	 */
+	/**
+	 * 将此异步结果作为异步水印返回
+	 */
 	AsyncWatermarkResult asWatermark();
 
 	/**
@@ -56,6 +69,9 @@ public interface AsyncResult {
 	 *
 	 * @param <T> Type of the result collection's elements
 	 * @return this result as a {@link AsyncCollectionResult}.
+	 */
+	/**
+	 * 将此异步结果作为输出元素的集合返回
 	 */
 	<T> AsyncCollectionResult<T> asResultCollection();
 }

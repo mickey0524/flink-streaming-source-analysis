@@ -24,6 +24,10 @@ import org.apache.flink.streaming.api.watermark.Watermark;
 /**
  * {@link AsyncResult} subclass for asynchronous result {@link Watermark}.
  */
+/**
+ * AsyncResult 的子类
+ * Watermark
+ */
 @Internal
 public interface AsyncWatermarkResult extends AsyncResult {
 	/**

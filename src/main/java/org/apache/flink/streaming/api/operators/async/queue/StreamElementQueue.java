@@ -26,6 +26,9 @@ import java.util.Collection;
 /**
  * Interface for blocking stream element queues for the {@link AsyncWaitOperator}.
  */
+/**
+ * 用于阻塞 AsyncWaitOperator 的流元素队列的接口
+ */
 @Internal
 public interface StreamElementQueue {
 
@@ -37,6 +40,9 @@ public interface StreamElementQueue {
 	 * @param <T> Type of the entries future value
 	 * @throws InterruptedException if the calling thread has been interrupted while waiting to
 	 * 	insert the given element
+	 */
+	/**
+	 * 将 streamElementQueueEntry 参数加入队列，如果队列满了，则阻塞直到队列有空余
 	 */
 	<T> void put(StreamElementQueueEntry<T> streamElementQueueEntry) throws InterruptedException;
 
@@ -50,6 +56,9 @@ public interface StreamElementQueue {
 	 * @throws InterruptedException if the calling thread has been interrupted while waiting to
 	 * 	insert the given element
 	 */
+	/**
+	 * 尝试将 streamElementQueueEntry 加入队列，加入成功返回 true，失败返回 false
+	 */
 	<T> boolean tryPut(StreamElementQueueEntry<T> streamElementQueueEntry) throws InterruptedException;
 
 	/**
@@ -61,6 +70,10 @@ public interface StreamElementQueue {
 	 * @throws InterruptedException if the current thread has been interrupted while waiting for a
 	 * 	completed async result.
 	 */
+	/**
+	 * 查看队列的头部并返回第一个完成的 AsyncResult
+	 * 此操作是阻塞操作，只有在找到完成的异步结果后才会返回
+	 */
 	AsyncResult peekBlockingly() throws InterruptedException;
 
 	/**
@@ -71,6 +84,10 @@ public interface StreamElementQueue {
 	 * @throws InterruptedException if the current thread has been interrupted while waiting for a
 	 * 	completed async result.
 	 */
+	/**
+	 * 从该队列的头部找到第一个完成的 AsyncResult，并 remove
+	 * 此操作是阻塞的，只有在找到完成的异步结果后才会返回
+	 */
 	AsyncResult poll() throws InterruptedException;
 
 	/**
@@ -80,6 +97,9 @@ public interface StreamElementQueue {
 	 * @throws InterruptedException if the current thread has been interrupted while retrieving the
 	 * 	stream element queue entries of this queue.
 	 */
+	/**
+	 * 返回当前队列中包含的 StreamElementQueueEntry 的集合
+	 */
 	Collection<StreamElementQueueEntry<?>> values() throws InterruptedException;
 
 	/**
@@ -87,12 +107,18 @@ public interface StreamElementQueue {
 	 *
 	 * @return True if the queue is empty; otherwise false.
 	 */
+	/**
+	 * 返回队列是否是空的
+	 */
 	boolean isEmpty();
 
 	/**
 	 * Return the size of the queue.
 	 *
 	 * @return The number of elements contained in this queue.
+	 */
+	/**
+	 * 返回队列的大小
 	 */
 	int size();
 }

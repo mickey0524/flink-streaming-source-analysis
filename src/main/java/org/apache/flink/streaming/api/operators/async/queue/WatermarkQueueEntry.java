@@ -26,6 +26,9 @@ import java.util.concurrent.CompletableFuture;
 /**
  * {@link StreamElementQueueEntry} implementation for the {@link Watermark}.
  */
+/**
+ * StreamElementQueueEntry 实现了 Watermark
+ */
 @Internal
 public class WatermarkQueueEntry extends StreamElementQueueEntry<Watermark> implements AsyncWatermarkResult {
 

@@ -24,6 +24,9 @@ import org.apache.flink.streaming.api.operators.StreamOperator;
 /**
  * Interface for {@link StreamOperator} actions.
  */
+/**
+ * StreamOperator 操作的接口
+ */
 @Internal
 public interface OperatorActions {
 
@@ -31,6 +34,9 @@ public interface OperatorActions {
 	 * Fail the respective stream operator with the given throwable.
 	 *
 	 * @param throwable to fail the stream operator with
+	 */
+	/**
+	 * 使用给定的 throwable 使相应的流操作符失败
 	 */
 	void failOperator(Throwable throwable);
 }

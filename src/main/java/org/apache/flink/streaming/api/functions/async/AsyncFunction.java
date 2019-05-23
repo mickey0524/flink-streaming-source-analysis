@@ -27,15 +27,23 @@ import java.util.concurrent.TimeoutException;
 /**
  * A function to trigger Async I/O operation.
  *
+ * 用于触发异步 I/O 操作的函数	
+ *
  * <p>For each #asyncInvoke, an async io operation can be triggered, and once it has been done,
  * the result can be collected by calling {@link ResultFuture#complete}. For each async
  * operation, its context is stored in the operator immediately after invoking
  * #asyncInvoke, avoiding blocking for each stream input as long as the internal buffer is not full.
  *
+ * 对于每个 asyncInvoke，可以触发异步 io 操作，一旦完成，就可以通过调用 ResultFuture.complete 来收集结果
+ * 对于每个异步操作，其上下文在调用 asyncInvoke 后立即存储在运算符中，只要内部缓冲区未满，就避免阻塞每个流输入
+ * 
  * <p>{@link ResultFuture} can be passed into callbacks or futures to collect the result data.
  * An error can also be propagate to the async IO operator by
  * {@link ResultFuture#completeExceptionally(Throwable)}.
  *
+ * ResultFuture 能够被传递到 callbacks 或 futures 来收集结果数据
+ * 错误也能够通过 completeExceptionally 方法传播到异步 IO 操作符
+ * 
  * <p>Callback example usage:
  *
  * <pre>{@code
@@ -84,6 +92,9 @@ public interface AsyncFunction<IN, OUT> extends Function, Serializable {
 	 * @exception Exception in case of a user code error. An exception will make the task fail and
 	 * trigger fail-over process.
 	 */
+	/**
+	 * 触发每个流输入的异步操作
+	 */
 	void asyncInvoke(IN input, ResultFuture<OUT> resultFuture) throws Exception;
 
 	/**
@@ -92,6 +103,9 @@ public interface AsyncFunction<IN, OUT> extends Function, Serializable {
 	 *
 	 * @param input element coming from an upstream task
 	 * @param resultFuture to be completed with the result data
+	 */
+	/**
+	 * asyncInvoke 操作 timeout 了，默认抛出异常
 	 */
 	default void timeout(IN input, ResultFuture<OUT> resultFuture) throws Exception {
 		resultFuture.completeExceptionally(

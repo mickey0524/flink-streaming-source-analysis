@@ -33,6 +33,11 @@ import java.util.function.Consumer;
  *
  * @param <T> Type of the result
  */
+/**
+ * StreamElementQueue 的实体类
+ * 流元素队列实体存储 StreamElement 
+ * 此外，当队列实体完成的时候允许注册回调
+ */
 @Internal
 public abstract class StreamElementQueueEntry<T> implements AsyncResult {
 
@@ -51,6 +56,9 @@ public abstract class StreamElementQueueEntry<T> implements AsyncResult {
 	 *
 	 * @return True if the stream element queue entry has been completed; otherwise false.
 	 */
+	/**
+	 * 如果流元素队列实体完成，返回 true，否则，返回 false
+	 */
 	public boolean isDone() {
 		return getFuture().isDone();
 	}
@@ -60,6 +68,9 @@ public abstract class StreamElementQueueEntry<T> implements AsyncResult {
 	 *
 	 * @param completeFunction to call when the queue entry has been completed
 	 * @param executor to run the complete function
+	 */
+	/**
+	 * 当本队列条目完成的时候，注册 completeFunction
 	 */
 	public void onComplete(
 			final Consumer<StreamElementQueueEntry<T>> completeFunction,

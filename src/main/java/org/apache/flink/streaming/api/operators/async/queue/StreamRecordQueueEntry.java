@@ -33,15 +33,22 @@ import java.util.concurrent.CompletableFuture;
  *
  * @param <OUT> Type of the asynchronous collection result
  */
+/**
+ * StreamRecord 的 StreamElementQueueEntry 实现
+ * 此类还充当为 AsyncFunction 提供的 ResultFuture 实现
+ * 异步函数使用一组结果完成此类
+ */
 @Internal
 public class StreamRecordQueueEntry<OUT> extends StreamElementQueueEntry<Collection<OUT>>
 	implements AsyncCollectionResult<OUT>, ResultFuture<OUT> {
 
 	/** Timestamp information. */
+	// 时间戳信息
 	private final boolean hasTimestamp;
 	private final long timestamp;
 
 	/** Future containing the collection result. */
+	// 包含集合结果的 Future
 	private final CompletableFuture<Collection<OUT>> resultFuture;
 
 	public StreamRecordQueueEntry(StreamRecord<?> streamRecord) {
@@ -73,6 +80,10 @@ public class StreamRecordQueueEntry<OUT> extends StreamElementQueueEntry<Collect
 		return resultFuture;
 	}
 
+	/**
+	 * userFunction 中调用这个方法，设置 CompletableFuture 的 result
+	 * 这样 CompletableFuture.isDone() 返回就会返回 true
+	 */
 	@Override
 	public void complete(Collection<OUT> result) {
 		resultFuture.complete(result);

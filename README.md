@@ -6,6 +6,7 @@
 
 * [flink 的安装](./docs/flink-install.md)
 * [第一个 flink 流式处理小栗子](./docs/first-flink-example.md)
+* [flink 中的时间](./docs/flink-time-characteristic.md)
 * 逐步更新，敬请期待
 
 另外，在 flink-runtime-src 目录中有我对 flink 流式处理逐行代码的详细分析，大家有兴趣的可以看看

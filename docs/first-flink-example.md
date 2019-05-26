@@ -46,7 +46,7 @@ public class SocketTextStreamWordCount {
 
 👇是第二个小栗子，我们从一个 socket 中获取 int 数据，然后将流中的每个 int 数据 * 10，然后输出到错误流中
 
-```
+```java
 package com.my.flink;
 
 import org.apache.flink.api.common.functions.MapFunction;

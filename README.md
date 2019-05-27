@@ -6,6 +6,7 @@
 
 * [flink 的安装](./docs/flink-install.md)
 * [第一个 flink 流式处理小栗子](./docs/first-flink-example.md)
+* [从源码角度分析一下 flink 流式处理小栗子](./docs/brief-analysis-of-first-flink-example.md)
 * [flink 中的时间](./docs/flink-time-characteristic.md)
 * 逐步更新，敬请期待
 

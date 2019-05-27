@@ -96,9 +96,15 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * {@link LocalStreamEnvironment} will cause execution in the current JVM, a
  * {@link RemoteStreamEnvironment} will cause execution on a remote setup.
  *
+ * StreamExecutionEnvironment 是流程序执行的上下文
+ * LocalStreamEnvironment 使得流程序在当前 JVM 中执行
+ * RemoteStreamEnvironment 将导致流程序在远程机器中执行
+ * 
  * <p>The environment provides methods to control the job execution (such as setting the parallelism
  * or the fault tolerance/checkpointing parameters) and to interact with the outside world (data access).
  *
+ * 环境提供了控制作业执行的方法（例如设置并行性或容错/检查点参数）以及与外部进行数据交互
+ * 
  * @see org.apache.flink.streaming.api.environment.LocalStreamEnvironment
  * @see org.apache.flink.streaming.api.environment.RemoteStreamEnvironment
  */

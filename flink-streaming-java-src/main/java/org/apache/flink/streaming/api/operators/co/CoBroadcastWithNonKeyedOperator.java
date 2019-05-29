@@ -60,10 +60,13 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 	private static final long serialVersionUID = -1869740381935471752L;
 
 	/** We listen to this ourselves because we don't have an {@link InternalTimerService}. */
+	// 非 keyed 的 Operator 只能自己记录 Watermark
 	private long currentWatermark = Long.MIN_VALUE;
-
+	
+	// BroadcastStream 的 stateDescriptor
 	private final List<MapStateDescriptor<?, ?>> broadcastStateDescriptors;
 
+	// 保证 emit 的元素的 ts 是相同的
 	private transient TimestampedCollector<OUT> collector;
 
 	private transient Map<MapStateDescriptor<?, ?>, BroadcastState<?, ?>> broadcastStates;
@@ -87,6 +90,7 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 
 		this.broadcastStates = new HashMap<>(broadcastStateDescriptors.size());
 		for (MapStateDescriptor<?, ?> descriptor: broadcastStateDescriptors) {
+			// 非 keyed，状态存储在 OperatorStateBackend 中
 			broadcastStates.put(descriptor, getOperatorStateBackend().getBroadcastState(descriptor));
 		}
 
@@ -94,6 +98,7 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 		rContext = new ReadOnlyContextImpl(getExecutionConfig(), userFunction, broadcastStates, getProcessingTimeService());
 	}
 
+	// 数据流侧
 	@Override
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		collector.setTimestamp(element);
@@ -102,6 +107,7 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 		rContext.setElement(null);
 	}
 
+	// 广播流侧
 	@Override
 	public void processElement2(StreamRecord<IN2> element) throws Exception {
 		collector.setTimestamp(element);
@@ -110,12 +116,14 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 		rwContext.setElement(null);
 	}
 
+	// 更新 currentWatermark
 	@Override
 	public void processWatermark(Watermark mark) throws Exception {
 		super.processWatermark(mark);
 		currentWatermark = mark.getTimestamp();
 	}
 
+	// 广播流侧的上下文
 	private class ReadWriteContextImpl extends Context {
 
 		private final ExecutionConfig config;
@@ -148,6 +156,7 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 			return element.getTimestamp();
 		}
 
+		// 从 map 中获取对应的 state
 		@Override
 		public <K, V> BroadcastState<K, V> getBroadcastState(MapStateDescriptor<K, V> stateDescriptor) {
 			Preconditions.checkNotNull(stateDescriptor);
@@ -162,23 +171,27 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 			return state;
 		}
 
+		// 侧边输出
 		@Override
 		public <X> void output(OutputTag<X> outputTag, X value) {
 			checkArgument(outputTag != null, "OutputTag must not be null.");
 			output.collect(outputTag, new StreamRecord<>(value, element.getTimestamp()));
 		}
 
+		// 返回当前进程时间
 		@Override
 		public long currentProcessingTime() {
 			return timerService.getCurrentProcessingTime();
 		}
 
+		// 返回当前 watermark
 		@Override
 		public long currentWatermark() {
 			return currentWatermark;
 		}
 	}
 
+	// 广播流侧的上下文，和 ReadWriteContextImpl 相同
 	private class ReadOnlyContextImpl extends BroadcastProcessFunction<IN1, IN2, OUT>.ReadOnlyContext {
 
 		private final ExecutionConfig config;
@@ -232,6 +245,7 @@ public class CoBroadcastWithNonKeyedOperator<IN1, IN2, OUT>
 			Preconditions.checkNotNull(stateDescriptor);
 
 			stateDescriptor.initializeSerializerUnlessSet(config);
+			// 得到的是 ReadOnlyBroadcastState
 			ReadOnlyBroadcastState<K, V> state = (ReadOnlyBroadcastState<K, V>) states.get(stateDescriptor);
 			if (state == null) {
 				throw new IllegalArgumentException("The requested state does not exist. " +

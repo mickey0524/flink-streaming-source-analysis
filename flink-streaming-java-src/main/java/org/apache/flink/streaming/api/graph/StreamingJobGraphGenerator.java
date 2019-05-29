@@ -568,6 +568,9 @@ public class StreamingJobGraphGenerator {
 
 		StreamPartitioner<?> partitioner = edge.getPartitioner();
 		JobEdge jobEdge;
+		// 当 partitioner 是 ForwardPartitioner 或者 RescalePartitioner 的时候
+		// 上游 SubTask 节点仅仅会连接到部分下游的 SubTask 节点 (DistributionPattern.POINTWISE)
+		// 其他的 Partitioner 上游 SubTask 节点会连接到所有下游的 SubTask 节点 (DistributionPattern.ALL_TO_ALL)
 		if (partitioner instanceof ForwardPartitioner || partitioner instanceof RescalePartitioner) {
 			jobEdge = downStreamVertex.connectNewDataSetAsInput(
 				headVertex,

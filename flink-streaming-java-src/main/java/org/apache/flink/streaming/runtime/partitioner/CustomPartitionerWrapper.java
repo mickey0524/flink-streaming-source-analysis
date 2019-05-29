@@ -32,7 +32,8 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  *            Type of the data
  */
 /**
- * 用户自定义 Partitioner，用户给出一个 key
+ * 用户自定义 Partitioner 和 KeySelector
+ * 根据 KeySelector 得到每一个 StreamRecord 的 key
  * 然后根据这个 key 来选择下游
  */
 @Internal

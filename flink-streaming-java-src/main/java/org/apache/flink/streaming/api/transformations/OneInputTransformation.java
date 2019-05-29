@@ -133,6 +133,8 @@ public class OneInputTransformation<IN, OUT> extends StreamTransformation<OUT> {
 		return result;
 	}
 
+	// ChainingStrategy 是加在 StreamOperator 上的
+	// 像 UnionTransformation 这样的 StreamTransformation 不支持 setChainingStrategy 方法
 	@Override
 	public final void setChainingStrategy(ChainingStrategy strategy) {
 		operator.setChainingStrategy(strategy);

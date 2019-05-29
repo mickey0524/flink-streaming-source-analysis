@@ -152,6 +152,9 @@ public abstract class KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT> extends B
 		 * @param stateDescriptor the descriptor of the state to be processed.
 		 * @param function the function to be applied.
 		 */
+		/**
+		 * 将提供的函数应用于与提供的状态描述符关联的状态
+		 */
 		public abstract <VS, S extends State> void applyToKeyedState(
 				final StateDescriptor<S, VS> stateDescriptor,
 				final KeyedStateFunction<KS, S> function) throws Exception;

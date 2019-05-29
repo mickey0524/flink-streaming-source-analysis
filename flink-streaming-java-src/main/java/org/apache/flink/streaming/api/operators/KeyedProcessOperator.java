@@ -35,6 +35,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  */
 /**
  * 一个执行 KeyedProcessFunction 的操作符
+ * KeyedProcessOperator 和 ProcessOperator 不一样
+ * ProcessOperator 其实只能输出一个或多个 StreamRecord
+ * 而 KeyedProcessOperator 是能够操作定时器的
  */
 @Internal
 public class KeyedProcessOperator<K, IN, OUT>
@@ -71,6 +74,7 @@ public class KeyedProcessOperator<K, IN, OUT>
 	}
 
 	@Override
+	// open 中生成 internalTimerService 的时候，传入 this 作为 trigger，这是 event 时间定时器的回调函数
 	// 会在 InternalTimerServiceImpl 中的 advanceWatermark 函数内被调用
 	public void onEventTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.setAbsoluteTimestamp(timer.getTimestamp());
@@ -78,6 +82,7 @@ public class KeyedProcessOperator<K, IN, OUT>
 	}
 
 	@Override
+	// open 中生成 internalTimerService 的时候，传入 this 作为 trigger，这是 process 时间定时器的回调函数
 	// 会在 InternalTimerServiceImpl 中的 onProcessingTime 函数内被调用
 	public void onProcessingTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.eraseTimestamp();
@@ -87,16 +92,17 @@ public class KeyedProcessOperator<K, IN, OUT>
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		collector.setTimestamp(element);
-		context.element = element;
+		context.element = element;  // 将当前处理的 StreamRecord 写入 context 中
 		userFunction.processElement(element.getValue(), context, collector);
 		context.element = null;
 	}
 
+	// 定时器触发的时候调用 invokeUserFunction 函数
 	private void invokeUserFunction(
 			TimeDomain timeDomain,
 			InternalTimer<K, VoidNamespace> timer) throws Exception {
-		onTimerContext.timeDomain = timeDomain;
-		onTimerContext.timer = timer;
+		onTimerContext.timeDomain = timeDomain;  // 将定时器的 timeDomain 写入 onTimerContext
+		onTimerContext.timer = timer;  // 将定时器写入 onTimerContext
 		userFunction.onTimer(timer.getTimestamp(), onTimerContext, collector);
 		onTimerContext.timeDomain = null;
 		onTimerContext.timer = null;
@@ -113,6 +119,7 @@ public class KeyedProcessOperator<K, IN, OUT>
 			this.timerService = checkNotNull(timerService);
 		}
 
+		// 返回当前处理的元素的 ts
 		@Override
 		public Long timestamp() {
 			checkState(element != null);
@@ -124,6 +131,8 @@ public class KeyedProcessOperator<K, IN, OUT>
 			}
 		}
 
+		// 这里就和 ProcessOperator 中不一样，这里返回的是包裹 internalTimerService 的 SimpleTimerService
+		// 因此能够操作定时器
 		@Override
 		public TimerService timerService() {
 			return timerService;
@@ -158,6 +167,7 @@ public class KeyedProcessOperator<K, IN, OUT>
 			this.timerService = checkNotNull(timerService);
 		}
 
+		// 返回触发的定时器的时间
 		@Override
 		public Long timestamp() {
 			checkState(timer != null);
@@ -184,6 +194,7 @@ public class KeyedProcessOperator<K, IN, OUT>
 			return timeDomain;
 		}
 
+		// 返回 timer 的 key
 		@Override
 		public K getCurrentKey() {
 			return timer.getKey();

@@ -36,7 +36,8 @@ public abstract class StreamPartitioner<T> implements
 	private static final long serialVersionUID = 1L;
 
 	protected int numberOfChannels;
-
+	
+	// setup 方法在 RecordWriter 初始化的时候被设置
 	@Override
 	public void setup(int numberOfChannels) {
 		this.numberOfChannels = numberOfChannels;

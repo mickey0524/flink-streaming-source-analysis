@@ -61,6 +61,10 @@ public class BroadcastStream<T> {
 	 * registered {@link org.apache.flink.api.common.state.BroadcastState broadcast states}. These
 	 * states have {@code key-value} format.
 	 */
+	/**
+	 * 广播状态的描述符 list
+	 * 这些状态是以 key-value 格式存储的
+	 */
 	private final List<MapStateDescriptor<?, ?>> broadcastStateDescriptors;
 
 	protected BroadcastStream(

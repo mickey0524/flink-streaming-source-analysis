@@ -44,11 +44,17 @@ public class CoStreamMap<IN1, IN2, OUT>
 		super(mapper);  // 设置 userFunction
 	}
 
+	/**
+	 * 第一个流的元素 map 操作
+	 */
 	@Override
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		output.collect(element.replace(userFunction.map1(element.getValue())));
 	}
 
+	/**
+	 * 第二个流的元素的 map 操作
+	 */
 	@Override
 	public void processElement2(StreamRecord<IN2> element) throws Exception {
 		output.collect(element.replace(userFunction.map2(element.getValue())));

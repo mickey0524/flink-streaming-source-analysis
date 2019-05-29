@@ -52,6 +52,10 @@ import static java.util.Objects.requireNonNull;
  * rules to. By broadcasting the rules, these will be available in all parallel instances, and
  * can be applied to all partitions of the other stream.
  *
+ * 使用这种连接流的一个例子是将随时间变化的规则应用到另一个可能是键控的流上
+ * 具有广播状态的流具有规则，并且将它们存储在广播状态中，而另一个流将包含要应用规则的元素
+ * 通过广播规则，这些规则将在所有并行实例中可用，并且可以应用于另一个流的所有分区
+ * 
  * @param <IN1> The input type of the non-broadcast side.
  * @param <IN2> The input type of the broadcast side.
  */
@@ -107,6 +111,9 @@ public class BroadcastConnectedStream<IN1, IN2> {
 	 *
 	 * @return The type of the first input
 	 */
+	/**
+	 * 获取 DataStream 的类型
+	 */
 	public TypeInformation<IN1> getType1() {
 		return inputStream1.getType();
 	}
@@ -115,6 +122,9 @@ public class BroadcastConnectedStream<IN1, IN2> {
 	 * Gets the type of the second input.
 	 *
 	 * @return The type of the second input
+	 */
+	/**
+	 * 获取 BroadcastStream 的类型
 	 */
 	public TypeInformation<IN2> getType2() {
 		return inputStream2.getType();
@@ -166,6 +176,7 @@ public class BroadcastConnectedStream<IN1, IN2> {
 			final TypeInformation<OUT> outTypeInfo) {
 
 		Preconditions.checkNotNull(function);
+		// 检查是否是 KeyedStream
 		Preconditions.checkArgument(inputStream1 instanceof KeyedStream,
 				"A KeyedBroadcastProcessFunction can only be used on a keyed stream.");
 

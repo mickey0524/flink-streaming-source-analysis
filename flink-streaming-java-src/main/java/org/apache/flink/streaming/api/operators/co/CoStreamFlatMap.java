@@ -56,7 +56,6 @@ public class CoStreamFlatMap<IN1, IN2, OUT>
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		collector.setTimestamp(element);
 		userFunction.flatMap1(element.getValue(), collector);
-
 	}
 
 	@Override

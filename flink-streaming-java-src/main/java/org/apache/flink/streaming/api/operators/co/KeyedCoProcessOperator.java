@@ -42,6 +42,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  */
 /**
  * 一个执行 keyed CoProcessFunction 的流操作符
+ * 当 ConnectedStream 的两个 input 流都是 KeyedStream 的时候
+ * 使用 KeyedCoProcessOperator，反之，使用 CoProcessOperator
+ * KeyedCoProcessOperator 和 KeyedProcessOperator 非常相似
  */
 @Internal
 public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
@@ -69,15 +72,18 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 		collector = new TimestampedCollector<>(output);
 
 		// 这里没有使用 getProcessingTimeService 而是使用了 getInternalTimerService
+		// this 将本类作为 trigger
 		InternalTimerService<VoidNamespace> internalTimerService =
 				getInternalTimerService("user-timers", VoidNamespaceSerializer.INSTANCE, this);
 
+		// 包裹 internalTimerService 的一个简单的 TimerService
 		TimerService timerService = new SimpleTimerService(internalTimerService);
 
 		context = new ContextImpl<>(userFunction, timerService);
 		onTimerContext = new OnTimerContextImpl<>(userFunction, timerService);
 	}
 
+	// 处理 ConnectedStream 的第一个 stream 到来的 StreamRecord
 	@Override
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		collector.setTimestamp(element);
@@ -86,6 +92,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 		context.element = null;
 	}
 
+	// 处理 ConnectedStream 的第二个 stream 到来的 StreamRecord
 	@Override
 	public void processElement2(StreamRecord<IN2> element) throws Exception {
 		collector.setTimestamp(element);
@@ -95,6 +102,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 	}
 
 	@Override
+	// 事件时间定时器触发的时候被调用
 	// 会在 internalTimerServiceImpl 的 advanceWatermark 函数内被调用
 	public void onEventTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.setAbsoluteTimestamp(timer.getTimestamp());
@@ -106,6 +114,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 	}
 
 	@Override
+	// 进程时间定时器触发的时候被调用
 	// 会在 internalTimerServiceImpl 的 onProcessingTime 函数中被调用
 	public void onProcessingTime(InternalTimer<K, VoidNamespace> timer) throws Exception {
 		collector.eraseTimestamp();
@@ -186,7 +195,7 @@ public class KeyedCoProcessOperator<K, IN1, IN2, OUT>
 			if (outputTag == null) {
 				throw new IllegalArgumentException("OutputTag must not be null.");
 			}
-
+			// 定时器中的偏侧输出的 ts 为定时器触发的时间
 			output.collect(outputTag, new StreamRecord<>(value, timer.getTimestamp()));
 		}
 

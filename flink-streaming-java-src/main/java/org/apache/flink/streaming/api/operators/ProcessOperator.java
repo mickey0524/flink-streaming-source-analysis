@@ -47,7 +47,10 @@ public class ProcessOperator<IN, OUT>
 
 	/** We listen to this ourselves because we don't have an {@link InternalTimerService}. */
 	private long currentWatermark = Long.MIN_VALUE;
-
+	
+	/**
+	 * 构造函数，传入的是 ProcessFunction
+	 */
 	public ProcessOperator(ProcessFunction<IN, OUT> function) {
 		super(function);
 
@@ -57,6 +60,7 @@ public class ProcessOperator<IN, OUT>
 	@Override
 	public void open() throws Exception {
 		super.open();
+		// 保证 process emit 的流元素都是相同的时间戳
 		collector = new TimestampedCollector<>(output);
 
 		context = new ContextImpl(userFunction, getProcessingTimeService());
@@ -65,11 +69,14 @@ public class ProcessOperator<IN, OUT>
 	@Override
 	public void processElement(StreamRecord<IN> element) throws Exception {
 		collector.setTimestamp(element);
-		context.element = element;
+		context.element = element;  // context 记录当前处理的流元素
 		userFunction.processElement(element.getValue(), context, collector);
 		context.element = null;
 	}
 
+	/**
+	 * 处理 watermark
+	 */
 	@Override
 	public void processWatermark(Watermark mark) throws Exception {
 		super.processWatermark(mark);
@@ -100,6 +107,7 @@ public class ProcessOperator<IN, OUT>
 			}
 		}
 
+		// 侧边输出
 		@Override
 		public <X> void output(OutputTag<X> outputTag, X value) {
 			if (outputTag == null) {
@@ -138,6 +146,8 @@ public class ProcessOperator<IN, OUT>
 			throw new UnsupportedOperationException(UNSUPPORTED_DELETE_TIMER_MSG);
 		}
 
+		// 非 keyed stream TimerService 不支持任何定时器操作，返回 this
+		// this 的所有定时器相关方法调用时候全部抛出异常
 		@Override
 		public TimerService timerService() {
 			return this;

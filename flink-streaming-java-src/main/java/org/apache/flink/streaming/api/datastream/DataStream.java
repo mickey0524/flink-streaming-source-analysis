@@ -298,6 +298,8 @@ public class DataStream<T> {
 	 * 连接当前的流和一个 BroadcastStream 生成一个 BroadcastConnectedStream
 	 *
 	 * <p>The latter can be created using the {@link #broadcast(MapStateDescriptor[])} method.
+	 * 
+	 * BroadcastStream 能够通过调用 broadcast(MapStateDescriptor[]) 方法得到
 	 *
 	 * <p>The resulting stream can be further processed using the {@code BroadcastConnectedStream.process(MyFunction)}
 	 * method, where {@code MyFunction} can be either a
@@ -305,6 +307,10 @@ public class DataStream<T> {
 	 * or a {@link org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction BroadcastProcessFunction}
 	 * depending on the current stream being a {@link KeyedStream} or not.
 	 *
+	 * BroadcastConnectedStream 能够使用 process(MyFunction) 方法进行进一步的处理
+	 * 其中 MyFunction 可以是 KeyedBroadcastProcessFunction 或 BroadcastProcessFunction
+	 * 具体取决于当前流是否是 KeyedStream
+	 * 
 	 * @param broadcastStream The broadcast stream with the broadcast state to be connected with this stream.
 	 * @return The {@link BroadcastConnectedStream}.
 	 */
@@ -477,6 +483,10 @@ public class DataStream<T> {
 	 * @return A {@link BroadcastStream} which can be used in the {@link #connect(BroadcastStream)} to
 	 * create a {@link BroadcastConnectedStream} for further processing of the elements.
 	 */
+	/**
+	 * 设置 DataStream 的分区方式为广播分区，这样输出元素会被广播到下游的每一个并行实例中
+	 * 另外，它包含 broadcastStateDescriptors，能够用来存储流的元素
+	 */
 	@PublicEvolving
 	public BroadcastStream<T> broadcast(final MapStateDescriptor<?, ?>... broadcastStateDescriptors) {
 		Preconditions.checkNotNull(broadcastStateDescriptors);
@@ -491,7 +501,7 @@ public class DataStream<T> {
 	 * @return The DataStream with shuffle partitioning set.
 	 */
 	/**
-	 * 给 DataStream 设置 shuffle partitioner，这样输出元素会被均匀随机的打散到下一个操作中
+	 * 给 DataStream 设置 shuffle partitioner，这样输出元素会被随机的打散到下一个操作中
 	 */
 	@PublicEvolving
 	public DataStream<T> shuffle() {
@@ -761,7 +771,7 @@ public class DataStream<T> {
 	 * @return The transformed {@link DataStream}.
 	 */
 	/**
-	 * process 是较为底层处理数据的方法，和 flatMap 差不多，但是能够访问定时器
+	 * process 是较为底层处理数据的方法，和 flatMap 差不多，但是能够访问定时器（只有 KeyedStream 能够访问定时器）
 	 */
 	@Internal
 	public <R> SingleOutputStreamOperator<R> process(

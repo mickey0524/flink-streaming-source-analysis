@@ -37,7 +37,10 @@ import static org.apache.flink.util.Preconditions.checkState;
  * {@link CoProcessFunction CoProcessFunctions}.
  */
 /**
+ * 当 ConnectedStream 的两个 input 不都为 KeyedStream 的时候使用 CoProcessOperator
+ * 反之，使用 KeyedCoProcessOperator
  * 一个执行 CoProcessFunction 的流操作符
+ * 本类的 ProcessOperator 非常相似，多了一个 processElement2
  */
 @Internal
 public class CoProcessOperator<IN1, IN2, OUT>
@@ -51,6 +54,8 @@ public class CoProcessOperator<IN1, IN2, OUT>
 	private transient ContextImpl context;
 
 	/** We listen to this ourselves because we don't have an {@link InternalTimerService}. */
+	// 我们需要自己来存储当前流入操作符的 watermark
+	// 因为不是 keyed 的 stream，不能使用 InternalTimerService
 	private long currentWatermark = Long.MIN_VALUE;
 
 	public CoProcessOperator(CoProcessFunction<IN1, IN2, OUT> flatMapper) {
@@ -60,11 +65,13 @@ public class CoProcessOperator<IN1, IN2, OUT>
 	@Override
 	public void open() throws Exception {
 		super.open();
+		// 保证 emit 的流元素的 ts 都是相同的
 		collector = new TimestampedCollector<>(output);
 
 		context = new ContextImpl(userFunction, getProcessingTimeService());
 	}
 
+	// 处理第一个流的 StreamRecord
 	@Override
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		collector.setTimestamp(element);
@@ -73,6 +80,7 @@ public class CoProcessOperator<IN1, IN2, OUT>
 		context.element = null;
 	}
 
+	// 处理第二个流的 StreamRecord
 	@Override
 	public void processElement2(StreamRecord<IN2> element) throws Exception {
 		collector.setTimestamp(element);
@@ -81,6 +89,7 @@ public class CoProcessOperator<IN1, IN2, OUT>
 		context.element = null;
 	}
 
+	// 处理到来的 watermark
 	@Override
 	public void processWatermark(Watermark mark) throws Exception {
 		super.processWatermark(mark);

@@ -58,6 +58,10 @@ import static java.util.Objects.requireNonNull;
  * @param <IN1> Type of the first input data steam.
  * @param <IN2> Type of the second input data stream.
  */
+/**
+ * 需要注意的是，ConnectedStreams 没有继承 DataStream
+ * 因此只能使用 ConnectedStreams 中定义的方法
+ */
 @Public
 public class ConnectedStreams<IN1, IN2> {
 

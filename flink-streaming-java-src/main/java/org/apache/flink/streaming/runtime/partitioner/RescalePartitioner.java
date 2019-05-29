@@ -28,6 +28,11 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * {@link org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator} instantiates
  * a {@link DistributionPattern#POINTWISE} distribution pattern when encountering
  * {@code RescalePartitioner}.
+ * 
+ * Partitioner 通过轮询将数据写入输出通道
+ * 需要注意的是（这也是 RescalePartitioner 和 RebalancePartitioner 的区别）：
+ * RescalePartitioner 仅仅将数据分配到下游节点的一个子集中，因为当 StreamingJobGraphGenerator
+ * 遇到 RescalePartitioner 的时候，会实例化一个 POINTWISE 分配模式
  *
  * <p>The subset of downstream operations to which the upstream operation sends
  * elements depends on the degree of parallelism of both the upstream and downstream operation.
@@ -47,6 +52,8 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * <p>In cases where the different parallelisms are not multiples of each other one or several
  * downstream operations will have a differing number of inputs from upstream operations.
  *
+ * 如果上下游的并行度不是倍数的话，其中某些下游操作符将具有不同的输入数量
+ * 
  * @param <T> Type of the elements in the Stream being rescaled
  */
 @Internal

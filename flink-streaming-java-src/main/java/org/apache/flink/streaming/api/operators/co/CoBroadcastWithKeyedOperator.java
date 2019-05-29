@@ -92,14 +92,15 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 	public void open() throws Exception {
 		super.open();
 
-		// 内部定时器服务
+		// 内部定时器服务，将本类作为 trigger
 		InternalTimerService<VoidNamespace> internalTimerService =
 				getInternalTimerService("user-timers", VoidNamespaceSerializer.INSTANCE, this);
-
+		// SimpleTimerService 包裹 internalTimerService
 		TimerService timerService = new SimpleTimerService(internalTimerService);
-
+	
 		collector = new TimestampedCollector<>(output);
 
+		// 用一个 map 保存每个 StateDescriptor 和 State 的映射
 		this.broadcastStates = new HashMap<>(broadcastStateDescriptors.size());
 		for (MapStateDescriptor<?, ?> descriptor: broadcastStateDescriptors) {
 			broadcastStates.put(descriptor, getOperatorStateBackend().getBroadcastState(descriptor));
@@ -110,6 +111,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		onTimerContext = new OnTimerContextImpl(getExecutionConfig(), userFunction, broadcastStates, timerService);
 	}
 
+	// 数据流侧
 	@Override
 	public void processElement1(StreamRecord<IN1> element) throws Exception {
 		collector.setTimestamp(element);
@@ -118,6 +120,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		rContext.setElement(null);
 	}
 
+	// 广播流侧
 	@Override
 	public void processElement2(StreamRecord<IN2> element) throws Exception {
 		collector.setTimestamp(element);
@@ -126,6 +129,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		rwContext.setElement(null);
 	}
 
+	// 事件时间定时器触发
 	@Override
 	public void onEventTime(InternalTimer<KS, VoidNamespace> timer) throws Exception {
 		collector.setAbsoluteTimestamp(timer.getTimestamp());
@@ -136,6 +140,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		onTimerContext.timer = null;
 	}
 
+	// 进程时间定时器触发
 	@Override
 	public void onProcessingTime(InternalTimer<KS, VoidNamespace> timer) throws Exception {
 		collector.eraseTimestamp();
@@ -146,13 +151,16 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		onTimerContext.timer = null;
 	}
 
+	// 广播侧的上下文
 	private class ReadWriteContextImpl
 			extends KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT>.Context {
 
 		private final ExecutionConfig config;
 
+		// 这里传入了 KeyedStateBackend
 		private final KeyedStateBackend<KS> keyedStateBackend;
 
+		// BroadcastState 是存储在 OperatorState 中的
 		private final Map<MapStateDescriptor<?, ?>, BroadcastState<?, ?>> states;
 
 		private final TimerService timerService;
@@ -226,6 +234,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 		}
 	}
 
+	// 数据流侧的上下文
 	private class ReadOnlyContextImpl extends ReadOnlyContext {
 
 		private final ExecutionConfig config;
@@ -284,6 +293,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 			Preconditions.checkNotNull(stateDescriptor);
 
 			stateDescriptor.initializeSerializerUnlessSet(config);
+			// 得到的是 ReadOnlyBroadcastState
 			ReadOnlyBroadcastState<K, V> state = (ReadOnlyBroadcastState<K, V>) states.get(stateDescriptor);
 			if (state == null) {
 				throw new IllegalArgumentException("The requested state does not exist. " +
@@ -301,6 +311,7 @@ public class CoBroadcastWithKeyedOperator<KS, IN1, IN2, OUT>
 
 	}
 
+	// 定时器触发的时候的上下文，用于 onTimer 方法内
 	private class OnTimerContextImpl extends KeyedBroadcastProcessFunction<KS, IN1, IN2, OUT>.OnTimerContext {
 
 		private final ExecutionConfig config;

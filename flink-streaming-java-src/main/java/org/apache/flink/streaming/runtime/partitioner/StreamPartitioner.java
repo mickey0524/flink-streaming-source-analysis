@@ -37,7 +37,7 @@ public abstract class StreamPartitioner<T> implements
 
 	protected int numberOfChannels;
 	
-	// setup 方法在 RecordWriter 初始化的时候被设置
+	// setup 方法在 RecordWriter 初始化的时候被调用
 	@Override
 	public void setup(int numberOfChannels) {
 		this.numberOfChannels = numberOfChannels;

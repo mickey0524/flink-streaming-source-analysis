@@ -65,6 +65,9 @@ public class FeedbackTransformation<T> extends StreamTransformation<T> {
 	 * @param waitTime The wait time of the feedback operator. After the time expires
 	 *                          the operation will close and not receive any more feedback elements.
 	 */
+	/**
+	 * 创建一个新的 FeedbackTransformation
+	 */
 	public FeedbackTransformation(StreamTransformation<T> input, Long waitTime) {
 		super("Feedback", input.getOutputType(), input.getParallelism());
 		this.input = input;
@@ -74,6 +77,9 @@ public class FeedbackTransformation<T> extends StreamTransformation<T> {
 
 	/**
 	 * Returns the input {@code StreamTransformation} of this {@code FeedbackTransformation}.
+	 */
+	/**
+	 * 返回输入的 StreamTransformation
 	 */
 	public StreamTransformation<T> getInput() {
 		return input;
@@ -85,6 +91,9 @@ public class FeedbackTransformation<T> extends StreamTransformation<T> {
 	 * {@code FeedbackTransformation}
 	 *
 	 * @param transform The new feedback {@code StreamTransformation}.
+	 */
+	/**
+	 * 添加一个反馈边，参数 transform 的并行度必须和 FeedbackTransformation 的并行度一样
 	 */
 	public void addFeedbackEdge(StreamTransformation<T> transform) {
 
@@ -102,6 +111,9 @@ public class FeedbackTransformation<T> extends StreamTransformation<T> {
 	/**
 	 * Returns the list of feedback {@code StreamTransformations}.
 	 */
+	/**
+	 * 返回反馈边的集合
+	 */
 	public List<StreamTransformation<T>> getFeedbackEdges() {
 		return feedbackEdges;
 	}
@@ -110,6 +122,9 @@ public class FeedbackTransformation<T> extends StreamTransformation<T> {
 	 * Returns the wait time. This is the amount of time that the feedback operator keeps listening
 	 * for feedback elements. Once the time expires the operation will close and will not receive
 	 * further elements.
+	 */
+	/**
+	 * 返回等待时间
 	 */
 	public Long getWaitTime() {
 		return waitTime;

@@ -71,6 +71,9 @@ public class CoFeedbackTransformation<F> extends StreamTransformation<F> {
 	 * @param waitTime The wait time of the feedback operator. After the time expires
 	 *                          the operation will close and not receive any more feedback elements.
 	 */
+	/**
+	 * 创建一个新的 CoFeedbackTransformation
+	 */
 	public CoFeedbackTransformation(int parallelism,
 			TypeInformation<F> feedbackType,
 			Long waitTime) {
@@ -86,6 +89,9 @@ public class CoFeedbackTransformation<F> extends StreamTransformation<F> {
 	 *
 	 * @param transform The new feedback {@code StreamTransformation}.
 	 */
+	/**
+	 * 添加一个反馈边，参数 transform 的并行度必须和 FeedbackTransformation 的并行度一样
+	 */
 	public void addFeedbackEdge(StreamTransformation<F> transform) {
 
 		if (transform.getParallelism() != this.getParallelism()) {
@@ -100,6 +106,9 @@ public class CoFeedbackTransformation<F> extends StreamTransformation<F> {
 
 	/**
 	 * Returns the list of feedback {@code StreamTransformations}.
+	 */
+	/**
+	 * 返回反馈边的集合
 	 */
 	public List<StreamTransformation<F>> getFeedbackEdges() {
 		return feedbackEdges;

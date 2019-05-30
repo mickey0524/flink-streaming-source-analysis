@@ -35,6 +35,8 @@ import java.util.Collection;
  */
 /**
  * 迭代数据流指代了数据流中迭代的开始
+ * IterativeStream 继承了 SingleOutputStreamOperator
+ * 可以正常使用 map 等操作
  */
 @PublicEvolving
 public class IterativeStream<T> extends SingleOutputStreamOperator<T> {

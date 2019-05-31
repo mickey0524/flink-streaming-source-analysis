@@ -10,6 +10,7 @@
 * [flink 的 DataSource](./docs/flink-data-source.md)
 * [flink 的 DataSink](./docs/flink-data-sink.md)
 * [flink DataStream 的转换](./docs/flink-stream-transformation.md)
+* [flink KeyedStream 的转换](./docs/flink-keyed-stream-transformation.md)
 * [flink 中的时间](./docs/flink-time-characteristic.md)
 * [flink 中的 StreamPartitioner](./docs/flink-stream-partitioner.md)
 * 逐步更新，敬请期待
@@ -23,3 +24,4 @@
 * [flink 中文文档](http://flink-cn.shinonomelab.com/)
 * [云邪的博客](http://wuchong.me/)
 * [zhisheng的博客](http://www.54tianzhisheng.cn/)
+* [flink 流操作官方栗子](https://github.com/apache/flink/tree/master/flink-examples/flink-examples-streaming)

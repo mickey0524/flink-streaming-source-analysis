@@ -520,7 +520,7 @@ iterativeStream.closeWith(splitStream.select("iterate"));
 splitStream.select("output").printToErr();
 ```
 
-上面的栗子，当元素大于 10 的时候输出到错误流，反之，进行迭代，需要注意的是，只有并行度相同的时候，才能调用 closeWith 方法，反馈操作不涉及 StreamOperator，是通过 BlockingQueue 在 StreamTask 的时候实现的（后续会有文章介绍）
+上面的栗子，当元素大于 10 的时候输出到错误流，反之，进行迭代，需要注意的是，只有并行度相同的时候，才能调用 closeWith 方法（上文栗子中使用 `env.setParallelism(1)` 设置环境的并行度为 1，否则需要设置 iterativeStream 的并行度为环境的并行度），反馈操作不涉及 StreamOperator，是通过 BlockingQueue 在 StreamTask 的时候实现的（后续会有文章介绍）
 
 ## 总结
 

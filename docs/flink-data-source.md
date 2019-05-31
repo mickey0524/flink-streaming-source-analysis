@@ -51,7 +51,7 @@ public <OUT> DataStreamSource<OUT> fromCollection(Collection<OUT> data, TypeInfo
 }
 ```
 
-fromCollection 创建一个了一个 FromElementsFunction，易得，FromElementsFunction 实现了 SourceFunction，用于生成流元素，最后调用了 addSource 方法生成 StreamSource，addSource 方法在上一篇文章中有讲到，这里就不重复了 
+fromCollection 创建一个了一个 FromElementsFunction，易得，FromElementsFunction 实现了 SourceFunction，用于生成流元素，最后调用了 addSource 方法生成 StreamSource，addSource 方法在上一篇文章中有讲到，这里就不重复了，最后调用了 `setParallelism(1)` 设置流的并行度为 1
 
 ```
 public class FromElementsFunction<T> implements SourceFunction<T>, CheckpointedFunction {

@@ -87,6 +87,7 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 		final StringBuilder buffer = new StringBuilder();
 		long attempt = 0;
 
+		// 使用 isRunning 来源源不断的从 socket 中获取字符串生成流元素
 		while (isRunning) {
 
 			try (Socket socket = new Socket()) {
@@ -94,16 +95,21 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 
 				LOG.info("Connecting to server socket " + hostname + ':' + port);
 				socket.connect(new InetSocketAddress(hostname, port), CONNECTION_TIMEOUT_TIME);
+				// 创建从 socket 中读取数据的 reader
 				try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
+					// 一次性最多读取 8192 个 char，也就是 16384 个字节
 					char[] cbuf = new char[8192];
 					int bytesRead;
+					// bytesRead 为 -1 代表没有获取到任何数据，不用进循环
 					while (isRunning && (bytesRead = reader.read(cbuf)) != -1) {
+						// 将所有的数据读入 StringBuilder
 						buffer.append(cbuf, 0, bytesRead);
 						int delimPos;
+						// 根据传入的分隔符切分流元素
 						while (buffer.length() >= delimiter.length() && (delimPos = buffer.indexOf(delimiter)) != -1) {
 							String record = buffer.substring(0, delimPos);
 							// truncate trailing carriage return
+							// 当分割符为 "\n" 的时候，需要判断最后一个字符是否为 "\r"
 							if (delimiter.equals("\n") && record.endsWith("\r")) {
 								record = record.substring(0, record.length() - 1);
 							}
@@ -122,6 +128,7 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 					Thread.sleep(delayBetweenRetries);
 				}
 				else {
+					// 没有重试次数或者没有设置重试机制，退出循环
 					// this should probably be here, but some examples expect simple exists of the stream source
 					// throw new EOFException("Reached end of stream and reconnects are not enabled.");
 					break;
@@ -141,6 +148,7 @@ public class SocketTextStreamFunction implements SourceFunction<String> {
 
 		// we need to close the socket as well, because the Thread.interrupt() function will
 		// not wake the thread in the socketStream.read() method when blocked.
+		// SourceFunction 关闭的时候，需要停止当前的 socket
 		Socket theSocket = this.currentSocket;
 		if (theSocket != null) {
 			IOUtils.closeSocket(theSocket);

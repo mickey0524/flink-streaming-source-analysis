@@ -85,7 +85,7 @@ dataStream.flatMap(new FlatMapFunction<String, String>() {
 
 flink 中有一个 `StreamFlatMap.java` 的文件，位于 `org.apache.flink.streaming.api.operators.StreamFlatMap.java`，StreamFlatMap 是一个 StreamOperator，用于在流元素到来的时候调用定义的 FlatMapFunction，并 emit 处理后的流元素，StreamFlatMap 使用 TimestampedCollector 来保证输出的流元素的 timestamp 全部等于输入的流元素
 
-```
+```java
 public class StreamFlatMap<IN, OUT>
 		extends AbstractUdfStreamOperator<OUT, FlatMapFunction<IN, OUT>>
 		implements OneInputStreamOperator<IN, OUT> {

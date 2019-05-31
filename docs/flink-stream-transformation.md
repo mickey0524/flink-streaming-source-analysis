@@ -484,6 +484,44 @@ connectedStreams.map(new CoMapFunction<Integer, String, String>() {
 }).printToErr();
 ```
 
+## iterate
+
+iterate 操作设置反馈流的终点（即接收反馈元素的节点），数据流执行 iterate 方法会返回一个 IterativeStream，IterativeStream 提供一个 closeWith 的方法，closeWith 接收一个 DataStream 作为参数，参数作为反馈流的起点（即产生反馈元素的节点）
+
+```java
+final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+env.setParallelism(1);
+
+Integer[] integers = new Integer[]{1, 2, 3, 4};
+
+DataStream<Integer> dataStream = env.fromElements(integers);
+IterativeStream<Integer> iterativeStream = dataStream.iterate(5000);
+
+SplitStream<Integer> splitStream = iterativeStream.map(new MapFunction<Integer, Integer>() {
+    @Override
+    public Integer map(Integer value) throws Exception {
+        return value * 2;
+    }
+}).split(new OutputSelector<Integer>() {
+    @Override
+    public Iterable<String> select(Integer value) {
+        ArrayList<String> l = new ArrayList<>();
+        if (value > 10) {
+            l.add("output");
+        } else {
+            l.add("iterate");
+        }
+
+        return l;
+    }
+});
+
+iterativeStream.closeWith(splitStream.select("iterate"));
+splitStream.select("output").printToErr();
+```
+
+上面的栗子，当元素大于 10 的时候输出到错误流，反之，进行迭代，需要注意的是，只有并行度相同的时候，才能调用 closeWith 方法，反馈操作不涉及 StreamOperator，是通过 BlockingQueue 在 StreamTask 的时候实现的（后续会有文章介绍）
+
 ## 总结
 
 本文主要介绍了 flink DataStream 的常用转换方式，每一个算子都有配套的小 demo 和源码分析，具体在项目中该如何将数据流转换成我们想要的格式，还需要根据实际情况对待

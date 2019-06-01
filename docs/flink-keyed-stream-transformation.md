@@ -242,7 +242,7 @@ public class ComparableAggregator<T> extends AggregationFunction<T> {
 }
 ```
 
-我们分 api 来介绍 Comparator
+我们分 api 来介绍 Comparator，sum 中有 AggregationFunction 的源码，其中 AggregationType 定义了 5 种操作，当调用 max、min、maxBy 和 minBy 的时候，flink 内部就是通过传递 AggregationType 来告诉 ComparableAggregator 使用哪种 Comparator
 
 * max 操作的 Comparator，只有 `o1.compareTo(o2) > 0` 返回 1，当 o2 大于等于 o1 的时候，都是返回 0 的
 

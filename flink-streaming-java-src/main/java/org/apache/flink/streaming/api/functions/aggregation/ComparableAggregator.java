@@ -91,8 +91,8 @@ public class ComparableAggregator<T> extends AggregationFunction<T> {
 			return c == 1 ? value1 : value2;
 
 		} else {
-			// MAX/MIN 将符合条件的 key 写入 value1，MAX/MIN 返回的永远是 value1，主要注意的是，当 o2 等于 o1 的时候，选择 o2
-			// 也就是说当数据相等的时候，选择后来的
+			// MAX/MIN 将符合条件的 key 写入 value1，MAX/MIN 返回的永远是 value1，主要注意的是，当 o2 等于 o1 的时候
+			// 会将 o2 写入 value1
 			if (c == 0) {
 				value1 = fieldAccessor.set(value1, o2);
 			}

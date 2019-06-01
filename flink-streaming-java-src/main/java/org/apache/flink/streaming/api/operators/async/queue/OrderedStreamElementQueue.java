@@ -248,7 +248,7 @@ public class OrderedStreamElementQueue implements StreamElementQueue {
 		lock.lockInterruptibly();
 
 		try {
-			// 我觉得这里应该是 while 而不是 if
+			// 异步执行完成，通知 poll 和 peekBlockingly 函数
 			if (!queue.isEmpty() && queue.peek().isDone()) {
 				LOG.debug("Signal ordered stream element queue has completed head element.");
 				headIsCompleted.signalAll();

@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 无序流元素队列在完成后立即 emit 异步结果
  * 此外，它还保持水印流记录顺序，这意味着没有流记录可以被水印超过，也没有水印可以超过流元素
  * 这是通过 firstSet、lastSet 以及 uncompletedQueue 来实现的
- * 但是，落在两个水印之间的同一段中的流记录可能会相互超越（不保证其排放顺序）
+ * 但是，落在两个水印之间的同一段中的流记录可能会相互超越（不保证其 emit 顺序）
  */
 @Internal
 public class UnorderedStreamElementQueue implements StreamElementQueue {
@@ -106,6 +106,7 @@ public class UnorderedStreamElementQueue implements StreamElementQueue {
 		this.uncompletedQueue = new ArrayDeque<>(capacity);
 		this.completedQueue = new ArrayDeque<>(capacity);
 
+		// 最开始的时候，firstSet 和 lastSet 指向的是同一块内存地址
 		this.firstSet = new HashSet<>(capacity);
 		this.lastSet = firstSet;
 

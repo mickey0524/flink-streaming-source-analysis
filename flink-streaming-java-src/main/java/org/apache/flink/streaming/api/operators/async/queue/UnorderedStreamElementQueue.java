@@ -271,9 +271,11 @@ public class UnorderedStreamElementQueue implements StreamElementQueue {
 			if (firstSet.remove(streamElementQueueEntry)) {
 				completedQueue.offer(streamElementQueueEntry);
 				// 当从 firstSet 中 remove 一个元素，然后 firstSet 变为空
-				// 说明 firstSet 中存放的是一个 watermark
-				// watermark 完成了，当前 uncompletedQueue 中的元素也应该完成了
-				// 当 firstSet 重新指向 lastSet 的时候，跳出循环
+				// 说明可以访问 uncompletedQueue 中下一个 set 了
+				// 通过 while 一直循环下去，
+				// 当 firstSet 重新指向 lastSet 的时候，跳出循环（重新将 firstSet 和 lastSet 指向同一块内存区域）
+				// 或者是当前 firstSet.isEmpty() == false，这意味着目前 firstSet
+				// 中还有没有完成异步操作的元素，需要等待
 				while (firstSet.isEmpty() && firstSet != lastSet) {
 					firstSet = uncompletedQueue.poll();
 

@@ -120,7 +120,7 @@ public class Emitter<OUT> implements Runnable {
 
 				// remove the peeked element from the async collector buffer so that it is no longer
 				// checkpointed
-				// 从异步收集器缓冲区中删除 peeked 元素，以便不再检查
+				// 从异步收集器缓冲区中删除 peeked 元素，以便检查点不会包含这个元素
 				streamElementQueue.poll();
 
 				// notify the main thread that there is again space left in the async collector

@@ -45,7 +45,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * {@link System#currentTimeMillis()} and registers timers using a {@link ScheduledThreadPoolExecutor}.
  */
 /**
- * 一个 ProcessingTimeService，它将调用 System.currentTimeMillis() 的结果指定为当前处理时间
+ * 一个 ProcessingTimeService，它将调用 System.currentTimeMillis() 的结果指定为当前进程时间
  * 并使用 ScheduledThreadPoolExecutor 注册计时器
  */
 public class SystemProcessingTimeService extends ProcessingTimeService {

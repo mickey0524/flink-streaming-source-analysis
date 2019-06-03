@@ -62,6 +62,10 @@ public abstract class MergingWindowAssigner<T, W extends Window> extends WindowA
 		 * @param toBeMerged The list of windows that should be merged into one window.
 		 * @param mergeResult The resulting merged window.
 		 */
+		/**
+		 * toBeMerged 是被合并的窗口的集合
+		 * mergeResult 是 toBeMerged 中窗口合并的结果
+		 */
 		void merge(Collection<W> toBeMerged, W mergeResult);
 	}
 }

@@ -75,7 +75,7 @@ public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 	 */
 	private void evict(Iterable<TimestampedValue<Object>> elements, int size, EvictorContext ctx) {
 		// 因为这个是 TimeEvictor，是需要根据 windowSize 和当前 elements 中最大的 ts 来决定
-		// 驱逐哪些元素的，所以需要判断
+		// 驱逐哪些元素的
 		if (!hasTimestamp(elements)) {
 			return;
 		}
@@ -83,7 +83,8 @@ public class TimeEvictor<W extends Window> implements Evictor<Object, W> {
 		long currentTime = getMaxTimestamp(elements);
 		long evictCutoff = currentTime - windowSize;
 
-		// 将时间早于 current_time - keep_time 的元素驱逐
+		// currentTime 是元素集中时间戳最大的，windowSize 是窗口的大小
+		// evictCutoff 是能够存活的最低的界限
 		for (Iterator<TimestampedValue<Object>> iterator = elements.iterator(); iterator.hasNext(); ) {
 			TimestampedValue<Object> record = iterator.next();
 			if (record.getTimestamp() <= evictCutoff) {

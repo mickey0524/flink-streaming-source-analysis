@@ -58,7 +58,7 @@ public interface Evictor<T, W extends Window> extends Serializable {
 	 * @param evictorContext The context for the Evictor
      */
 	/**
-	 * 可选的驱逐元素，在窗口函数执行前调用
+	 * 驱逐部分元素，在窗口函数执行前调用
 	 */
 	void evictBefore(Iterable<TimestampedValue<T>> elements, int size, W window, EvictorContext evictorContext);
 
@@ -71,7 +71,7 @@ public interface Evictor<T, W extends Window> extends Serializable {
 	 * @param evictorContext The context for the Evictor
 	 */
 	/**
-	 * 可选的驱逐元素，在窗口函数执行后调用
+	 * 驱逐部分元素，在窗口函数执行后调用
 	 */
 	void evictAfter(Iterable<TimestampedValue<T>> elements, int size, W window, EvictorContext evictorContext);
 

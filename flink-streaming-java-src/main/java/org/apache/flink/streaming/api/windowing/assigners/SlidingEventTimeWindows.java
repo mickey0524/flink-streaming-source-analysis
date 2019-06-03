@@ -83,6 +83,8 @@ public class SlidingEventTimeWindows extends WindowAssigner<Object, TimeWindow> 
 			}
 			return windows;
 		} else {
+			// 当 Watermark 的 ts 为 Long.MIN_VALUE 的时候
+			// 说明数据流中没有有效的 Watermark
 			throw new RuntimeException("Record has Long.MIN_VALUE timestamp (= no timestamp marker). " +
 					"Is the time characteristic set to 'ProcessingTime', or did you forget to call " +
 					"'DataStream.assignTimestampsAndWatermarks(...)'?");

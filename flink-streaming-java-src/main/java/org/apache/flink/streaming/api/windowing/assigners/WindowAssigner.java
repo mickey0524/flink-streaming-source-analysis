@@ -62,7 +62,7 @@ public abstract class WindowAssigner<T, W extends Window> implements Serializabl
 	 *
 	 * @param element 被分配窗口的元素
 	 * @param timestamp 元素的 ts
-	 * @param context 分配器在其中操作的WindowAssignerContext
+	 * @param context 分配器在其中操作的 WindowAssignerContext
 	 */
 	public abstract Collection<W> assignWindows(T element, long timestamp, WindowAssignerContext context);
 

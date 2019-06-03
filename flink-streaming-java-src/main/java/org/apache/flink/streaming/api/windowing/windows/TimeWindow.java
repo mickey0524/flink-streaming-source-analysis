@@ -142,7 +142,7 @@ public class TimeWindow extends Window {
 	 * Returns the minimal window covers both this window and the given window.
 	 */
 	/**
-	 * 返回最小的窗口能够覆盖本窗口和给定的窗口
+	 * 返回能够覆盖本窗口和给定的窗口的最小窗口
 	 */
 	public TimeWindow cover(TimeWindow other) {
 		return new TimeWindow(Math.min(start, other.start), Math.max(end, other.end));
@@ -154,6 +154,9 @@ public class TimeWindow extends Window {
 
 	/**
 	 * The serializer used to write the TimeWindow type.
+	 */
+	/**
+	 * 用于编写 TimeWindow 类型的序列化程序
 	 */
 	public static class Serializer extends TypeSerializerSingleton<TimeWindow> {
 		private static final long serialVersionUID = 1L;
@@ -241,7 +244,7 @@ public class TimeWindow extends Window {
 	public static void mergeWindows(Collection<TimeWindow> windows, MergingWindowAssigner.MergeCallback<TimeWindow> c) {
 
 		// sort the windows by the start time and then merge overlapping windows
-		// 将窗口按照开始时间排序，然后合并重叠的窗口
+		// 将窗口按照开始时间排序，然后合并有重合的窗口
 		List<TimeWindow> sortedWindows = new ArrayList<>(windows);
 
 		Collections.sort(sortedWindows, new Comparator<TimeWindow>() {
@@ -280,6 +283,8 @@ public class TimeWindow extends Window {
 		}
 
 		for (Tuple2<TimeWindow, Set<TimeWindow>> m: merged) {
+			// set 的 size() 大于 1，表明这个 Tuple2 是多个原始窗口合并的
+			// 调用 merge 的回调函数
 			if (m.f1.size() > 1) {
 				c.merge(m.f1, m.f0);
 			}

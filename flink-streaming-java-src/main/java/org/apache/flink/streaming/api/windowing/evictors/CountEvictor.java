@@ -37,7 +37,7 @@ public class CountEvictor<W extends Window> implements Evictor<Object, W> {
 	private static final long serialVersionUID = 1L;
 
 	private final long maxCount;  // 最多保留多少数量的 record
-	private final boolean doEvictAfter;
+	private final boolean doEvictAfter;  // 在窗口函数执行前还是后执行驱逐操作
 
 	private CountEvictor(long count, boolean doEvictAfter) {
 		this.maxCount = count;

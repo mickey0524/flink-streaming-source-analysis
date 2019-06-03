@@ -43,6 +43,7 @@ public class EventTimeTrigger extends Trigger<Object, TimeWindow> {
 			// 如果 watermark 已经超过窗口末端了，立即触发定时器
 			return TriggerResult.FIRE;
 		} else {
+			// 否则注册事件时间定时器，在 onEventTime 中触发
 			ctx.registerEventTimeTimer(window.maxTimestamp());
 			return TriggerResult.CONTINUE;
 		}

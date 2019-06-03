@@ -45,9 +45,9 @@ import java.util.Iterator;
 public class DeltaEvictor<T, W extends Window> implements Evictor<T, W> {
 	private static final long serialVersionUID = 1L;
 
-	DeltaFunction<T> deltaFunction;
-	private double threshold;
-	private final boolean doEvictAfter;
+	DeltaFunction<T> deltaFunction;  // 计算两个元素的差值的函数  
+	private double threshold;  // 窗口能接受最大的差值
+	private final boolean doEvictAfter;  // 在窗口函数执行前还是后执行驱逐操作
 
 	private DeltaEvictor(double threshold, DeltaFunction<T> deltaFunction) {
 		this.deltaFunction = deltaFunction;

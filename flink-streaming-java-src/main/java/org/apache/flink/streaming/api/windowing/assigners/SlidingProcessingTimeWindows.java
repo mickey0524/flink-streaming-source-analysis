@@ -43,8 +43,9 @@ import java.util.List;
  * } </pre>
  */
 /**
- * 一种窗口分配器，根据当前运行机器的系统时间将元素分配到滑动窗口中
- * 窗口可能重叠
+ * 一种窗口分配器，根据当前运行机器的系统时间将元素分配到滑动窗口中，窗口可能重叠
+ * 滑动进程时间窗口，假如窗口大小为 60，slide 为 10
+ * 那么 0 - 60 为第一个窗口，10 - 70 为第二个窗口，依此类推
  */
 public class SlidingProcessingTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
@@ -72,7 +73,7 @@ public class SlidingProcessingTimeWindows extends WindowAssigner<Object, TimeWin
 	 */
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		timestamp = context.getCurrentProcessingTime();
-		// 每一个元素都应该至少属于 size / slide 个滑动窗口
+		// 每一个元素都应该至少属于 size/slide 个滑动窗口，需要记住，时间窗口都是左闭右开的
 		List<TimeWindow> windows = new ArrayList<>((int) (size / slide));
 		long lastStart = TimeWindow.getWindowStartWithOffset(timestamp, offset, slide);
 		// 这里感觉能优化一下，start 有可能左溢出，比如 timestamp 为 3，size 为 60

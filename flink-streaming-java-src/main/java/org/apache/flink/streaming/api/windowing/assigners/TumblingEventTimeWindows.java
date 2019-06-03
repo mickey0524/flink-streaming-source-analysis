@@ -50,9 +50,9 @@ import java.util.Collections;
 public class TumblingEventTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
 
-	private final long size;
+	private final long size;  // 窗口大小
 
-	private final long offset;
+	private final long offset;  // 窗口偏移
 
 	protected TumblingEventTimeWindows(long size, long offset) {
 		if (Math.abs(offset) >= size) {
@@ -67,10 +67,11 @@ public class TumblingEventTimeWindows extends WindowAssigner<Object, TimeWindow>
 	public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
 		if (timestamp > Long.MIN_VALUE) {
 			// Long.MIN_VALUE is currently assigned when no timestamp is present
-			// 当没有 StreamRecord 没有 ts 的时候，getTimestamp 返回 Long.MIN_VALUE
+			// 当 StreamRecord 没有 ts 的时候，getTimestamp 返回 Long.MIN_VALUE
 			long start = TimeWindow.getWindowStartWithOffset(timestamp, offset, size);
 			return Collections.singletonList(new TimeWindow(start, start + size));
 		} else {
+			// 说明 StreamRecord 没有被设置 ts，有空吗没有调用 assignTimestampsAndWatermarks
 			throw new RuntimeException("Record has Long.MIN_VALUE timestamp (= no timestamp marker). " +
 					"Is the time characteristic set to 'ProcessingTime', or did you forget to call " +
 					"'DataStream.assignTimestampsAndWatermarks(...)'?");

@@ -42,15 +42,16 @@ import java.util.Collections;
  * } </pre>
  */
 /**
- * 一种窗口分配器，根据运行操作的机器的当前系统时间，将窗口元素放入窗口中
- * 窗口不能重叠
+ * 一种窗口分配器，根据运行操作的机器的当前系统时间，将元素放入窗口中，窗口不能重叠
+ * 翻转进程时间窗口，例如窗口 size 为 60，offset 为 0
+ * 0 - 60 为第一个窗口，60 - 120 为第二个，依此类推
  */
 public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWindow> {
 	private static final long serialVersionUID = 1L;
 
-	private final long size;  // 大小
+	private final long size;  // 窗口大小
 
-	private final long offset;  // offset
+	private final long offset;  // 窗口偏移
 
 	private TumblingProcessingTimeWindows(long size, long offset) {
 		// 当 offset 大于 size 的时候，抛出异常
@@ -71,6 +72,9 @@ public class TumblingProcessingTimeWindows extends WindowAssigner<Object, TimeWi
 		return Collections.singletonList(new TimeWindow(start, start + size));
 	}
 
+	/**
+	 * 返回窗口长度
+	 */
 	public long getSize() {
 		return size;
 	}

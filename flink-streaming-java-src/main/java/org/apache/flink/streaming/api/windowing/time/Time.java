@@ -47,7 +47,6 @@ public final class Time {
 	private Time(long size, TimeUnit unit) {
 		this.unit = checkNotNull(unit, "time unit may not be null");
 		this.size = size;
-
 	}
 
 	// ------------------------------------------------------------------------
@@ -70,7 +69,7 @@ public final class Time {
 	 * @return The length of this policy's time interval.
 	 */
 	/**
-	 * 获取时间量级
+	 * 获取时间间隔
 	 */
 	public long getSize() {
 		return size;
@@ -111,12 +110,18 @@ public final class Time {
 	/**
 	 * Creates a new {@link Time} that represents the given number of milliseconds.
 	 */
+	/**
+	 * 快捷创建 TimeUnit 为 MILLISECONDS 的 Time 实例
+	 */
 	public static Time milliseconds(long milliseconds) {
 		return of(milliseconds, TimeUnit.MILLISECONDS);
 	}
 
 	/**
 	 * Creates a new {@link Time} that represents the given number of seconds.
+	 */
+	/**
+	 * 快捷创建 TimeUnit 为 SECONDS 的 Time 实例
 	 */
 	public static Time seconds(long seconds) {
 		return of(seconds, TimeUnit.SECONDS);
@@ -125,6 +130,9 @@ public final class Time {
 	/**
 	 * Creates a new {@link Time} that represents the given number of minutes.
 	 */
+	/**
+	 * 快捷创建 TimeUnit 为 MINUTES 的 Time 实例
+	 */
 	public static Time minutes(long minutes) {
 		return of(minutes, TimeUnit.MINUTES);
 	}
@@ -132,12 +140,18 @@ public final class Time {
 	/**
 	 * Creates a new {@link Time} that represents the given number of hours.
 	 */
+	/**
+	 * 快捷创建 TimeUnit 为 HOURS 的 Time 实例
+	 */
 	public static Time hours(long hours) {
 		return of(hours, TimeUnit.HOURS);
 	}
 
 	/**
 	 * Creates a new {@link Time} that represents the given number of days.
+	 */
+	/**
+	 * 快捷创建 TimeUnit 为 DAYS 的 Time 实例
 	 */
 	public static Time days(long days) {
 		return of(days, TimeUnit.DAYS);

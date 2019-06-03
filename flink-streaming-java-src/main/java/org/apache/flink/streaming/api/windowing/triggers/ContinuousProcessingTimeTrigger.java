@@ -43,6 +43,7 @@ public class ContinuousProcessingTimeTrigger<W extends Window> extends Trigger<O
 	private final long interval;
 
 	/** When merging we take the lowest of all fire timestamps as the new fire timestamp. */
+	// 当合并的时候，我们选择所有触发时间中的最小值作为新的触发时间
 	private final ReducingStateDescriptor<Long> stateDesc =
 			new ReducingStateDescriptor<>("fire-time", new Min(), LongSerializer.INSTANCE);
 

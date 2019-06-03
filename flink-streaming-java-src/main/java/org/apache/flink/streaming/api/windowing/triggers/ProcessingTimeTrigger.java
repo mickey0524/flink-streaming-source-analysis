@@ -34,6 +34,7 @@ public class ProcessingTimeTrigger extends Trigger<Object, TimeWindow> {
 
 	private ProcessingTimeTrigger() {}
 
+	// 以窗口的末端时间戳设置进程时间定时器
 	@Override
 	public TriggerResult onElement(Object element, long timestamp, TimeWindow window, TriggerContext ctx) {
 		ctx.registerProcessingTimeTimer(window.maxTimestamp());
@@ -45,6 +46,7 @@ public class ProcessingTimeTrigger extends Trigger<Object, TimeWindow> {
 		return TriggerResult.CONTINUE;
 	}
 
+	// 当定时器触发的时候，表明窗口可以被触发了
 	@Override
 	public TriggerResult onProcessingTime(long time, TimeWindow window, TriggerContext ctx) {
 		return TriggerResult.FIRE;

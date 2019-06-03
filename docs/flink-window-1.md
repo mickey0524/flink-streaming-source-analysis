@@ -83,7 +83,7 @@ TimeWindow 是 Window 的实现类，TimeWindow 是一个时间窗口，代表�
 	mergeWindows 方法接受一个时间窗口的集合，合并集合中所有相交的时间窗口，得到一个元素为 `Tuple2<TimeWindow, Set<TimeWindow>>` 的 List，Tuple2.f0 指代合并得到的时间窗口，Tuple2.f1 指代合并成 Tuple2.f0 的所有时间窗口组成的 set
 	
 	```java
-/**
+	/**
 	 * 合并重叠的时间窗口
 	 * 会在合并窗口分配器的时候被用到
 	 */

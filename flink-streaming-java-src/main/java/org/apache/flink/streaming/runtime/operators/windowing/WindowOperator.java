@@ -176,11 +176,10 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 	 */
 	// 在 InternalWindowFunction 中用于输出给定 ts 的元素
 	protected transient TimestampedCollector<OUT> timestampedCollector;
-
+	// 给 trigger 使用的上下文
 	protected transient Context triggerContext = new Context(null, null);
-
+	// 给窗口函数使用的上下文
 	protected transient WindowContext processContext;
-
 	// 获取当前的进程时间
 	protected transient WindowAssigner.WindowAssignerContext windowAssignerContext;
 
@@ -192,6 +191,9 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
 	/**
 	 * Creates a new {@code WindowOperator} based on the given policies and user functions.
+	 */
+	/**
+	 * 根据给定的 policies 和用户函数创建一个 WindowOperator 实例
 	 */
 	public WindowOperator(
 			WindowAssigner<? super IN, W> windowAssigner,
@@ -235,6 +237,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		this.numLateRecordsDropped = metrics.counter(LATE_ELEMENTS_DROPPED_METRIC_NAME);
 		timestampedCollector = new TimestampedCollector<>(output);
 
+		// windowSerializer 用做命名空间序列器，this 用作 trigger
 		internalTimerService =
 				getInternalTimerService("window-timers", windowSerializer, this);
 
@@ -288,6 +291,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		}
 	}
 
+	// close 和 dispose 的时候需要将下面四个实例设置为 null
 	@Override
 	public void close() throws Exception {
 		super.close();
@@ -313,7 +317,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		final Collection<W> elementWindows = windowAssigner.assignWindows(
 			element.getValue(), element.getTimestamp(), windowAssignerContext);
 
-		//if element is handled by none of assigned 
+		// if element is handled by none of assigned 
 		// 如果元素没有被任何一个窗口处理
 		boolean isSkippedElement = true;
 
@@ -380,6 +384,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 					throw new IllegalStateException("Window " + window + " is not in in-flight window set.");
 				}
 
+				// 合并分配器的命名空间是 stateWindow 也就是 mergingWindows 中 mapping 的 value
 				// 先设置 windowState 的命名空间为当前 stateWindow
 				// 然后添加当前 element
 				windowState.setCurrentNamespace(stateWindow);
@@ -412,10 +417,11 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			for (W window: elementWindows) {
 
 				// drop if the window is already late
-				// 如果元素大于延迟最大范围，直接忽略
+				// 如果事件时间窗口右端 + allowedLateness <= Watermark，直接忽略
 				if (isWindowLate(window)) {
 					continue;
 				}
+				// 窗口是有效的，说明元素被处理了，isSkippedElement 设置为 false
 				isSkippedElement = false;
 
 				// 每一个窗口都是一个命名空间
@@ -429,7 +435,8 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 				triggerContext.window = window;
 
 				TriggerResult triggerResult = triggerContext.onElement(element);
-
+				
+				// 本元素触发了窗口的执行
 				if (triggerResult.isFire()) {
 					ACC contents = windowState.get();
 					if (contents == null) {
@@ -442,7 +449,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 				if (triggerResult.isPurge()) {
 					windowState.clear();  // 清理窗口元信息
 				}
-				registerCleanupTimer(window);  // 当窗口过期了清理窗口内容
+				registerCleanupTimer(window);  // 用窗口的末端注册定时器
 			}
 		}
 
@@ -555,7 +562,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 			clearAllState(triggerContext.window, windowState, mergingWindows);
 		}
 
-		// 我感觉这步是多余的
+		// 我感觉这步是多余的，因为唯一可能发送变化的 clearAllState 方法也执行了 persist 方法
 		if (mergingWindows != null) {
 			// need to make sure to update the merging state in state
 			mergingWindows.persist();
@@ -811,7 +818,7 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 		}
 
 		@Override
-		protected  <S extends State> S getPartitionedState(StateDescriptor<S, ?> stateDescriptor) throws Exception {
+		protected <S extends State> S getPartitionedState(StateDescriptor<S, ?> stateDescriptor) throws Exception {
 			return keyedStateBackend.getPartitionedState(
 				window,
 				windowSerializer,

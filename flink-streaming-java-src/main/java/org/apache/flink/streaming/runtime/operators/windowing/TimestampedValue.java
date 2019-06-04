@@ -33,16 +33,22 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 public class TimestampedValue<T> {
 
 	/** The actual value held by this record. */
+	// StreamRecord 的 value
 	private T value;
 
 	/** The timestamp of the record. */
+	// StreamRecord 的时间戳
 	private long timestamp;
 
 	/** Flag whether the timestamp is actually set. */
+	// StreamRecord 的时间戳是否已经设置
 	private boolean hasTimestamp;
 
 	/**
 	 * Creates a new TimestampedValue. The record does not have a timestamp.
+	 */
+	/**
+	 * 创建一个不带时间戳的 TimestampedValue 实例
 	 */
 	public TimestampedValue(T value) {
 		this.value = value;
@@ -54,6 +60,9 @@ public class TimestampedValue<T> {
 	 *
 	 * @param value The value to wrap in this {@link TimestampedValue}
 	 * @param timestamp The timestamp in milliseconds
+	 */
+	/**
+	 * 创建一个带时间戳的 TimestampedValue 实例
 	 */
 	public TimestampedValue(T value, long timestamp) {
 		this.value = value;
@@ -93,6 +102,9 @@ public class TimestampedValue<T> {
 	/**
 	 * Creates a {@link StreamRecord} from this TimestampedValue.
      */
+	/**
+	 * 从 TimestampedValue 中创建一个 StreamRecord
+	 */
 	public StreamRecord<T> getStreamRecord() {
 		StreamRecord<T> streamRecord = new StreamRecord<>(value);
 		if (hasTimestamp) {

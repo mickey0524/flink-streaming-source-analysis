@@ -75,6 +75,7 @@ public class MergingWindowSet<W extends Window> {
 	/**
 	 * 窗口到窗口的映射来保持窗口状态。当我们从某个窗口开始逐步合并窗口时
 	 * 我们将该开始窗口保留为状态窗口，以防止昂贵的状态变化
+	 * 其实就是用于保存窗口到其命名窗口的映射
 	 */
 	private final Map<W, W> mapping;
 
@@ -105,6 +106,7 @@ public class MergingWindowSet<W extends Window> {
 		this.windowAssigner = windowAssigner;
 		mapping = new HashMap<>();
 
+		// 从 state 中获取 Tuple2 的集合
 		Iterable<Tuple2<W, W>> windowState = state.get();
 		if (windowState != null) {
 			for (Tuple2<W, W> window: windowState) {
@@ -198,11 +200,12 @@ public class MergingWindowSet<W extends Window> {
 	public W addWindow(W newWindow, MergeFunction<W> mergeFunction) throws Exception {
 
 		List<W> windows = new ArrayList<>();
-
+		// 将当前 mapping 中的所有 key 窗口和新的窗口加入 windows
 		windows.addAll(this.mapping.keySet());
 		windows.add(newWindow);
 
-		// k 是合并后的窗口，v 是合并后的窗口包含的原始窗口集合
+		// mergeResults，k 是合并后的窗口，v 是合并后的窗口包含的原始窗口集合
+		// windowAssigner 的 mergeWindows 方法会调用 TimeWindow 的 mergeWindows 方法
 		final Map<W, Collection<W>> mergeResults = new HashMap<>();
 		windowAssigner.mergeWindows(windows,
 				new MergingWindowAssigner.MergeCallback<W>() {
@@ -279,6 +282,9 @@ public class MergingWindowSet<W extends Window> {
 	 * Callback for {@link #addWindow(Window, MergeFunction)}.
 	 * @param <W>
 	 */
+	/**
+	 * addWindow 方法的回调
+	 */
 	public interface MergeFunction<W> {
 
 		/**
@@ -289,6 +295,14 @@ public class MergingWindowSet<W extends Window> {
 		 * @param stateWindowResult The state window of the merge result.
 		 * @param mergedStateWindows The merged state windows.
 		 * @throws Exception
+		 */
+		/**
+		 * 当 merge 发生的时候，调用此方法
+		 * 
+		 * @param mergeResult 合并的结果窗口
+		 * @param mergedWindows 被本次操作合并的窗口集合
+		 * @param stateWindowResult mergedWindows 中第一个 window 对应的 window，用来作为 mergeResult 在 mapping 中对应的 value
+		 * @param mergedStateWindows 被合并的窗口在 mapping 中对应的 value 的集合
 		 */
 		void merge(W mergeResult, Collection<W> mergedWindows, W stateWindowResult, Collection<W> mergedStateWindows) throws Exception;
 	}

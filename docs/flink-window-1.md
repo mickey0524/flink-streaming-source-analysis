@@ -507,7 +507,7 @@ WindowAssigner 是窗口分配器，用于给一个元素分配一个或多个�
 
 ## Trigger
 
-Trigger 是一个触发器，用来决定何时计算窗口以 emit 该窗口部分的结果
+Trigger 是一个触发器，用来决定何时计算窗口 emit 该窗口部分的结果
 
 * Trigger
 

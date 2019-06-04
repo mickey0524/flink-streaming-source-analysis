@@ -15,8 +15,9 @@
 * [flink 中的 StreamPartitioner](./docs/flink-stream-partitioner.md)
 * [flink 中的异步操作符](./docs/flink-async-operator.md)
 * [flink 中的定时器](./docs/flink-timer.md)
-* [flink 的窗口操作 —— 窗口的一些组件类](./docs/flink-window-1.md)
-* [flink 的窗口操作 —— 窗口操作符](./docs/flink-window-operator.md)
+* [flink 的窗口 —— 窗口组件类](./docs/flink-window-component.md)
+* [flink 的窗口 —— 窗口操作符](./docs/flink-window-operator.md)
+* [flink 的窗口 —— 窗口函数](./docs/flink-window-function.md) 
 * 👇 等待施工 🚧
 * flink 中依托窗口完成的操作（coGroup、join、intervalJoin）
 * flink 的 StreamGraph

@@ -62,6 +62,5 @@ public final class InternalSingleValueWindowFunction<IN, OUT, KEY, W extends Win
 	@Override
 	public IterationRuntimeContext getIterationRuntimeContext() {
 		throw new RuntimeException("This should never be called.");
-
 	}
 }

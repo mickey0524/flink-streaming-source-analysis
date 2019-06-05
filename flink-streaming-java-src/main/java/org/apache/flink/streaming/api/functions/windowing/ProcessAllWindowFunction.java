@@ -34,7 +34,7 @@ import org.apache.flink.util.OutputTag;
  * @param <W> The type of {@code Window} that this window function can be applied on.
  */
 /**
- * 使用上下文获取额外信息，在非键化窗口上计算的函数的基本抽象类
+ * 使用上下文获取额外信息，在非 key 化窗口上计算的函数的基本抽象类
  */
 @PublicEvolving
 public abstract class ProcessAllWindowFunction<IN, OUT, W extends Window> extends AbstractRichFunction {

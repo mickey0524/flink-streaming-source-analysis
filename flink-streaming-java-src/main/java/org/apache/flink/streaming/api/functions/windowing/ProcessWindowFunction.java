@@ -34,6 +34,9 @@ import org.apache.flink.util.OutputTag;
  * @param <KEY> The type of the key.
  * @param <W> The type of {@code Window} that this window function can be applied on.
  */
+/**
+ * 使用上下文获取额外信息，在 keyed 窗口上计算的函数的基本抽象类
+ */
 @PublicEvolving
 public abstract class ProcessWindowFunction<IN, OUT, KEY, W extends Window> extends AbstractRichFunction {
 
@@ -49,6 +52,9 @@ public abstract class ProcessWindowFunction<IN, OUT, KEY, W extends Window> exte
 	 *
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
 	 */
+	/**
+	 * 计算窗口，然后输出零个或多个元素
+	 */
 	public abstract void process(KEY key, Context context, Iterable<IN> elements, Collector<OUT> out) throws Exception;
 
 	/**
@@ -57,21 +63,36 @@ public abstract class ProcessWindowFunction<IN, OUT, KEY, W extends Window> exte
 	 * @param context The context to which the window is being evaluated
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
 	 */
+	/**
+	 * 当窗口被清洗的时候，删除 Context 中的所有状态
+	 */
 	public void clear(Context context) throws Exception {}
 
 	/**
 	 * The context holding window metadata.
 	 */
+	/**
+	 * 掌握窗口元数据的上下文
+	 */
 	public abstract class Context implements java.io.Serializable {
 		/**
 		 * Returns the window that is being evaluated.
 		 */
+		/**
+		 * 返回窗口是否正在被计算
+		 */
 		public abstract W window();
 
 		/** Returns the current processing time. */
+		/**
+		 * 返回当前的进程时间
+		 */
 		public abstract long currentProcessingTime();
 
 		/** Returns the current event-time watermark. */
+		/**
+		 * 返回当前的 Watermark
+		 */
 		public abstract long currentWatermark();
 
 		/**
@@ -80,10 +101,16 @@ public abstract class ProcessWindowFunction<IN, OUT, KEY, W extends Window> exte
 		 * <p><b>NOTE:</b>If you use per-window state you have to ensure that you clean it up
 		 * by implementing {@link ProcessWindowFunction#clear(Context)}.
 		 */
+		/**
+		 * 每个 key，每个窗口的状态获取器
+		 */
 		public abstract KeyedStateStore windowState();
 
 		/**
 		 * State accessor for per-key global state.
+		 */
+		/**
+		 * 每个 key 的全局状态获取器
 		 */
 		public abstract KeyedStateStore globalState();
 
@@ -92,6 +119,9 @@ public abstract class ProcessWindowFunction<IN, OUT, KEY, W extends Window> exte
 		 *
 		 * @param outputTag the {@code OutputTag} that identifies the side output to emit to.
 		 * @param value The record to emit.
+		 */
+		/**
+		 * 侧边输出
 		 */
 		public abstract <X> void output(OutputTag<X> outputTag, X value);
 	}

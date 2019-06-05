@@ -49,5 +49,8 @@ public interface WindowFunction<IN, OUT, KEY, W extends Window> extends Function
 	 *
 	 * @throws Exception The function may throw exceptions to fail the program and trigger recovery.
 	 */
+	/**
+	 * 执行窗口并且输出零个或者多个元素
+	 */
 	void apply(KEY key, W window, Iterable<IN> input, Collector<OUT> out) throws Exception;
 }

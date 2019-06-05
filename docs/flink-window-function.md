@@ -93,6 +93,39 @@
 * InternalSingleValueWindowFunction
 
 	InternalSingleValueWindowFunction 服务于 WindowOpertor，包裹一个 WindowFunction，当 process 方法被 WindowOpertor 的 emitWindowContents 调用的时候，直接将 WindowOpertor **最后的聚合状态**包装成一个 Collection，再调用 WindowFunction 的方法进行输出
+	
+	```java
+	public final class InternalSingleValueWindowFunction<IN, OUT, KEY, W extends Window>
+			extends WrappingFunction<WindowFunction<IN, OUT, KEY, W>>
+			implements InternalWindowFunction<IN, OUT, KEY, W> {
+	
+		private static final long serialVersionUID = 1L;
+	
+		public InternalSingleValueWindowFunction(WindowFunction<IN, OUT, KEY, W> wrappedFunction) {
+			super(wrappedFunction);
+		}
+	
+		@Override
+		public void process(KEY key, W window, InternalWindowContext context, IN input, Collector<OUT> out) throws Exception {
+			wrappedFunction.apply(key, window, Collections.singletonList(input), out);
+		}
+	
+		@Override
+		public void clear(W window, InternalWindowContext context) throws Exception {
+	
+		}
+	
+		@Override
+		public RuntimeContext getRuntimeContext() {
+			throw new RuntimeException("This should never be called.");
+		}
+	
+		@Override
+		public IterationRuntimeContext getIterationRuntimeContext() {
+			throw new RuntimeException("This should never be called.");
+		}
+	}
+	```
 
 * InternalSingleValueProcessWindowFunction
 

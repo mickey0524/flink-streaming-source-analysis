@@ -115,14 +115,14 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	private static final String CLEANUP_NAMESPACE_LEFT = "CLEANUP_LEFT";
 	private static final String CLEANUP_NAMESPACE_RIGHT = "CLEANUP_RIGHT";
 
-	private final long lowerBound;
-	private final long upperBound;
+	private final long lowerBound;  // 下界
+	private final long upperBound;  // 上界
 
 	private final TypeSerializer<T1> leftTypeSerializer;
 	private final TypeSerializer<T2> rightTypeSerializer;
 
-	private transient MapState<Long, List<BufferEntry<T1>>> leftBuffer;
-	private transient MapState<Long, List<BufferEntry<T2>>> rightBuffer;
+	private transient MapState<Long, List<BufferEntry<T1>>> leftBuffer;  // 缓存第一个流的元素
+	private transient MapState<Long, List<BufferEntry<T2>>> rightBuffer;  // 缓存第二个流的元素
 
 	private transient TimestampedCollector<OUT> collector;
 	private transient ContextImpl context;
@@ -202,7 +202,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	 */
 	/** 
 	 * 处理左边流的元素，无论何时，当 StreamRecord 到达左边的流，元素会被加入 leftBuffer
-	 * 会去右边的流中找何时的 join 对，如果时间合适，会被传递给 ProcessJoinFunction
+	 * 会去右边的流中找何时的 join 对，如果时间合适，pair 会被传递给 ProcessJoinFunction
 	 */
 	@Override
 	public void processElement1(StreamRecord<T1> record) throws Exception {
@@ -220,7 +220,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 	 */
 	/**
 	 * 处理右边流的元素，无论何时，当 StreamRecord 到达右边的流，元素会被加入 leftBuffer
-	 * 会去左边的流中找何时的 join 对，如果时间合适，会被传递给 ProcessJoinFunction
+	 * 会去左边的流中找何时的 join 对，如果时间合适，pair 会被传递给 ProcessJoinFunction
 	 */
 	@Override
 	public void processElement2(StreamRecord<T2> record) throws Exception {

@@ -81,15 +81,24 @@ public abstract class ProcessJoinFunction<IN1, IN2, OUT> extends AbstractRichFun
 		/**
 		 * @return The timestamp of the left element of a joined pair
 		 */
+		/**
+		 * 返回 join 对中左边元素的 ts
+		 */
 		public abstract long getLeftTimestamp();
 
 		/**
 		 * @return The timestamp of the right element of a joined pair
 		 */
+		/**
+		 * 返回 join 对中右边元素的 ts
+		 */
 		public abstract long getRightTimestamp();
 
 		/**
 		 * @return The timestamp of the joined pair.
+		 */
+		/**
+		 * 返回 join 对的 ts
 		 */
 		public abstract long getTimestamp();
 
@@ -97,6 +106,9 @@ public abstract class ProcessJoinFunction<IN1, IN2, OUT> extends AbstractRichFun
 		 * Emits a record to the side output identified by the {@link OutputTag}.
 		 * @param outputTag The output tag that identifies the side output to emit to
 		 * @param value The record to emit
+		 */
+		/**
+		 * 提供侧边输出的接口
 		 */
 		public abstract <X> void output(OutputTag<X> outputTag, X value);
 	}

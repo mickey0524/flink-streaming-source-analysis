@@ -86,14 +86,14 @@ import java.util.Objects;
  * <p>Whenever a pair of elements is emitted it will be assigned the max timestamp of either of
  * the elements.
  *
- * 每当 emit 一对元素时，将为其分配任一元素的最大时间戳
+ * 每当 emit 一对元素时，将为其分配这对元素的最大时间戳
  *
  * <p>In order to avoid the element buffers to grow indefinitely a cleanup timer is registered
  * per element. This timer indicates when an element is not considered for joining anymore and can
  * be removed from the state.
  *
  * 为了避免元素缓冲区无限增长，每个元素都注册了一个清理计时器。
- *  此计时器指示何时不再考虑加入元素，并且可以从该状态中删除该元素
+ * 此计时器指示何时不再考虑加入元素，并且可以从该状态中删除该元素
  *
  * @param <K>	The type of the key based on which we join elements.
  * @param <T1>	The type of the elements in the left stream.
@@ -254,7 +254,7 @@ public class IntervalJoinOperator<K, T1, T2, OUT>
 		 * 遍历另外一个 buffer，查询是否有合适的元素可以形成 join 对
 		 */
 		for (Map.Entry<Long, List<BufferEntry<OTHER>>> bucket: otherBuffer.entries()) {
-			final long timestamp  = bucket.getKey();
+			final long timestamp = bucket.getKey();
 
 			// 不满足条件直接丢弃
 			if (timestamp < ourTimestamp + relativeLowerBound ||

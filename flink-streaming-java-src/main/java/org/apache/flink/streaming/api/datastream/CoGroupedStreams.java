@@ -58,7 +58,7 @@ import static java.util.Objects.requireNonNull;
  * A streaming co-group operation is evaluated over elements in a window.
  *
  * CoGroupedStreams 代表共同分组的两个 DataStreams
- * 窗口内的每个元素都要执行一个流共同分组操作
+ * DataStreams 中每个元素都会在窗口中执行一个流共同分组操作
  *
  * <p>To finalize co-group operation you also need to specify a {@link KeySelector} for
  * both the first and second input and a {@link WindowAssigner}.

@@ -19,8 +19,9 @@
 * [flink 的窗口 —— 窗口操作符](./docs/flink-window-operator.md)
 * [flink 的窗口 —— 窗口函数](./docs/flink-window-function.md) 
 * [flink 的窗口 —— 窗口流](./docs/flink-window-stream.md)
+* [flink DataStream 依托窗口完成的操作（coGroup、join）](./docs/flink-coGroup-join.md)
 * 👇 等待施工 🚧
-* flink 中依托窗口完成的操作（coGroup、join、intervalJoin）
+* flink KeyedStream 的 intervalJoin
 * flink 的 StreamGraph
 * flink 的 JobGraph
 * flink 的 OperatorChain

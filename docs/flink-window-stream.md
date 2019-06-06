@@ -285,7 +285,7 @@ public <ACC, V, R> SingleOutputStreamOperator<R> aggregate(
 
 ## WindowedStream 的 apply 方法
 
-如果不想对窗口进行任何聚合操作，可以调用 apply 方法，直接传入 WindowFunction 或 ProcessWindowFunction，apply 方法会将其包装成 InternalWindowFunction
+如果不想对窗口进行任何聚合操作，可以调用 public 的 apply 方法，传入 WindowFunction 或调用 process 方法传入 ProcessWindowFunction，public 的 apply 方法和 process 方法内部调用了下方 private 的apply 方法，会将 WindowFunction／ProcessWindowFunction 其包装成 InternalWindowFunction
 
 从下面的代码可以看到，无论是否设置了 evictor，都是选用 ListStateDescriptor，直接将集合传递给 WindowFunction 或 ProcessWindowFunction
 

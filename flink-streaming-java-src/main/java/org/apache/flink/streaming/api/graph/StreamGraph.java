@@ -98,10 +98,10 @@ public class StreamGraph extends StreamingPlan {
 	private Map<Integer, Tuple2<Integer, OutputTag>> virtualSideOutputNodes;  // 图中所有的 side output 虚拟节点
 	private Map<Integer, Tuple2<Integer, StreamPartitioner<?>>> virtualPartitionNodes;  // 图中所有的 partition 虚拟节点
 
-	protected Map<Integer, String> vertexIDtoBrokerID;
-	protected Map<Integer, Long> vertexIDtoLoopTimeout;
+	protected Map<Integer, String> vertexIDtoBrokerID;  // 存储反馈头尾节点 id 和 FeedbackTransformation id 之间的映射
+	protected Map<Integer, Long> vertexIDtoLoopTimeout;  // 存储反馈头尾节点 id 和 iterate 中设置的 timeout 之间的映射
 	private StateBackend stateBackend;
-	private Set<Tuple2<StreamNode, StreamNode>> iterationSourceSinkPairs;
+	private Set<Tuple2<StreamNode, StreamNode>> iterationSourceSinkPairs;  // 存储图中所有迭代头、尾组成的 pair
 
 	public StreamGraph(StreamExecutionEnvironment environment) {
 		this.environment = environment;
@@ -165,7 +165,8 @@ public class StreamGraph extends StreamingPlan {
 	public boolean isChainingEnabled() {
 		return chaining;
 	}
-
+	
+	// 根据 vertexIDtoLoopTimeout 是否为空来得出图是否是迭代的
 	public boolean isIterative() {
 		return !vertexIDtoLoopTimeout.isEmpty();
 	}

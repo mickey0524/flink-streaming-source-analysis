@@ -456,7 +456,7 @@ public class StreamGraphGenerator {
 			Collection<Integer> feedbackIds = transform(feedbackEdge);  // 生成反馈节点
 			allFeedbackIds.addAll(feedbackIds);
 			for (Integer feedbackId: feedbackIds) {
-				// 因为反馈尾巴作为消费者，因此反馈尾节点是作为 edge 的 targetId 的
+				// 因为反馈尾接收反馈边传来的数据，再发送给反馈头，因此反馈尾节点是作为 edge 的 targetId 的
 				streamGraph.addEdge(feedbackId,
 						itSink.getId(),
 						0

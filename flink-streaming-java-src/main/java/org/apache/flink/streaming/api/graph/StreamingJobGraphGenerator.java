@@ -416,7 +416,7 @@ public class StreamingJobGraphGenerator {
 		List<Tuple2<byte[], byte[]>> chainedOperators = chainedOperatorHashes.get(streamNodeId);
 		List<OperatorID> chainedOperatorVertexIds = new ArrayList<>();
 		List<OperatorID> userDefinedChainedOperatorVertexIds = new ArrayList<>();
-		// 生成链式操作符的 id 和 backword id
+		// 生成链中操作符的 id 和 backword id
 		if (chainedOperators != null) {
 			for (Tuple2<byte[], byte[]> chainedOperator : chainedOperators) {
 				chainedOperatorVertexIds.add(new OperatorID(chainedOperator.f0));

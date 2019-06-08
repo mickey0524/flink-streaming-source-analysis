@@ -223,7 +223,7 @@ for (StreamEdge inEdge : node.getInEdges()) {
 
 首先，将节点自身的属性加入 hash，需要注意，我们使用 hashes 当前的 size 作为 id，我们不能使用 node 的 id，因为它是由一个静态 counter 分配 id 的，这会导致相同的程序得到不同的 hashes，例如
 
-```
+```java
 // 如下所示：
 // 范例1：A.id = 1  B.id = 2
 // DataStream<String> A = ...

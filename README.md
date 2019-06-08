@@ -21,6 +21,7 @@
 * [flink 的窗口 —— 窗口流](./docs/flink-window-stream.md)
 * [flink DataStream 依托窗口完成的操作（coGroup、join）](./docs/flink-coGroup-join.md)
 * [flink KeyedStream 的 intervalJoin](./docs/flink-keyed-stream-intervaljoin.md)
+* [flink 的架构和拓扑](http://wuchong.me/blog/2016/05/03/flink-internals-overview/)
 * [flink 的 StreamGraph](./docs/flink-stream-graph.md)
 * [flink 的 JobGraph](./docs/flink-job-graph.md)
 * 👇 等待施工 🚧

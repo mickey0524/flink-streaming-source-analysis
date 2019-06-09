@@ -24,8 +24,8 @@
 * [flink 的架构和拓扑](http://wuchong.me/blog/2016/05/03/flink-internals-overview/)
 * [flink 的 StreamGraph](./docs/flink-stream-graph.md)
 * [flink 的 JobGraph](./docs/flink-job-graph.md)
+* [flink 的 OperatorChain](./docs/flink-operator-chain.md)
 * 👇 等待施工 🚧
-* flink 的 OperatorChain
 * flink 的 StreamInputProcessor
 * flink 的 Checkpoint
 * flink 的 StreamTask

@@ -85,11 +85,11 @@ public class OperatorChain<OUT, OP extends StreamOperator<OUT>> implements Strea
 	// 因为不含 StreamOperator 的 transformation 都变成 StreamEdge 的属性了
 	private final StreamOperator<?>[] allOperators;
 
-	private final RecordWriterOutput<?>[] streamOutputs;  // output，也就是我们在 operators 能看到的 output
+	private final RecordWriterOutput<?>[] streamOutputs;  // output，用于 emit 元素给链外的操作符
 
 	private final WatermarkGaugeExposingOutput<StreamRecord<OUT>> chainEntryPoint;  // headOperator 的 collector output
 
-	private final OP headOperator;  // 头部操作符 StreamOperator
+	private final OP headOperator;  // 链条头部操作符 StreamOperator
 
 	/**
 	 * Current status of the input stream of the operator chain.

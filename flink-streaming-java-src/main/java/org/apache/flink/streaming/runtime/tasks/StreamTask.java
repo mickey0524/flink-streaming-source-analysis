@@ -1309,7 +1309,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			String taskName,
 			long bufferTimeout) {
 		@SuppressWarnings("unchecked")
-		// 边上的 partitioner，没有显示设置的话，会使用 ForwardPartitioner 或 RebalancePartitioner
+		// 边上的 partitioner，没有显式设置的话，会使用 ForwardPartitioner 或 RebalancePartitioner
 		StreamPartitioner<OUT> outputPartitioner = (StreamPartitioner<OUT>) edge.getPartitioner();
 
 		LOG.debug("Using partitioner {} for output {} of task {}", outputPartitioner, outputIndex, taskName);

@@ -25,11 +25,11 @@
 * [flink 的 StreamGraph](./docs/flink-stream-graph.md)
 * [flink 的 JobGraph](./docs/flink-job-graph.md)
 * [flink 的 OperatorChain](./docs/flink-operator-chain.md)
+* [flink 的 RecordWriterOutput 和 RecordWriter](./docs/flink-writer-output.md)
 * 👇 等待施工 🚧
 * flink 的 StreamInputProcessor
 * flink 的 Checkpoint
 * flink 的 StreamTask
-* flink 的 RecordWriter
 
 另外，在 flink-runtime-src 目录中有我对 flink 流式处理逐行代码的详细分析，大家有兴趣的可以看看
 

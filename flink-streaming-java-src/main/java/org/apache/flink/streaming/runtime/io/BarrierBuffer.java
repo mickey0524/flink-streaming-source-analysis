@@ -96,7 +96,7 @@ public class BarrierBuffer implements CheckpointBarrierHandler {
 	 * unlimited.
 	 */
 	/**
-	 * 在对齐被破坏之前可以缓冲的最大字节数，-1表示无限制
+	 * 在对齐被破坏之前可以缓冲的最大字节数，-1表示无限制，通俗点讲就是，BarrierBuffer 中一共能缓存多少字节的数据
 	 */
 	private final long maxBufferedBytes;
 
@@ -212,6 +212,7 @@ public class BarrierBuffer implements CheckpointBarrierHandler {
 			else {
 				next = Optional.ofNullable(currentBuffered.getNext());
 				// next 为 null 的话，完成本 BufferOrEventSequence
+				// 调用 completeBufferedSequence 去队列中获取下一个 BufferOrEventSequence
 				if (!next.isPresent()) {
 					completeBufferedSequence();
 					return getNextNonBlocked();

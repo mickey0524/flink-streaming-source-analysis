@@ -401,7 +401,8 @@ public class BufferSpiller implements BufferBlocker {
 
 				buffer.flip();
 			}
-
+			
+			// 读取 9 字节的 header
 			final int channel = buffer.getInt();
 			final int length = buffer.getInt();
 			final boolean isBuffer = buffer.get() == 0;

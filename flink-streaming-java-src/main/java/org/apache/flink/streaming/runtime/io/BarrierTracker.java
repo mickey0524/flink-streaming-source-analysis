@@ -68,13 +68,14 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 	 */
 	/**
 	 * 跟踪器跟踪最大数量的检查点，其中有一些，但不是全部的障碍没有到达
+	 * BarrierTracker 最多保存 MAX_CHECKPOINTS_TO_TRACK 个检查点
 	 */
 	private static final int MAX_CHECKPOINTS_TO_TRACK = 50;
 
 	// ------------------------------------------------------------------------
 
 	/** The input gate, to draw the buffers and events from. */
-	// input gate，用于绘制缓冲区和事件
+	// 从 inputGate 接收网络 io 流入的元素
 	private final InputGate inputGate;
 
 	/**
@@ -94,11 +95,11 @@ public class BarrierTracker implements CheckpointBarrierHandler {
 	private final ArrayDeque<CheckpointBarrierCount> pendingCheckpoints;
 
 	/** The listener to be notified on complete checkpoints. */
-	// 检查点完成的时候触发的监听器
+	// 检查点完成的时候触发的回调
 	private AbstractInvokable toNotifyOnCheckpoint;
 
 	/** The highest checkpoint ID encountered so far. */
-	// 到目前位置遇到的最大检查点 ID
+	// 到目前为止遇到的最大检查点 ID
 	private long latestPendingCheckpointID = -1;
 
 	// ------------------------------------------------------------------------

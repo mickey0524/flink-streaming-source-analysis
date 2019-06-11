@@ -124,7 +124,7 @@ public boolean processInput() throws Exception {
 
 ForwardingValveOutputHandler 实现了 `StatusWatermarkValve.ValveOutputHandler` 接口，当 StatusWatermarkValve 判断可以 emit 新的 Watermark／StreamStatus 给下游的时候，调用 ForwardingValveOutputHandler 的 handleWatermark／handleStreamStatus 方法
 
-```
+```java
 private class ForwardingValveOutputHandler implements StatusWatermarkValve.ValveOutputHandler {
 	private final OneInputStreamOperator<IN, ?> operator;
 	private final Object lock;

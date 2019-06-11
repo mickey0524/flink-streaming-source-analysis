@@ -28,9 +28,9 @@
 * [flink 的 RecordWriterOutput 和 RecordWriter](./docs/flink-writer-output.md)
 * [flink 的 CheckpointBarrierHandler](./docs/flink-checkpoint-barrier-handler.md)
 * [flink 的 StreamInputProcessor](./docs/flink-stream-input-processor.md)
+* [flink 的 StreamTask](./docs/flink-stream-task.md)
 * 👇 等待施工 🚧
 * flink 的 Checkpoint
-* flink 的 StreamTask
 
 另外，在 flink-runtime-src 目录中有我对 flink 流式处理逐行代码的详细分析，大家有兴趣的可以看看
 

@@ -83,7 +83,7 @@ public class StreamInputProcessor<IN> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(StreamInputProcessor.class);
 
-	// 不同 cchannel 的 record 反序列化工具
+	// 所有 channel 的 record 反序列化工具
 	private final RecordDeserializer<DeserializationDelegate<StreamElement>>[] recordDeserializers;
 	
 	// 当前 channel 的 record 反序列化工具
@@ -99,7 +99,7 @@ public class StreamInputProcessor<IN> {
 	// ---------------- Status and Watermark Valve ------------------
 
 	/** Valve that controls how watermarks and stream statuses are forwarded. */
-	// 控制水印和流状态如何转发的 Valve
+	// 控制 Watermark 和流状态何时被 emit 给下游
 	private StatusWatermarkValve statusWatermarkValve;
 
 	/** Number of input channels the valve needs to handle. */
@@ -112,6 +112,7 @@ public class StreamInputProcessor<IN> {
 	 */
 	/**
 	 * 跟踪缓冲区来自的通道，以便我们可以将水印和流状态适当地映射到 value 的通道索引
+	 * 当前从哪个 channel 中获取 BufferOrEvent
 	 */
 	private int currentChannel = -1;
 
@@ -124,6 +125,7 @@ public class StreamInputProcessor<IN> {
 	private final WatermarkGauge watermarkGauge;
 	private Counter numRecordsIn;
 
+	// StreamInputProcessor 是否在运行，内部也有 while 循环
 	private boolean isFinished;
 
 	@SuppressWarnings("unchecked")

@@ -34,7 +34,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * stream status can be propagated.
  */
 /**
- * StatusWatermarkValve 体现了 Watermark 和 StreamStatus 如何传播到下游输出的逻辑s
+ * StatusWatermarkValve 体现了 Watermark 和 StreamStatus 如何传播到下游输出的逻辑
  * 此类的用法需要定义 value 需要处理的输入通道的数量，以及提供 ValveOutputHandler 的实现类
  * ValveOutputHandler 仅在确定新的水印或流状态可以传播时由 value 调用
  */

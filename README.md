@@ -27,8 +27,8 @@
 * [flink 的 OperatorChain](./docs/flink-operator-chain.md)
 * [flink 的 RecordWriterOutput 和 RecordWriter](./docs/flink-writer-output.md)
 * [flink 的 CheckpointBarrierHandler](./docs/flink-checkpoint-barrier-handler.md)
+* [flink 的 StreamInputProcessor](./docs/flink-stream-input-processor.md)
 * 👇 等待施工 🚧
-* flink 的 StreamInputProcessor
 * flink 的 Checkpoint
 * flink 的 StreamTask
 

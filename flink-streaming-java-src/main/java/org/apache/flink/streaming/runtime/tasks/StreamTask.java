@@ -639,7 +639,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	//  Checkpoint and Restore
 	// ------------------------------------------------------------------------
 
-	// 触发检查点
+	// 触发检查点，这个方法在 TaskManager 中调用
 	@Override
 	public boolean triggerCheckpoint(CheckpointMetaData checkpointMetaData, CheckpointOptions checkpointOptions) throws Exception {
 		try {
@@ -664,6 +664,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	}
 
 	// 触发检查点，由 BarrierBuffer.java 和 BarrierTracker.java 调用
+	// 当 inputGate 中，所有的 channel 上某个检查点的 barrier 都到来的时候
+	// 调用本方法
 	@Override
 	public void triggerCheckpointOnBarrier(
 			CheckpointMetaData checkpointMetaData,

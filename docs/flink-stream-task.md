@@ -38,6 +38,34 @@ StreamNode sink = this.addNode(sinkId,
 
 `StreamTask.java` 中主要由 invoke 方法和检查点相关的方法两部分组成，今天这篇文章我们来讲一下 invoke 方法，检查点相关的方法会在下一篇文章中详细介绍
 
+## StreamTask 主要属性（检查点相关的会在下篇文章讲解）
+
+```java
+// StreamOperator 的所有方法都需要靠 lock 同步，这样能保证我们不会并发调用影响检查点一致性的方法
+private final Object lock = new Object();
+
+// task 执行的操作符链
+protected OperatorChain<OUT, OP> operatorChain;
+
+// 操作符链的头部操作符
+protected OP headOperator;
+
+// task 的配置，其实就是 JobGraph 中 JobVertex 的 StreamConfig
+protected final StreamConfig configuration;
+
+// 持久存储检查点数据的外部存储
+private CheckpointStorageWorkerView checkpointStorage;
+
+// 内部 ProcessingTimeService 用于定义当前处理时间(default = System.currentTimeMillis()) 并注册将来要执行的任务的计时器
+protected ProcessingTimeService timerService;
+
+// 用于需要关闭的实例注册，然后在服务挂掉的时候，统一 close，释放资源
+private final CloseableRegistry cancelables = new CloseableRegistry();
+
+// 存储操作符链向链外 emit 数据使用的 RecordWriter
+private final List<RecordWriter<SerializationDelegate<StreamRecord<OUT>>>> recordWriters;
+```
+
 ## invoke 方法
 
 invoke 方法会在 TaskManager 中被调用，用于启动流式任务，invoke 会按照如下的步骤执行

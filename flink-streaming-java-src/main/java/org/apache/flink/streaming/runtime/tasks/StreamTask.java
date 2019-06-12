@@ -147,7 +147,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * All interaction with the {@code StreamOperator} must be synchronized on this lock object to
 	 * ensure that we don't have concurrent method calls that void consistent checkpoints.
 	 */
-	// 必须在此锁定对象上同步与StreamOperator的所有交互，以确保我们没有使一致检查点无效的并发方法调用
+	// StreamOperator 的所有方法都需要靠 lock 同步，这样能保证我们不会并发调用影响检查点一致性的方法
 	private final Object lock = new Object();
 
 	/** the head operator that consumes the input streams of this task. */
@@ -159,7 +159,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	protected OperatorChain<OUT, OP> operatorChain;
 
 	/** The configuration of this streaming task. */
-	// 流任务的配置
+	// task 的配置，其实就是 JobGraph 中 JobVertex 的 StreamConfig
 	protected final StreamConfig configuration;
 
 	/** Our state backend. We use this to create checkpoint streams and a keyed state backend. */
@@ -214,6 +214,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	// 用于处理重新抛出的异常，用于异步部分
 	private AsyncCheckpointExceptionHandler asynchronousCheckpointExceptionHandler;
 
+	// 存储操作符链向链外 emit 数据使用的 RecordWriter
 	private final List<RecordWriter<SerializationDelegate<StreamRecord<OUT>>>> recordWriters;
 
 	// ------------------------------------------------------------------------

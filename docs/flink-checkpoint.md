@@ -243,4 +243,74 @@ if (asyncCheckpointState.compareAndSet(CheckpointingOperation.AsyncCheckpointSta
 
 ## StreamOperator 中与 Checkpoint 相关的部分
 
+前文说到，`StreamTask.java` 的 CheckpointingOperation 实例会调用 OperatorChain 上所有操作符的 snapshotState 方法，今天我们来看看 `AbstractStreamOperator.java` 的 snapshotState 的方法
+
+### snapshotState
+
+在 `AbstractStreamOperator.java` 中，定义了两个 snapshotState 方法，使用重载实现，我们分别看看
+
+#### snapshotState(long checkpointId, long timestamp, CheckpointOptions checkpointOptions, CheckpointStreamFactory factory)
+
+`StreamTask.java` 调用的就是这个方法，我们在前文讲到，操作符快照由 4 个 state 快照组成，本方法开启 4 个 state 快照的生成，将其用 Future 包装后写入 OperatorSnapshotFutures，在 AsyncCheckpointRunnable 中会对所有操作符的 OperatorSnapshotFutures 实例统一处理
+
+```java
+// 获取 KeyGroupRange
+KeyGroupRange keyGroupRange = null != keyedStateBackend ?
+		keyedStateBackend.getKeyGroupRange() : KeyGroupRange.EMPTY_KEY_GROUP_RANGE;
+		
+// 用于装载各种 Future 对象
+OperatorSnapshotFutures snapshotInProgress = new OperatorSnapshotFutures();
+
+StateSnapshotContextSynchronousImpl snapshotContext = new StateSnapshotContextSynchronousImpl(
+	checkpointId,
+	timestamp,
+	factory,
+	keyGroupRange,
+	getContainingTask().getCancelables())) {
+
+snapshotState(snapshotContext);
+	
+// 设置 keyedState 输出流的 Future 对象
+snapshotInProgress.setKeyedStateRawFuture(snapshotContext.getKeyedStateStreamFuture());
+// 设置 operatorState 输出流的 Future 对象
+snapshotInProgress.setOperatorStateRawFuture(snapshotContext.getOperatorStateStreamFuture());
+	
+// 如果 operatorStateBackend 不为空的时候，设置操作符状态管理 Future
+if (null != operatorStateBackend) {
+	snapshotInProgress.setOperatorStateManagedFuture(
+		operatorStateBackend.snapshot(checkpointId, timestamp, factory, checkpointOptions));
+}
+
+// 如果 keyedStateBackend 不为空的时候，设置 keyedStateBackend Future
+if (null != keyedStateBackend) {
+	snapshotInProgress.setKeyedStateManagedFuture(
+		keyedStateBackend.snapshot(checkpointId, timestamp, factory, checkpointOptions));
+}
+
+return snapshotInProgress;
+```
+
+代码中出现的一些类就不展开讲解了，这里介绍类的作用，这些类的代码都位于 `org.apache.flink.runtime.state` 目录，感兴趣的同学可以去看看，本 repo 的 flink-runtime-src 目录里也有对这些类的解析
+
+* KeyGroupRange：定义一系列 key 的索引，用来区分每一个 key
+* OperatorSnapshotFutures：用来存放四个 state 快照的 future
+* StateSnapshotContextSynchronousImpl：用于创建读写 KeyedState 和 OperatorState 的流
+
+#### snapshotState(StateSnapshotContext context)
+
+本 snapshotState 方法在之前的 snapshotState 方法中被调用，用于将操作符的所有定时器写入 KeyedStateCheckpointOutputStream 进行持久化, KeyedStateCheckpointOutputStream 从 StateSnapshotContextSynchronousImpl 中获取
+
+```java
+KeyedStateCheckpointOutputStream out = context.getRawKeyedOperatorStateOutput();
+
+KeyGroupsList allKeyGroups = out.getKeyGroupList();  // 获取全部的 key-group
+for (int keyGroupIdx : allKeyGroups) {
+	out.startNewKeyGroup(keyGroupIdx);  // 开始当前 key group 的写入
+
+	timeServiceManager.snapshotStateForKeyGroup(
+		new DataOutputViewStreamWrapper(out), keyGroupIdx);
+}
+```
+
+## 定时器中与 Checkpoint 相关的部分
 🚧 Under Construction

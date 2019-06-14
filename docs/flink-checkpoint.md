@@ -313,4 +313,158 @@ for (int keyGroupIdx : allKeyGroups) {
 ```
 
 ## 定时器中与 Checkpoint 相关的部分
-🚧 Under Construction
+
+Checkpoint 会将定时器的 ts、key 和命名空间序列化到 KeyedState 的流中。AbstractStreamOperator 的 snapshotState 方法调用了 `timeServiceManager.snapshotStateForKeyGroup` 方法，snapshotStateForKeyGroup 创建了一个 InternalTimerServiceSerializationProxy 实例，调用了 InternalTimerServiceSerializationProxy 的 write 方法（也在下方给出）
+
+我们知道，在 timerServicesManager 中维护着一个 hashMap，k 为定时器服务的名称，v 为定时器服务实例，首先调用 getRegisteredTimerServices 方法获取这个 hashMap，将 timerServicesManager 中定时器服务的个数写入流，然后遍历 hashMap，将每个定时器服务的名称和序列化后的定时器服务实例写入流，完成定时器的持久化，InternalTimersSnapshotReaderWriters 是用来序列化和反序列化定时器实例的
+
+```java
+public void snapshotStateForKeyGroup(DataOutputView stream, int keyGroupIdx) throws IOException {
+	Preconditions.checkState(useLegacySynchronousSnapshots);
+	InternalTimerServiceSerializationProxy<K> serializationProxy =
+		new InternalTimerServiceSerializationProxy<>(this, keyGroupIdx);
+
+	serializationProxy.write(stream);
+}
+
+public void write(DataOutputView out) throws IOException {
+	// 写入版本信息
+	super.write(out);
+	// 从 timerServicesManager 中获取所有的定时器服务
+	final Map<String, InternalTimerServiceImpl<K, ?>> registeredTimerServices =
+		timerServicesManager.getRegisteredTimerServices();
+
+	// 写入时间服务个数
+	out.writeInt(registeredTimerServices.size());
+	for (Map.Entry<String, InternalTimerServiceImpl<K, ?>> entry : registeredTimerServices.entrySet()) {
+		String serviceName = entry.getKey();
+		InternalTimerServiceImpl<K, ?> timerService = entry.getValue();
+
+		out.writeUTF(serviceName);  // 写入定时器名称
+		// 将进程时间定时器和事件时间定时器写入快照
+		InternalTimersSnapshotReaderWriters
+			.getWriterForVersion(
+				VERSION,
+				timerService.snapshotTimersForKeyGroup(keyGroupIdx),
+				timerService.getKeySerializer(),
+				(TypeSerializer) timerService.getNamespaceSerializer())
+			.writeTimersSnapshot(out);
+	}
+}
+```
+
+### timerService.snapshotTimersForKeyGroup
+
+定时器服务中有两个队列，分别用来存储进程时间定时器和事件时间定时器，
+timerService.snapshotTimersForKeyGroup 调用 队列的 getSubsetForKeyGroup 方法获取定时器服务中和 keyGroupIdx 相关的定时器，然后通过获取的定时器子集、key序列器 和 namespace 序列器生成 InternalTimersSnapshot 实例，InternalTimersSnapshot 会创建 key 序列器和 namespace 序列器的快照，这样在之后的快照恢复中，可以通过序列器快照恢复序列器，再通过序列器恢复 key 和 namespace
+
+```java
+public InternalTimersSnapshot<K, N> snapshotTimersForKeyGroup(int keyGroupIdx) {
+	return new InternalTimersSnapshot<>(
+		keySerializer,
+		namespaceSerializer,
+		eventTimeTimersQueue.getSubsetForKeyGroup(keyGroupIdx),
+		processingTimeTimersQueue.getSubsetForKeyGroup(keyGroupIdx));
+}
+
+// 当生成定时器快照的时候使用的构造器
+public InternalTimersSnapshot(
+		TypeSerializer<K> keySerializer,
+		TypeSerializer<N> namespaceSerializer,
+		@Nullable Set<TimerHeapInternalTimer<K, N>> eventTimeTimers,
+		@Nullable Set<TimerHeapInternalTimer<K, N>> processingTimeTimers) {
+
+	Preconditions.checkNotNull(keySerializer);
+	this.keySerializerSnapshot = TypeSerializerUtils.snapshotBackwardsCompatible(keySerializer);
+	Preconditions.checkNotNull(namespaceSerializer);
+	this.namespaceSerializerSnapshot = TypeSerializerUtils.snapshotBackwardsCompatible(namespaceSerializer);
+
+	this.eventTimeTimers = eventTimeTimers;
+	this.processingTimeTimers = processingTimeTimers;
+}
+```
+
+### InternalTimersSnapshotReaderWriters
+
+InternalTimersSnapshotReaderWriters 提供了 Reader 和 Writer，用于读取和存储定时器服务快照，从下方代码中，可以清晰的看到，writeTimersSnapshot 先将 key 和 namespace 序列器快照写入流，然后依次将所有的定时器的 key、namespace 和 ts 写入流，完成持久化
+
+```java
+private abstract static class AbstractInternalTimersSnapshotWriter<K, N> implements InternalTimersSnapshotWriter {
+
+	protected final InternalTimersSnapshot<K, N> timersSnapshot;
+
+	protected final TypeSerializer<K> keySerializer;
+	protected final TypeSerializer<N> namespaceSerializer;
+
+	public AbstractInternalTimersSnapshotWriter(
+			InternalTimersSnapshot<K, N> timersSnapshot,
+			TypeSerializer<K> keySerializer,
+			TypeSerializer<N> namespaceSerializer) {
+		this.timersSnapshot = checkNotNull(timersSnapshot);
+		this.keySerializer = checkNotNull(keySerializer);
+		this.namespaceSerializer = checkNotNull(namespaceSerializer);
+	}
+
+	// 将 key 和命名空间的序列器写入快照
+	protected abstract void writeKeyAndNamespaceSerializers(DataOutputView out) throws IOException;
+
+	@Override
+	public final void writeTimersSnapshot(DataOutputView out) throws IOException {
+		writeKeyAndNamespaceSerializers(out);
+
+		LegacyTimerSerializer<K, N> timerSerializer = new LegacyTimerSerializer<>(
+			keySerializer,
+			namespaceSerializer);
+
+		// write 事件时间定时器
+		Set<TimerHeapInternalTimer<K, N>> eventTimers = timersSnapshot.getEventTimeTimers();
+		if (eventTimers != null) {
+			out.writeInt(eventTimers.size());  // 将事件时间定时器的数量写入快照
+			for (TimerHeapInternalTimer<K, N> eventTimer : eventTimers) {
+				timerSerializer.serialize(eventTimer, out);
+			}
+		} else {
+			out.writeInt(0);
+		}
+
+		// write 进程时间定时器
+		Set<TimerHeapInternalTimer<K, N>> processingTimers = timersSnapshot.getProcessingTimeTimers();
+		if (processingTimers != null) {
+			out.writeInt(processingTimers.size());  // 将进程时间定时器的数量写入快照
+			for (TimerHeapInternalTimer<K, N> processingTimer : processingTimers) {
+				timerSerializer.serialize(processingTimer, out);
+			}
+		} else {
+			out.writeInt(0);
+		}
+	}
+}
+
+private static class InternalTimersSnapshotWriterV2<K, N> extends AbstractInternalTimersSnapshotWriter<K, N> {
+
+	public InternalTimersSnapshotWriterV2(
+			InternalTimersSnapshot<K, N> timersSnapshot,
+			TypeSerializer<K> keySerializer,
+			TypeSerializer<N> namespaceSerializer) {
+		super(timersSnapshot, keySerializer, namespaceSerializer);
+	}
+
+	@Override
+	protected void writeKeyAndNamespaceSerializers(DataOutputView out) throws IOException {
+		TypeSerializerSnapshot.writeVersionedSnapshot(out, timersSnapshot.getKeySerializerSnapshot());
+		TypeSerializerSnapshot.writeVersionedSnapshot(out, timersSnapshot.getNamespaceSerializerSnapshot());
+	}
+}
+
+...
+
+public void serialize(TimerHeapInternalTimer<K, N> record, DataOutputView target) throws IOException {
+	keySerializer.serialize(record.getKey(), target);
+	namespaceSerializer.serialize(record.getNamespace(), target);
+	LongSerializer.INSTANCE.serialize(record.getTimestamp(), target);
+}
+```
+
+## 总结
+
+今天这篇文章我们介绍了 flink 的检查点，checkpoint 还是比较难理解的，而且涉及的类比较多，大家可以细看看，希望对大家有所帮助

@@ -33,7 +33,7 @@
 * 👇Under Construction🚧
 * 博主是一名研二的学生，现在要暑期实习和准备秋招了，等待校招完毕，再来分享 `org.apache.flink.runtime` 包
 
-另外，在 flink-runtime-src 目录中有我对 flink 流式处理逐行代码的详细分析，大家有兴趣的可以看看
+另外，在 flink-java-streaming-src 目录中有我对 flink 流式处理逐行代码的详细分析，大家有兴趣的可以看看
 
 如果大家觉得本 repo 对您有所帮助，可以点个 star
 

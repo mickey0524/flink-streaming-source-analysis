@@ -30,6 +30,8 @@
 * [flink 的 StreamInputProcessor](./docs/flink-stream-input-processor.md)
 * [flink 的 StreamTask](./docs/flink-stream-task.md)
 * [flink 的 Checkpoint](./docs/flink-checkpoint.md)
+* [flink 的 反压](./docs/flink-backpressure.md)
+* [flink 的内存管理](./docs/flink-memory-manage.md)
 * 👇Under Construction🚧
 * 博主是一名研二的学生，现在要暑期实习和准备秋招了，等待校招完毕，再来分享 `org.apache.flink.runtime` 包
 

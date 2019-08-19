@@ -71,7 +71,7 @@ public class TumblingEventTimeWindows extends WindowAssigner<Object, TimeWindow>
 			long start = TimeWindow.getWindowStartWithOffset(timestamp, offset, size);
 			return Collections.singletonList(new TimeWindow(start, start + size));
 		} else {
-			// 说明 StreamRecord 没有被设置 ts，有空吗没有调用 assignTimestampsAndWatermarks
+			// 说明 StreamRecord 没有被设置 ts，有可能没有调用 assignTimestampsAndWatermarks
 			throw new RuntimeException("Record has Long.MIN_VALUE timestamp (= no timestamp marker). " +
 					"Is the time characteristic set to 'ProcessingTime', or did you forget to call " +
 					"'DataStream.assignTimestampsAndWatermarks(...)'?");

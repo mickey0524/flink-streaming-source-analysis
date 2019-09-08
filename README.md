@@ -32,6 +32,7 @@
 * [flink 的 Checkpoint](./docs/flink-checkpoint.md)
 * [flink 的 反压](./docs/flink-backpressure.md)
 * [flink 的内存管理](./docs/flink-memory-manage.md)
+* [flink 的 Savepoint 和 Checkpoint 的区别](./docs/flink-savepoint-checkpoint.md)
 * 👇Under Construction🚧
 * 博主是一名研二的学生，现在要暑期实习和准备秋招了，等待校招完毕，再来分享 `org.apache.flink.runtime` 包
 
